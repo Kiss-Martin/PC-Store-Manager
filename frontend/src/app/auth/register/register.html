@@ -1,0 +1,293 @@
+<div class="register-container">
+  <div class="register-wrapper">
+    <!-- Header -->
+    <div class="register-header">
+      <div>
+        <span>🖥️</span>
+        <span>PC Store</span>
+      </div>
+      <h1 class="register-header">Create Your Account</h1>
+      <p class="register-subtitle">Join our platform in a few simple steps</p>
+    </div>
+
+    <div class="register-grid">
+      <!-- Progress Sidebar -->
+      <div class="progress-sidebar">
+        <!-- Progress Bar -->
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              [style.width.%]="progressPercentage"
+            ></div>
+          </div>
+          <p class="progress-text">
+            Step {{ currentStep }} of {{ totalSteps }}
+          </p>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps-list">
+          <!-- Step 1 -->
+          <div
+            class="step-item"
+            [class.active]="currentStep >= 1"
+            [class.inactive]="currentStep < 1"
+          >
+            <div class="step-header">
+              <div
+                class="step-number"
+                [class.active]="currentStep >= 1"
+                [class.inactive]="currentStep < 1"
+              >
+                {{ currentStep > 1 ? '✓' : '1' }}
+              </div>
+              <span class="step-title">Select Role</span>
+            </div>
+            <p class="step-description">Choose your position</p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="step-item"
+            [class.active]="currentStep >= 2"
+            [class.inactive]="currentStep < 2"
+          >
+            <div class="step-header">
+              <div
+                class="step-number"
+                [class.active]="currentStep >= 2"
+                [class.inactive]="currentStep < 2"
+              >
+                {{ currentStep > 2 ? '✓' : '2' }}
+              </div>
+              <span class="step-title">Credentials</span>
+            </div>
+            <p class="step-description">Username & password</p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="step-item"
+            [class.active]="currentStep >= 3"
+            [class.inactive]="currentStep < 3"
+          >
+            <div class="step-header">
+              <div
+                class="step-number"
+                [class.active]="currentStep >= 3"
+                [class.inactive]="currentStep < 3"
+              >
+                {{ currentStep > 3 ? '✓' : '3' }}
+              </div>
+              <span class="step-title">Personal Info</span>
+            </div>
+            <p class="step-description">Name & email</p>
+          </div>
+
+          <!-- Step 4 -->
+          <div
+            class="step-item"
+            [class.active]="currentStep >= 4"
+            [class.inactive]="currentStep < 4"
+          >
+            <div class="step-header">
+              <div
+                class="step-number"
+                [class.active]="currentStep >= 4"
+                [class.inactive]="currentStep < 4"
+              >
+                {{ currentStep > 4 ? '✓' : '4' }}
+              </div>
+              <span class="step-title">Confirm</span>
+            </div>
+            <p class="step-description">Review & submit</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Content -->
+      <div class="register-card">
+
+        <!-- Step 1: Select Role -->
+        <div class="step-content" [class.active]="currentStep === 1">
+          <h2 class="step-title-main">Select Your Role</h2>
+          <p class="step-description-main">Choose the role that best describes your position</p>
+
+          <div class="role-grid">
+            <!-- Admin Role -->
+            <button
+              (click)="selectRole('admin')"
+              class="role-button"
+              [class.active]="formData.role === 'admin'"
+            >
+              <span class="role-icon">👨‍💼</span>
+              <h3 class="role-title">Administrator</h3>
+              <p class="role-description">Full access to all features and settings</p>
+            </button>
+
+            <!-- Worker Role -->
+            <button
+              (click)="selectRole('worker')"
+              class="role-button"
+              [class.active]="formData.role === 'worker'"
+            >
+              <span class="role-icon">👷</span>
+              <h3 class="role-title">Worker</h3>
+              <p class="role-description">Limited access for daily operations</p>
+            </button>
+          </div>
+
+          <div *ngIf="errors['role']" class="error-text">
+            {{ errors['role'] }}
+          </div>
+        </div>
+
+        <!-- Step 2: Credentials -->
+        <div class="step-content" [class.active]="currentStep === 2">
+          <h2 class="step-title-main">Set Your Credentials</h2>
+          <p class="step-description-main">Create a secure username and password</p>
+
+          <div>
+            <!-- Username -->
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input
+                type="text"
+                [(ngModel)]="formData.username"
+                placeholder="Choose a unique username"
+                class="form-input"
+              />
+              <div *ngIf="errors['username']" class="error-text">{{ errors['username'] }}</div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input
+                type="password"
+                [(ngModel)]="formData.password"
+                placeholder="At least 6 characters"
+                class="form-input"
+              />
+              <div *ngIf="errors['password']" class="error-text">{{ errors['password'] }}</div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <input
+                type="password"
+                [(ngModel)]="formData.confirmPassword"
+                placeholder="Re-enter your password"
+                class="form-input"
+              />
+              <div *ngIf="errors['confirmPassword']" class="error-text">{{ errors['confirmPassword'] }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Personal Info -->
+        <div class="step-content" [class.active]="currentStep === 3">
+          <h2 class="step-title-main">Personal Information</h2>
+          <p class="step-description-main">Tell us a bit about yourself</p>
+
+          <div>
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input
+                type="text"
+                [(ngModel)]="formData.fullName"
+                placeholder="Enter your full name"
+                class="form-input"
+              />
+              <div *ngIf="errors['fullName']" class="error-text">{{ errors['fullName'] }}</div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input
+                type="email"
+                [(ngModel)]="formData.email"
+                placeholder="Enter your email"
+                class="form-input"
+              />
+              <div *ngIf="errors['email']" class="error-text">{{ errors['email'] }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Review -->
+        <div class="step-content" [class.active]="currentStep === 4">
+          <h2 class="step-title-main">Review Your Details</h2>
+          <p class="step-description-main">Please verify all information before submitting</p>
+
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="review-label">Role:</span>
+              <span class="review-value">{{ formData.role }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Username:</span>
+              <span class="review-value">{{ formData.username }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Full Name:</span>
+              <span class="review-value">{{ formData.fullName }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">Email:</span>
+              <span class="review-value">{{ formData.email }}</span>
+            </div>
+          </div>
+
+          <p class="review-note">
+            By clicking submit, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="button-group">
+          <button
+            *ngIf="currentStep > 1"
+            (click)="prevStep()"
+            class="button-prev"
+          >
+            ← Previous
+          </button>
+
+          <div class="button-spacer"></div>
+
+          <button
+            *ngIf="currentStep < totalSteps"
+            (click)="nextStep()"
+            class="button-next"
+          >
+            Next →
+          </button>
+
+          <button
+            *ngIf="currentStep === totalSteps"
+            (click)="submitRegistration()"
+            [disabled]="isLoading"
+            class="button-submit"
+          >
+            {{ isLoading ? 'Creating Account...' : 'Create Account' }}
+          </button>
+        </div>
+
+        <!-- Login Link -->
+        <div class="register-footer">
+          <p class="footer-text">
+            Already have an account?
+            <button (click)="goToLogin()" class="button-next">
+              Sign in
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
