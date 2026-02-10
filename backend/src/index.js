@@ -1,11 +1,23 @@
-const express = require('express');
-const app = express();
+import express from 'express'
+import cors from 'cors'
+import 'dotenv/config'
+import sql from './db.js'
 
-app.use(express.json());
+const app = express()
+app.use(cors())
+app.use(express.json())
 
-app.use('/items', require('./routes/items'));
-app.use('/categories', require('./routes/categories'));
-app.use('/brands', require('./routes/brands'));
-app.use('/users', require('./routes/users'));
+// teszt végpont
+app.get('/health', async (req, res) => {
+  try {
+    const result = await sql`SELECT 1`
+    res.json({ status: 'ok', db: 'connected' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+const PORT = 3000
+app.listen(PORT, () => {
+  console.log(`🚀 Backend fut: http://localhost:${PORT}/health`)
+})
