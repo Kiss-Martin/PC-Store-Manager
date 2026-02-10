@@ -1,0 +1,80 @@
+<div class="login-container">
+  <div class="login-wrapper">
+    <!-- Logo/Header -->
+    <div class="login-header">
+      <div class="logo-section">
+        <span class="logo">🖥️</span>
+        <span class="brand">PC Store</span>
+      </div>
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-subtitle">Sign in to your account</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        <p class="error-text">{{ errorMessage }}</p>
+      </div>
+
+      <!-- Form -->
+      <form (ngSubmit)="login()" class="form">
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Enter your username"
+            class="form-input"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Enter your password"
+            class="form-input"
+          />
+        </div>
+
+        <!-- Login Button -->
+        <button
+          type="submit"
+          [disabled]="isLoading"
+          class="login-button"
+        >
+          {{ isLoading ? 'Signing in...' : 'Sign In' }}
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">OR</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Register Link -->
+      <button
+        (click)="goToRegister()"
+        class="register-button"
+      >
+        Create New Account
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p class="footer-text">
+        Need help? <a href="#" class="footer-link">Contact support</a>
+      </p>
+    </div>
+  </div>
+</div>
+
