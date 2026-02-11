@@ -59,28 +59,16 @@
   background: white;
   border-radius: 1.25rem;
   padding: 2rem;
-  border: 1px solid #e2e8f0;
+  border: 3px solid #e2e8f0;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #7c3aed;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .stat-card:hover {
   border-color: #7c3aed;
   box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
-}
+} 
 
 .stat-card:hover::before {
   opacity: 1;
@@ -119,7 +107,7 @@
   background: white;
   border-radius: 1.25rem;
   padding: 2rem;
-  border: 1px solid #e2e8f0;
+  border: 3px solid #e2e8f0;
   transition: all 0.3s ease;
 }
 
@@ -211,7 +199,7 @@
 
 .action-btn {
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 3px solid #e2e8f0;
   padding: 1.25rem;
   border-radius: 1rem;
   cursor: pointer;
