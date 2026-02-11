@@ -3,8 +3,8 @@
   <nav class="navbar" *ngIf="showNavbar">
     <div class="navbar-container">
       <div class="navbar-brand">
-        <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
-        <span class="brand-name">{{ title() }}</span>
+        <lucide-icon name="monitor" class="logo" size="30"></lucide-icon>
+        <span class="brand-name" href="#">{{ title() }}</span>
       </div>
       <button class="menu-toggle" (click)="toggleNav()">
         <span *ngIf="!isNavOpen">☰</span>
