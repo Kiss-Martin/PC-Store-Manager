@@ -11,18 +11,18 @@
   <!-- Stats Grid -->
   <div class="stats-grid">
     @for (stat of stats; track $index) {
-    <div class="stat-card">
-      <div class="stat-content">
-        <lucide-icon
-          [name]="stat.icon"
-          class="stat-icon"
-          size="32"
+      <div class="stat-card">
+        <div class="stat-content">
+          <lucide-icon
+            [name]="stat.icon"
+            class="stat-icon"
+            size="32"
           [style.color]="stat.color"></lucide-icon>
-        <p class="stat-title">{{ stat.title }}</p>
-        <p class="stat-value">{{ stat.value }}</p>
+          <p class="stat-title">{{ stat.title }}</p>
+          <p class="stat-value">{{ stat.value }}</p>
+        </div>
       </div>
-    </div>
-  }
+    }
   </div>
 
   <!-- Main Content Grid -->
@@ -33,16 +33,18 @@
         <h2>Recent Activity</h2>
       </div>
       <div class="activity-list">
-        <div *ngFor="let activity of activities" class="activity-item">
-          <lucide-icon
-            [name]="getActivityIcon(activity.type)"
-            class="activity-icon"
+        @for (activity of activities; track activity) {
+          <div class="activity-item">
+            <lucide-icon
+              [name]="getActivityIcon(activity.type)"
+              class="activity-icon"
             size="24"></lucide-icon>
-          <div class="activity-info">
-            <p class="activity-description">{{ activity.description }}</p>
-            <p class="activity-time">{{ activity.timestamp }}</p>
+            <div class="activity-info">
+              <p class="activity-description">{{ activity.description }}</p>
+              <p class="activity-time">{{ activity.timestamp }}</p>
+            </div>
           </div>
-        </div>
+        }
       </div>
     </div>
 

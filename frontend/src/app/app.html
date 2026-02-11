@@ -1,24 +1,30 @@
 <div class="app-wrapper">
   <!-- Navigation Bar (Only on dashboard) -->
-  <nav class="navbar" *ngIf="showNavbar">
-    <div class="navbar-container">
-      <div class="navbar-brand">
-        <lucide-icon name="monitor" class="logo" size="30"></lucide-icon>
-        <span class="brand-name" href="#">{{ title() }}</span>
+  @if (showNavbar) {
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="navbar-brand">
+          <lucide-icon name="monitor" class="logo" size="30"></lucide-icon>
+          <span class="brand-name" href="#">{{ title() }}</span>
+        </div>
+        <button class="menu-toggle" (click)="toggleNav()">
+          @if (!isNavOpen) {
+            <span>☰</span>
+          }
+          @if (isNavOpen) {
+            <span>✕</span>
+          }
+        </button>
+        <ul class="nav-menu" [class.active]="isNavOpen">
+          <li><a (click)="navigate('dashboard')" class="nav-link">Dashboard</a></li>
+          <li><a href="#" class="nav-link">Products</a></li>
+          <li><a href="#" class="nav-link">Orders</a></li>
+          <li><a href="#" class="nav-link">Analytics</a></li>
+          <li><a href="#" class="nav-link">Settings</a></li>
+        </ul>
       </div>
-      <button class="menu-toggle" (click)="toggleNav()">
-        <span *ngIf="!isNavOpen">☰</span>
-        <span *ngIf="isNavOpen">✕</span>
-      </button>
-      <ul class="nav-menu" [class.active]="isNavOpen">
-        <li><a (click)="navigate('dashboard')" class="nav-link">Dashboard</a></li>
-        <li><a href="#" class="nav-link">Products</a></li>
-        <li><a href="#" class="nav-link">Orders</a></li>
-        <li><a href="#" class="nav-link">Analytics</a></li>
-        <li><a href="#" class="nav-link">Settings</a></li>
-      </ul>
-    </div>
-  </nav>
+    </nav>
+  }
 
   <!-- Main Content -->
   <main class="main-content">

@@ -1,12 +1,12 @@
 import { Component, NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [FormsModule, LucideAngularModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

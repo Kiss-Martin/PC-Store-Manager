@@ -1,5 +1,5 @@
 import { Component, NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
@@ -16,7 +16,7 @@ interface RegistrationData {
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [FormsModule, LucideAngularModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })

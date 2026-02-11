@@ -1,5 +1,5 @@
 import { Component, NgModule, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule } from "lucide-angular";
 
 interface DashboardCard {
@@ -18,7 +18,7 @@ interface Activity {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
