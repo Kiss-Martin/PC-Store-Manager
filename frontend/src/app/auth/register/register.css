@@ -7,6 +7,17 @@
   padding: 1rem;
 }
 
+.logo{
+  font-size: 2.25rem;
+  color: #7c3aed;
+}
+
+.brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .register-wrapper {
   width: 100%;
   max-width: 80rem;
@@ -256,8 +267,19 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+.review-icon {
+  margin-left: auto;
+  color: #7c3aed;
+  text-align: right;
+}
+
 .review-item:last-child {
   border-bottom: none;
+}
+
+.review-role{
+  text-transform: capitalize !important;
+  margin-left: 0.5rem;
 }
 
 .review-label {
@@ -268,7 +290,7 @@
 .review-value {
   color: #0f172a;
   font-weight: 700;
-  text-transform: capitalize;
+  text-transform: none;
 }
 
 .review-note {

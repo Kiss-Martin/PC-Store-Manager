@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, NgModule, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from "lucide-angular";
 
 interface DashboardCard {
   title: string;
@@ -17,7 +18,7 @@ interface Activity {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, LucideAngularModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -34,10 +35,10 @@ export class DashboardComponent implements OnInit {
   loadDashboardData() {
     // Mock data - replace with backend API calls
     this.stats = [
-      { title: 'Total Products', value: 1250, icon: '📦', color: '#3b82f6' },
-      { title: 'Total Sales', value: '$45,231', icon: '💰', color: '#10b981' },
-      { title: 'Active Orders', value: 127, icon: '🛒', color: '#f59e0b' },
-      { title: 'Customers', value: 856, icon: '👥', color: '#8b5cf6' }
+      { title: 'Total Products', value: 1250, icon: 'package', color: '#f59e0b' },
+      { title: 'Total Sales', value: '$45,231', icon: 'badge-dollar-sign', color: '#10b981' },
+      { title: 'Active Orders', value: 127, icon: 'shopping-cart', color: '#3b82f6' },
+      { title: 'Customers', value: 856, icon: 'users', color: '#8b5cf6' }
     ];
 
     this.activities = [
@@ -52,11 +53,11 @@ export class DashboardComponent implements OnInit {
 
   getActivityIcon(type: string): string {
     const icons: { [key: string]: string } = {
-      'order': '📦',
-      'inventory': '📊',
-      'review': '⭐',
-      'payment': '💳'
+      'order': 'package',
+      'inventory': 'chart-column',
+      'review': 'star',
+      'payment': 'credit-card'
     };
-    return icons[type] || '📌';
+    return icons[type] || 'activity';
   }
 }

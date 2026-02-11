@@ -2,20 +2,13 @@ import { Component, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, Monitor } from "lucide-angular";
-
-@NgModule({
-imports: [
-    LucideAngularModule.pick({ Monitor })
-  ]
-})
-export class LoginModule {}
+import { LucideAngularModule } from "lucide-angular";
 
 @Component({
   selector: 'app-login',
   imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.css',
 })
 export class LoginComponent {
   username = '';

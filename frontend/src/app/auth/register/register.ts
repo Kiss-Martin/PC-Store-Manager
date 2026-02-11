@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { LucideAngularModule } from "lucide-angular";
 
 interface RegistrationData {
+  icon: string;
   role: string;
   username: string;
   password: string;
@@ -14,7 +16,7 @@ interface RegistrationData {
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
@@ -24,6 +26,7 @@ export class RegisterComponent {
 
   formData: RegistrationData = {
     role: '',
+    icon: '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -93,6 +96,11 @@ export class RegisterComponent {
 
   selectRole(role: string) {
     this.formData.role = role;
+    const roleIcons: { [key: string]: string } = {
+      'admin': 'Briefcase',
+      'worker': 'user'
+    };
+    this.formData.icon = roleIcons[role];
   }
 
   submitRegistration() {
