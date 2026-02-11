@@ -34,13 +34,14 @@ app.get('/health', async (req, res) => {
   try {
     // try selecting from a common table; if table doesn't exist, still confirm Supabase reachability
     const { data, error } = await supabase.from('users').select('id').limit(1)
-    if (error && error.details && error.details.includes('relation') ) {
+    const isMissingRelation = error && ((error.details && error.details.includes('relation')) || (error.message && error.message.includes('relation')))
+    if (isMissingRelation) {
       return res.json({ status: 'ok', supabase: 'reachable', note: 'table users missing' })
     }
-    if (error) return res.status(502).json({ status: 'error', error: error.message })
+    if (error) return res.status(502).json({ status: 'error', error: error.message || error })
     res.json({ status: 'ok', supabase: 'reachable' })
   } catch (err) {
-    res.status(500).json({ status: 'error', error: err.message })
+    res.status(500).json({ status: 'error', error: err.message || String(err) })
   }
 })
 

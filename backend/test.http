@@ -1,0 +1,77 @@
+# Test HTTP file for backend and Supabase endpoints
+# Instructions:
+# - Install VS Code REST Client extension (or use curl/postman).
+# - Set `@supabaseUrl` to your Supabase project URL and `@supabaseKey` to your service/anon key.
+# - The file includes both backend tests (localhost) and direct Supabase REST API examples.
+
+@supabaseUrl = https://your-project.supabase.co
+@supabaseKey = YOUR_SUPABASE_KEY
+@backendBase = http://localhost:3000
+
+### Backend — Health check
+GET {{backendBase}}/health
+Accept: application/json
+
+### Backend — Register user
+POST {{backendBase}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "you@example.com",
+  "password": "REPLACE_WITH_PASSWORD",
+  "username": "your_username",
+  "fullName": "Your Name",
+  "role": "user"
+}
+
+### Backend — Login
+POST {{backendBase}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "you@example.com",
+  "password": "REPLACE_WITH_PASSWORD"
+}
+
+### Supabase — Check users (PostgREST)
+GET {{supabaseUrl}}/rest/v1/users?select=id&limit=1
+apikey: {{supabaseKey}}
+Authorization: Bearer {{supabaseKey}}
+Accept: application/json
+
+### Supabase — Insert a product (PostgREST)
+POST {{supabaseUrl}}/rest/v1/products
+Content-Type: application/json
+Prefer: return=representation
+apikey: {{supabaseKey}}
+Authorization: Bearer {{supabaseKey}}
+
+[
+  {
+    "name": "Test Product",
+    "description": "Created directly via Supabase REST",
+    "price": 19.99,
+    "stock": 10,
+    "metadata": { "category": "test" }
+  }
+]
+
+### Supabase — Query products
+GET {{supabaseUrl}}/rest/v1/products?select=*&limit=10
+apikey: {{supabaseKey}}
+Authorization: Bearer {{supabaseKey}}
+Accept: application/json
+
+### Supabase — Insert order
+POST {{supabaseUrl}}/rest/v1/orders
+Content-Type: application/json
+Prefer: return=representation
+apikey: {{supabaseKey}}
+Authorization: Bearer {{supabaseKey}}
+
+{
+  "user_id": 1,
+  "total": 39.98,
+  "status": "pending",
+  "items": [{ "product_id": 1, "qty": 2, "price": 19.99 }]
+}
