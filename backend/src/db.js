@@ -1,6 +1,9 @@
-import postgres from 'postgres'
+import { createClient } from '@supabase/supabase-js'
 
-const connectionString = process.env.DATABASE_URL
-const sql = postgres(connectionString)
+const supabaseUrl = 'https://tcwiwwjdujufcfnvctvo.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
 
-export default sql
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+export default supabase
+export { supabase }
