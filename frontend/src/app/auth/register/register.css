@@ -12,6 +12,14 @@
   color: #7c3aed;
 }
 
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
 .brand {
   font-size: 1.5rem;
   font-weight: 700;
@@ -26,6 +34,7 @@
 .register-header {
   text-align: center;
   margin-bottom: 2rem;
+
 }
 
 .register-header h1 {
