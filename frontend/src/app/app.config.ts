@@ -3,7 +3,6 @@ import { provideRouter } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { icons } from 'lucide-angular';
 import { importProvidersFrom } from '@angular/core';
-import { DarkmodeComponent } from 'darkmode-angular';
 
 import { routes } from './app.routes';
 
