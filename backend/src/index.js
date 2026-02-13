@@ -130,6 +130,27 @@ app.get('/me', authMiddleware, async (req, res) => {
   res.json({ user: data })
 })
 
+app.patch('/me', authMiddleware, async (req, res) => {
+  const updates = {}
+  const allowed = ['email', 'username', 'fullname']
+  for (const k of allowed) {
+    if (k in req.body) updates[k] = req.body[k]
+  }
+
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields to update' })
+
+  const { data, error } = await supabase
+    .from('users')
+    .update(updates)
+    .eq('id', req.user.id)
+    .select('id,email,username,fullname,role')
+    .single()
+
+  if (error) return res.status(500).json({ error: error.message })
+
+  res.json({ user: data })
+})
+
 app.get('/items', async (req, res) => {
   const { data, error } = await supabase
     .from('items')

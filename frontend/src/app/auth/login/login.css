@@ -32,23 +32,23 @@
 .brand {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .login-title {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .login-subtitle {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.95rem;
 }
 
 .login-card {
-  background: white;
+  background: var(--card-bg, #fff);
   border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
   padding: 2rem;
@@ -82,7 +82,7 @@
 .form-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--muted);
   margin-bottom: 0.5rem;
 }
 
@@ -135,7 +135,7 @@
 
 .divider-text {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .register-button {
@@ -160,7 +160,7 @@
 
 .footer-text {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .footer-link {

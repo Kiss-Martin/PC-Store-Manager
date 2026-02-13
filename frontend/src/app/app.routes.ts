@@ -2,10 +2,12 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard';
 import { LoginComponent } from './auth/login/login';
 import { RegisterComponent } from './auth/register/register';
+import { AuthGuard } from './auth/auth.guard';
 import { OrdersComponent } from './components/orders.component/orders.component';
 import { AnalyticsComponent } from './components/analytics.component/analytics.component';
 import { SettingsComponent } from './components/settings.component/settings.component';
 import { ProductsComponent } from './components/products.component/products.component';
+import { ProfileComponent } from './components/profile.component/profile';
 
 export const routes: Routes = [
   {
@@ -23,7 +25,8 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    component: DashboardComponent
+    component: DashboardComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'products',
@@ -40,5 +43,11 @@ export const routes: Routes = [
   {
     path: 'settings',
     component: SettingsComponent
+  }
+  ,
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    canActivate: [AuthGuard]
   }
 ];

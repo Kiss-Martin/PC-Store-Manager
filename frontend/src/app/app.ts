@@ -3,6 +3,8 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 
 import { filter } from 'rxjs/operators';
 import { LucideAngularModule, Monitor } from "lucide-angular";
+import { AuthService } from './auth/auth.service';
+import { ThemeService } from './theme.service';
 
 @Component({
   selector: 'app-root',
@@ -15,12 +17,24 @@ export class App {
   isNavOpen = false;
   showNavbar = false;
 
-  constructor(public router: Router) {
+  constructor(public router: Router, public auth: AuthService, public theme: ThemeService) {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.showNavbar = !event.url.includes('login') && !event.url.includes('register');
       });
+
+    // apply admin background when appropriate
+    document.body.classList.toggle('admin-bg', this.auth.isAdmin());
+  }
+
+  toggleTheme() {
+    this.theme.toggle();
+  }
+
+  openProfile() {
+    this.router.navigate(['profile']);
+    this.isNavOpen = false;
   }
 
   toggleNav() {

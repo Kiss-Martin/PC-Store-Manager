@@ -1,4 +1,4 @@
-<div class="app-wrapper">
+<div class="app-wrapper" [class.dark-theme]="theme.isDark()" [class.admin-bg]="auth.isAdmin()">
   <!-- Navigation Bar (Only on dashboard) -->
   @if (showNavbar) {
     <nav class="navbar">
@@ -21,6 +21,15 @@
           <li><a (click)="navigate('orders')" class="nav-link">Orders</a></li>
           <li><a (click)="navigate('analytics')" class="nav-link">Analytics</a></li>
           <li><a (click)="navigate('settings')" class="nav-link">Settings</a></li>
+          <li class="nav-extra">
+            <button type="button" class="btn theme-toggle" (click)="toggleTheme()">
+              <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
+                <span style="margin-left:8px">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+            </button>
+          </li>
+          <li class="nav-extra">
+            <a (click)="openProfile()" class="nav-link">Profile</a>
+          </li>
         </ul>
       </div>
     </nav>

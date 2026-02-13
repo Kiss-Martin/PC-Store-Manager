@@ -54,19 +54,19 @@
         <h2>Quick Actions</h2>
       </div>
       <div class="actions-grid">
-        <button class="action-btn">
+        <button class="action-btn" (click)="navigate('products/new')">
           <lucide-icon name="plus" class="action-icon" size="24"></lucide-icon>
           Add Product
         </button>
-        <button class="action-btn">
+        <button class="action-btn" (click)="navigate('orders')">
           <lucide-icon name="shopping-cart" class="action-icon" size="24"></lucide-icon>
           View Orders
         </button>
-        <button class="action-btn">
+        <button class="action-btn" (click)="navigate('analytics')">
           <lucide-icon name="chart-no-axes-combined" class="action-icon" size="24"></lucide-icon>
           Reports
         </button>
-        <button class="action-btn">
+        <button class="action-btn" (click)="navigate('settings')">
           <lucide-icon name="settings" class="action-icon" size="24"></lucide-icon>
           Settings
         </button>

@@ -22,7 +22,7 @@
 .brand {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .register-wrapper {
@@ -39,12 +39,12 @@
 .register-header h1 {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .register-subtitle {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.95rem;
 }
 
@@ -56,7 +56,7 @@
 
 /* Sidebar */
 .progress-sidebar {
-  background: white;
+  background: var(--card-bg, #fff);
   border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
   padding: 1.5rem;
@@ -86,7 +86,7 @@
 
 .progress-text {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--muted);
   text-align: center;
   margin-top: 0.75rem;
 }
@@ -137,23 +137,23 @@
 
 .step-number.inactive {
   background: #cbd5e1;
-  color: #475569;
+  color: var(--muted);
 }
 
 .step-title {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .step-description {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--muted);
   margin-left: 2.5rem;
 }
 
 /* Main Content */
 .register-card {
-  background: white;
+  background: var(--card-bg, #fff);
   border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
   padding: 2rem;
@@ -171,12 +171,12 @@
 .step-title-main {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .step-description-main {
-  color: #64748b;
+  color: var(--muted);
   margin-bottom: 2rem;
   font-size: 0.95rem;
 }
@@ -189,7 +189,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--muted);
   margin-bottom: 0.5rem;
 }
 
@@ -225,7 +225,7 @@
   padding: 1.5rem;
   border: 2px solid #e2e8f0;
   border-radius: 0.5rem;
-  background: white;
+  background: var(--card-bg, #fff);
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
@@ -249,13 +249,13 @@
 .role-title {
   font-size: 1.125rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .role-description {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--muted);
 }
 
 /* Review Section */
@@ -263,7 +263,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: #f8fafc;
+  background: var(--card-bg, #fff);
   border-radius: 0.5rem;
   padding: 1.5rem;
 }
@@ -291,19 +291,19 @@
 }
 
 .review-label {
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
 }
 
 .review-value {
-  color: #0f172a;
+  color: var(--text);
   font-weight: 700;
   text-transform: none;
 }
 
 .review-note {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--muted);
   margin-top: 1.5rem;
 }
 
@@ -317,8 +317,8 @@
 .button-prev {
   padding: 0.75rem 1.5rem;
   border: 1px solid #e2e8f0;
-  color: #475569;
-  background: white;
+  color: var(--muted);
+  background: var(--card-bg, #fff);
   font-weight: 500;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -362,7 +362,7 @@
 }
 
 .footer-text {
-  color: #475569;
+  color: var(--muted);
   font-size: 0.875rem;
 }
 

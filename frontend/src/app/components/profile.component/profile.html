@@ -1,0 +1,73 @@
+<div class="profile-page">
+  <header class="profile-hero">
+    <div class="hero-inner">
+      <div class="role-badge">
+        <lucide-icon [name]="roleIcon" size="72"></lucide-icon>
+      </div>
+      <div class="hero-info">
+        <h1>{{ user?.fullname || user?.username || 'User' }}</h1>
+        <p class="muted">{{ user?.email }}</p>
+        <p class="role">Role: <strong>{{ (user?.role || 'worker') }}</strong></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="profile-main">
+    <section class="profile-section about">
+      <h2>About</h2>
+      @if (!isEditing) {
+        <p class="about-text">{{ user?.fullname ? ('Hello, ' + user.fullname + '.') : 'Welcome to your profile.' }} Use this page to manage your account and preferences.</p>
+      }
+      @if (isEditing) {
+        <div class="edit-form">
+          <label>Full name</label>
+          <input [(ngModel)]="editData.fullname" placeholder="Full name">
+          <label>Username</label>
+          <input [(ngModel)]="editData.username" placeholder="Username">
+          <label>Email</label>
+          <input [(ngModel)]="editData.email" placeholder="Email">
+        </div>
+      }
+      <div class="actions-row button-group">
+        @if (!isEditing) {
+          <button class="button-prev" (click)="logout()">
+            <lucide-icon name="log-out" size="16"></lucide-icon>
+            <span style="margin-left:8px">Logout</span>
+          </button>
+          <button class="button-next" (click)="startEdit()">
+            <lucide-icon name="pen-line" size="16"></lucide-icon>
+            <span style="margin-left:8px">Edit Profile</span>
+          </button>
+        }
+        @if (isEditing) {
+          <button class="button-submit" (click)="saveEdit()">
+            <lucide-icon name="check" size="16"></lucide-icon>
+            <span style="margin-left:8px">Save</span>
+          </button>
+          <button class="button-prev" (click)="cancelEdit()">
+            <lucide-icon name="x" size="16"></lucide-icon>
+            <span style="margin-left:8px">Cancel</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="profile-section meta">
+      <h2>Account Details</h2>
+      <dl class="meta-list">
+        <div>
+          <dt>Username</dt>
+          <dd>{{ user?.username || '-' }}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ user?.email || '-' }}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd>{{ user?.role || 'worker' }}</dd>
+        </div>
+      </dl>
+    </section>
+  </main>
+</div>

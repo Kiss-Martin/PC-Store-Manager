@@ -1,5 +1,5 @@
 import { Component, NgModule, OnInit } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
 
 interface DashboardCard {
@@ -23,6 +23,7 @@ interface Activity {
   styleUrl: './dashboard.css'
 })
 export class DashboardComponent implements OnInit {
+  constructor(private router: Router) {}
   stats: DashboardCard[] = [];
   activities: Activity[] = [];
   isLoading = true;
@@ -59,5 +60,9 @@ export class DashboardComponent implements OnInit {
       'payment': 'credit-card'
     };
     return icons[type] || 'activity';
+  }
+
+  navigate(path: string) {
+    this.router.navigate([path]);
   }
 }

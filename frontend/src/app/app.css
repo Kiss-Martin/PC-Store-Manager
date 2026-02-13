@@ -6,14 +6,21 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: #fafbfc;
+  background: var(--bg, #fafbfc);
+  color: var(--text, #0f172a);
 }
 
 .app-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+  background: transparent;
+}
+
+/* When app wrapper has dark-theme, show the themed background behind content */
+.app-wrapper.dark-theme {
+  background: var(--bg, #071226);
+  color: var(--text, #e6eef8);
 }
 
 /* Navigation Bar */
@@ -64,7 +71,7 @@ body {
 }
 
 .nav-link {
-  color: #475569;
+  color: var(--muted);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -157,4 +164,180 @@ body {
     letter-spacing: 0;
   }
 }
+
+/* Theme and admin background */
+:root {
+  --bg: #fafbfc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+.dark-theme {
+  --bg: linear-gradient(180deg,#071226 0%, #081226 100%);
+  --card-bg: #0f1724;
+  --text: #e6eef8;
+  --muted: rgba(230,238,248,0.6);
+}
+
+/* Dark theme element overrides */
+.dark-theme .navbar {
+  background: rgba(6, 8, 15, 0.6);
+  border-bottom-color: rgba(255,255,255,0.04);
+}
+
+.dark-theme .navbar-brand { color: var(--text); }
+.dark-theme .nav-link { color: rgba(230,238,248,0.9); }
+.dark-theme .nav-link:hover { color: #d6b7ff; }
+
+.dark-theme .register-card,
+.dark-theme .card,
+.dark-theme .profile-section,
+.dark-theme .stat-card,
+.dark-theme .progress-sidebar {
+  background: var(--card-bg);
+  border-color: rgba(255,255,255,0.04);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.dark-theme .form-input,
+.dark-theme input,
+.dark-theme textarea {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.dark-theme .btn {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-color: rgba(255,255,255,0.04);
+}
+
+.dark-theme .btn-primary {
+  background: #6d28d9;
+}
+
+/* Broader dark-mode fixes for elements that still used hard-coded light styles */
+.dark-theme .dashboard-container,
+.dark-theme .register-container,
+.dark-theme .register-wrapper,
+.dark-theme .register-card,
+.dark-theme .profile-page,
+.dark-theme .profile-section,
+.dark-theme .card,
+.dark-theme .stat-card,
+.dark-theme .progress-sidebar,
+.dark-theme .content-grid,
+.dark-theme .stats-grid {
+  background: transparent;
+  color: var(--text);
+}
+
+.dark-theme .register-card,
+.dark-theme .profile-section,
+.dark-theme .card,
+.dark-theme .stat-card,
+.dark-theme .progress-sidebar {
+  background: var(--card-bg);
+}
+
+.dark-theme .dashboard-header h1,
+.dark-theme .hero-info h1,
+.dark-theme .step-title-main,
+.dark-theme .card-header h2 {
+  color: var(--text);
+}
+
+.dark-theme .subtitle,
+.dark-theme .muted,
+.dark-theme .step-description-main,
+.dark-theme .step-description,
+.dark-theme .activity-time,
+.dark-theme .activity-description,
+.dark-theme .profile-section .about-text,
+.dark-theme .meta-list dt {
+  color: rgba(230,238,248,0.8);
+}
+
+.dark-theme .stat-value,
+.dark-theme .card-header h2,
+.dark-theme .meta-list dd,
+.dark-theme .review-value {
+  color: var(--text);
+}
+
+.dark-theme .button-prev {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.dark-theme .button-next,
+.dark-theme .button-submit {
+  background: #7c3aed;
+}
+
+.dark-theme .action-btn {
+  background: transparent;
+  border-color: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.dark-theme .view-all { color: #d6b7ff }
+
+.dark-theme input.form-input,
+.dark-theme .form-input,
+.dark-theme input,
+.dark-theme textarea {
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  border-color: rgba(255,255,255,0.06);
+}
+
+
+
+.theme-toggle {
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Generic button styles to match app look */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: #eef2ff;
+  color: #5b21b6;
+}
+
+.btn:hover {
+  background: #f5efff;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(16,24,40,0.05);
+}
+
+.btn-primary {
+  background: #7c3aed;
+  color: white;
+  border: none;
+}
+
+
+.admin-bg .app-wrapper, .admin-bg body {
+  background: linear-gradient(135deg,#5b21b6 0%, #8b5cf6 60%);
+  color: #fff;
+}
+
 
