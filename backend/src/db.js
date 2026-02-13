@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://tcwiwwjdujufcfnvctvo.supabase.co'
+const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_KEY
 
 let supabase
-if (!supabaseKey) {
-	console.warn('Warning: SUPABASE_KEY is not set. Create backend/.env from .env.example or set SUPABASE_KEY in the environment before running the server.')
-	// Export a minimal stub that fails with a clear message when used.
+if (!supabaseKey || !supabaseUrl) {
+	console.warn('Warning: SUPABASE_URL or SUPABASE_KEY is not set. Create backend/.env or set environment variables before running the server.')
 	const missingErr = () => {
-		throw new Error('SUPABASE_KEY is required. Set SUPABASE_KEY environment variable or create backend/.env from .env.example')
+		throw new Error('SUPABASE_URL and SUPABASE_KEY are required. Set them in the environment or create backend/.env')
 	}
 	supabase = {
 		from() {

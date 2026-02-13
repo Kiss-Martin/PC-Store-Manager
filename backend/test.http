@@ -1,77 +1,63 @@
-# Test HTTP file for backend and Supabase endpoints
-# Instructions:
-# - Install VS Code REST Client extension (or use curl/postman).
-# - Set `@supabaseUrl` to your Supabase project URL and `@supabaseKey` to your service/anon key.
-# - The file includes both backend tests (localhost) and direct Supabase REST API examples.
+@BASE_URL = http://localhost:3000
+@ADMIN_TOKEN =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU2ZTdmMzU0LTM0MzgtNGZlOC1iZWY0LTZjMTU5ZDhmNTYwMiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MDk3MTEyNiwiZXhwIjoxNzcxNTc1OTI2fQ._goppepGpEIm5mnvp12H8OFXaZDhky5l8RwfA1mAnYU
+@USER_TOKEN =
+@CATEGORY_ID =17107080-2320-4b5f-82bb-d7bac5f93b78
+@BRAND_ID =39e7f0dc-cbd6-46e6-958b-7e44263d304e
 
-@supabaseUrl = https://your-project.supabase.co
-@supabaseKey = YOUR_SUPABASE_KEY
-@backendBase = http://localhost:3000
+### 1) Health
+GET {{BASE_URL}}/health
 
-### Backend — Health check
-GET {{backendBase}}/health
-Accept: application/json
-
-### Backend — Register user
-POST {{backendBase}}/auth/register
+### 2) Register admin
+POST {{BASE_URL}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "you@example.com",
-  "password": "REPLACE_WITH_PASSWORD",
-  "username": "your_username",
-  "fullName": "Your Name",
-  "role": "user"
+  "email": "admin2@test.com",
+  "username": "admin2",
+  "password": "TestPass1234!",
+  "fullname": "System Admin1",
+  "role": "admin"
 }
 
-### Backend — Login
-POST {{backendBase}}/auth/login
+### 3) Login admin
+POST {{BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "you@example.com",
-  "password": "REPLACE_WITH_PASSWORD"
+  "email": "admin2@test.com",
+  "password": "TestPass1234!"
 }
 
-### Supabase — Check users (PostgREST)
-GET {{supabaseUrl}}/rest/v1/users?select=id&limit=1
-apikey: {{supabaseKey}}
-Authorization: Bearer {{supabaseKey}}
-Accept: application/json
+### 4) /me with token
+GET {{BASE_URL}}/me
+Authorization: Bearer {{ADMIN_TOKEN}}
 
-### Supabase — Insert a product (PostgREST)
-POST {{supabaseUrl}}/rest/v1/products
+### 5) Create item (ADMIN ONLY)
+POST {{BASE_URL}}/items
+Authorization: Bearer {{ADMIN_TOKEN}}
 Content-Type: application/json
-Prefer: return=representation
-apikey: {{supabaseKey}}
-Authorization: Bearer {{supabaseKey}}
-
-[
-  {
-    "name": "Test Product",
-    "description": "Created directly via Supabase REST",
-    "price": 19.99,
-    "stock": 10,
-    "metadata": { "category": "test" }
-  }
-]
-
-### Supabase — Query products
-GET {{supabaseUrl}}/rest/v1/products?select=*&limit=10
-apikey: {{supabaseKey}}
-Authorization: Bearer {{supabaseKey}}
-Accept: application/json
-
-### Supabase — Insert order
-POST {{supabaseUrl}}/rest/v1/orders
-Content-Type: application/json
-Prefer: return=representation
-apikey: {{supabaseKey}}
-Authorization: Bearer {{supabaseKey}}
 
 {
-  "user_id": 1,
-  "total": 39.98,
-  "status": "pending",
-  "items": [{ "product_id": 1, "qty": 2, "price": 19.99 }]
+  "name": "Laptop X",
+  "amount": 5,
+  "category_id": "{{CATEGORY_ID}}",
+  "brand_id": "{{BRAND_ID}}",
+  "model": "X1000",
+  "specifications": "16GB RAM",
+  "warranty": "2 years"
+}
+
+### 6) List items
+GET {{BASE_URL}}/items
+
+### 7) Negative test (no token)
+GET {{BASE_URL}}/me
+
+### 8) Wrong password
+POST {{BASE_URL}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "WrongPassword"
 }
