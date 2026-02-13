@@ -165,6 +165,37 @@ app.get('/items', async (req, res) => {
   res.json({ items: data })
 })
 
+// Dashboard summary endpoint
+app.get('/dashboard', authMiddleware, async (req, res) => {
+  try {
+    // total products
+    const { data: itemsData, error: itemsErr } = await supabase.from('items').select('id, name, created_at').order('created_at', { ascending: false }).limit(10)
+    if (itemsErr) return res.status(500).json({ error: itemsErr.message })
+
+    const { data: allItems, error: allItemsErr } = await supabase.from('items').select('id')
+    if (allItemsErr) return res.status(500).json({ error: allItemsErr.message })
+
+    const totalProducts = Array.isArray(allItems) ? allItems.length : 0
+
+    // For now we don't have sales/orders tables; return zeros for those metrics
+    const totalSales = 0
+    const activeOrders = 0
+    const customers = 0
+
+    // Recent activities: use recent items as a proxy
+    const recent = (itemsData || []).map((it) => ({
+      id: it.id,
+      description: `Item added: ${it.name || 'Unnamed'}`,
+      timestamp: it.created_at || null,
+      type: 'inventory'
+    }))
+
+    res.json({ stats: { totalProducts, totalSales, activeOrders, customers }, activities: recent })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
 app.post('/items', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ error: 'Admin only' })

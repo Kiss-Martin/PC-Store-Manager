@@ -67,4 +67,8 @@ export class AuthService {
       })
     );
   }
+
+  getDashboard(): Observable<any> {
+    return this.http.get(`${this.ApiUrl}/dashboard`);
+  }
 }
