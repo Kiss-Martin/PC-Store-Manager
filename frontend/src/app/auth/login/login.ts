@@ -3,6 +3,7 @@ import { Component, NgModule } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login',
@@ -11,27 +12,37 @@ import { LucideAngularModule } from "lucide-angular";
   styleUrl: './login.css',
 })
 export class LoginComponent {
-  username = '';
+  email = '';
   password = '';
   isLoading = false;
   errorMessage = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   login() {
-    if (!this.username || !this.password) {
-      this.errorMessage = 'Please fill in all fields';
-      return;
-    }
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    this.isLoading = true;
-    // Simulate API call
-    setTimeout(() => {
-      this.router.navigate(['/dashboard']);
-      this.isLoading = false;
-    }, 1000);
-  }
+  this.authService.login(this.email, this.password, { email: this.email, password: this.password })
+    .subscribe({
+      next: (res) => {
 
+        // BACKEND JWT TOKEN visszaadja?
+        const token = res.token || res.accessToken || res.access_token;
+
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+
+        this.isLoading = false;
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Login failed';
+        this.isLoading = false;
+      }
+    });
+}
   goToRegister() {
     this.router.navigate(['/register']);
   }

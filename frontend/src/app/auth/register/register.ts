@@ -1,5 +1,5 @@
 import { Component, NgModule } from '@angular/core';
-
+import { AuthService } from '../auth.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
@@ -37,7 +37,7 @@ export class RegisterComponent {
   errors: { [key: string]: string } = {};
   isLoading = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   get progressPercentage() {
     return ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
@@ -103,17 +103,30 @@ export class RegisterComponent {
     this.formData.icon = roleIcons[role];
   }
 
-  submitRegistration() {
-    if (this.validateStep(this.currentStep)) {
-      this.isLoading = true;
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Registration data:', this.formData);
-        this.router.navigate(['/dashboard']);
-        this.isLoading = false;
-      }, 1500);
+submitRegistration() {
+  if (!this.validateStep(this.currentStep)) return;
+
+  this.isLoading = true;
+
+  this.authService.register({
+    email: this.formData.email,
+    username: this.formData.username,
+    password: this.formData.password,
+    fullname: this.formData.fullName,
+    role: this.formData.role
+  }).subscribe({
+    next: (res) => {
+      console.log('Register success:', res);
+      this.isLoading = false;
+      this.router.navigate(['/login']);
+    },
+    error: (err) => {
+      console.error(err);
+      this.errors['general'] = err.error?.message || 'Registration failed';
+      this.isLoading = false;
     }
-  }
+  });
+}
 
   goToLogin() {
     this.router.navigate(['/login']);
