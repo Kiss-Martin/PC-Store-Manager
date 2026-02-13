@@ -4,6 +4,7 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
 import { AuthService } from '../auth.service';
+import { ThemeService } from '../../theme.service';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,7 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService, public theme: ThemeService) {}
 
   login() {
   this.isLoading = true;
@@ -45,5 +46,9 @@ export class LoginComponent {
 }
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  toggleTheme() {
+    this.theme.toggle();
   }
 }

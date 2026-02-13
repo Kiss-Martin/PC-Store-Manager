@@ -3,6 +3,7 @@ import { AuthService } from '../auth.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
+import { ThemeService } from '../../theme.service';
 
 interface RegistrationData {
   icon: string;
@@ -26,7 +27,7 @@ export class RegisterComponent {
 
   formData: RegistrationData = {
     role: '',
-    icon: '',
+    icon: 'user',
     username: '',
     password: '',
     confirmPassword: '',
@@ -37,7 +38,7 @@ export class RegisterComponent {
   errors: { [key: string]: string } = {};
   isLoading = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService, public theme: ThemeService) {}
 
   get progressPercentage() {
     return ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
@@ -97,7 +98,7 @@ export class RegisterComponent {
   selectRole(role: string) {
     this.formData.role = role;
     const roleIcons: { [key: string]: string } = {
-      'admin': 'Briefcase',
+      'admin': 'briefcase',
       'worker': 'user'
     };
     this.formData.icon = roleIcons[role];
@@ -130,5 +131,9 @@ submitRegistration() {
 
   goToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  toggleTheme() {
+    this.theme.toggle();
   }
 }

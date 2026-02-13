@@ -5,6 +5,10 @@
       <div class="logo-section">
         <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
         <span class="brand">PC Store</span>
+        <button type="button" class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+          <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
+          <span style="margin-left:8px">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+        </button>
       </div>
       <h1 class="login-title">Welcome Back</h1>
       <p class="login-subtitle">Sign in to your account</p>

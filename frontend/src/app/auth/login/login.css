@@ -55,6 +55,12 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* Dark theme overrides for login card */
+.dark-theme .login-card {
+  background: var(--card-bg);
+  border-color: rgba(255,255,255,0.04);
+}
+
 .error-message {
   margin-bottom: 1.5rem;
   padding: 1rem;
@@ -92,11 +98,13 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.2s ease;
+  background: var(--card-bg, #fff);
+  color: var(--text);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: transparent;
+  border-color: #7c3aed;
 }
 
 .login-button {
@@ -147,6 +155,35 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background 0.2s ease;
+}
+
+/* Theme toggle styling to match app buttons */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(16,24,40,0.05);
+  background: transparent;
+  color: var(--text);
+}
+
+.theme-toggle:hover { background: rgba(124,58,237,0.04) }
+
+/* Stronger dark overrides for inputs inside this component */
+.dark-theme .form-input {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.form-input::placeholder,
+.form-input::-webkit-input-placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .register-button:hover {

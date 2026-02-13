@@ -104,7 +104,7 @@
 }
 
 .step-item.active {
-  background: #f3e8ff;
+  background: #7906f5;
   border: 1px solid #e9d5ff;
 }
 
@@ -136,7 +136,7 @@
 }
 
 .step-number.inactive {
-  background: #cbd5e1;
+  background: #0073ff;
   color: var(--muted);
 }
 
@@ -200,6 +200,8 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.2s ease;
+  background: var(--card-bg, #fff);
+  color: var(--text);
 }
 
 .form-input:focus {
@@ -233,7 +235,7 @@
 
 .role-button.active {
   border-color: #7c3aed;
-  background: #f3e8ff;
+  background: #7c02ff;
 }
 
 .role-button:hover:not(.active) {
@@ -258,6 +260,150 @@
   color: var(--muted);
 }
 
+/* Dark theme: make selected role and step highlights darker for contrast */
+.role-button { color: var(--text); }
+.role-button .role-icon { color: currentColor; }
+
+/* Active role: different treatments for light and dark themes to ensure contrast */
+body:not(.dark-theme) .role-button.active {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+  color: #0f172a;
+}
+
+body.dark-theme .role-button.active {
+  background: linear-gradient(90deg, rgba(124,58,237,0.32), rgba(124,58,237,0.24));
+  border-color: rgba(124,58,237,0.6);
+  color: #ffffff;
+}
+
+body:not(.dark-theme) .role-button.active .role-description {
+  color: #475569;
+}
+
+body.dark-theme .role-button.active .role-description {
+  color: rgba(255,255,255,0.85);
+}
+
+.dark-theme .role-button {
+  border-color: rgba(255,255,255,0.06);
+}
+
+.dark-theme .role-title,
+.dark-theme .role-description,
+.dark-theme .role-icon {
+  color: var(--text);
+}
+
+.dark-theme .step-item.active {
+  background: rgba(124,58,237,0.04);
+  border: 1px solid rgba(124,58,237,0.12);
+}
+
+.dark-theme .progress-bar { background: rgba(255,255,255,0.04); }
+
+.dark-theme .register-card { background: var(--card-bg); border-color: rgba(255,255,255,0.04); }
+
+/* Stronger, higher-specificity dark-mode overrides to guarantee contrast */
+body.dark-theme .register-card {
+  background: var(--card-bg);
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* Stronger dark-mode active role: use solid purple and white text for readability */
+body.dark-theme .role-button.active {
+  background: #6d28d9; /* solid vivid purple */
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+body.dark-theme .role-button.active .role-title,
+body.dark-theme .role-button.active .role-description,
+body.dark-theme .role-button.active .role-icon {
+  color: #ffffff !important;
+}
+
+body.dark-theme .role-button {
+  background: transparent;
+  border-color: rgba(255,255,255,0.06);
+}
+
+/* Dark-mode sidebar step: stronger purple tint and white text */
+body.dark-theme .step-item.active {
+  background: rgba(124,58,237,0.18);
+  border: 1px solid rgba(124,58,237,0.36);
+  color: #ffffff;
+}
+
+body:not(.dark-theme) .step-item.active {
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  color: #0f172a;
+}
+
+body.dark-theme .step-item.active .step-title,
+body.dark-theme .step-item.active .step-description,
+body.dark-theme .step-number.active {
+  color: #ffffff !important;
+}
+
+/* Forcefully override any lighter rules: ensure readable contrast in dark-mode */
+.dark-theme .register-card .role-button.active,
+.dark-theme .role-button.active {
+  background: #5b21b6 !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .register-card .role-button.active .role-title,
+.dark-theme .register-card .role-button.active .role-description,
+.dark-theme .role-button.active .role-title,
+.dark-theme .role-button.active .role-description {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.dark-theme .progress-sidebar .step-item.active,
+.dark-theme .step-item.active {
+  background: #5b21b6 !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .progress-sidebar .step-item.active .step-title,
+.dark-theme .progress-sidebar .step-item.active .step-description,
+.dark-theme .step-item.active .step-title,
+.dark-theme .step-item.active .step-description {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.dark-theme .step-number.active {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+}
+
+/* also ensure progress-fill visible */
+.dark-theme .progress-fill {
+  background: linear-gradient(90deg,#7c3aed,#a78bfa) !important;
+}
+
+body:not(.dark-theme) .step-item.active .step-title,
+body:not(.dark-theme) .step-item.active .step-description,
+body:not(.dark-theme) .step-number.active {
+  color: #0f172a;
+}
+
+body.dark-theme .step-item.active .step-title,
+body.dark-theme .step-item.active .step-description,
+body.dark-theme .step-number.active {
+  color: #ffffff;
+}
+
+body.dark-theme .progress-fill {
+  background: linear-gradient(90deg,#7c3aed,#a78bfa);
+}
+
 /* Review Section */
 .review-grid {
   display: flex;
@@ -266,6 +412,35 @@
   background: var(--card-bg, #fff);
   border-radius: 0.5rem;
   padding: 1.5rem;
+}
+
+/* Theme toggle styling to match app buttons */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(16,24,40,0.05);
+  background: transparent;
+  color: var(--text);
+}
+
+.theme-toggle:hover { background: rgba(124,58,237,0.04) }
+
+/* Stronger dark overrides for inputs inside this component */
+.dark-theme .form-input {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  color: var(--text);
+}
+
+.form-input::placeholder,
+.form-input::-webkit-input-placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .review-item {
@@ -326,7 +501,7 @@
 }
 
 .button-prev:hover {
-  background: #f8fafc;
+  background: #ad6bf3;
 }
 
 .button-spacer {

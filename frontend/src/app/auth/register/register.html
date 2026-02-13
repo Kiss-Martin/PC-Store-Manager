@@ -5,6 +5,10 @@
       <div class="logo-section">
         <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
         <span class="brand">PC Store</span>
+        <button type="button" class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+          <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
+          <span style="margin-left:8px">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+        </button>
       </div>
       <h1 class="register-header">Create Your Account</h1>
       <p class="register-subtitle">Join our platform in a few simple steps</p>
@@ -239,10 +243,10 @@
                     <div class="review-grid">
                       <div class="review-item">
                         <span class="review-label">Role:</span>
-                        <lucide-icon
-                          [name]="formData.icon"
-                          class="review-icon"
-                        size="20"></lucide-icon>
+                          <lucide-icon
+                            [name]="formData.icon || 'user'"
+                            class="review-icon"
+                          size="20"></lucide-icon>
                         <span class="review-value review-role">{{ formData.role }}</span>
                       </div>
                       <div class="review-item">
