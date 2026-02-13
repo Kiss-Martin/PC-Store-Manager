@@ -1,156 +1,156 @@
-# Backend Documentation
+# Backend dokumentáció
 
-This document describes the backend for the PC-Store-Manager project. The backend is a small Express.js service that uses Supabase (Postgres) as the data store. It provides authentication, product, and order endpoints and is intentionally independent from the frontend; do not modify the frontend.
+Ez a dokumentum a PC-Store-Manager projekt backendjét írja le. A backend egy kis Express.js szolgáltatás, amely Supabase-t (Postgres) használ adatbázisként. Biztosít hitelesítési, termék- és rendelés-végpontokat, és szándékosan független a frontendtől; a frontendet ne módosítsd.
 
-**Contents**
-- Overview
-- Requirements
-- Environment
-- Installation & run
-- API reference
-- Database schema and seed
-- Security notes
-- Next steps
+**Tartalom**
+- Áttekintés
+- Követelmények
+- Környezet
+- Telepítés és futtatás
+- API referencia
+- Adatbázis séma és seed
+- Biztonsági megjegyzések
+- Következő lépések
 
-**Overview**
+**Áttekintés**
 
-The backend exposes REST endpoints used by the frontend and for administrative tasks. It uses the official `@supabase/supabase-js` client to interact with a Supabase-hosted Postgres database. Authentication in the service is implemented using JSON Web Tokens (JWT) for simplicity; passwords are hashed before being stored.
+A backend REST végpontokat exponál, amelyeket a frontend és adminisztratív feladatok használnak. Az alkalmazás az hivatalos `@supabase/supabase-js` klienst használja a Supabase-hostolt Postgres adatbázissal való kommunikációhoz. A szolgáltatásban a hitelesítés egyszerűség kedvéért JSON Web Tokenekkel (JWT) valósul meg; a jelszavakat a tárolás előtt hash-elik.
 
-**Requirements**
+**Követelmények**
 
-- Node.js 18+ (or compatible runtime supporting ESM)
+- Node.js 18+ (vagy ESM-et támogató kompatibilis futtatókörnyezet)
 - npm
-- A Supabase project (URL is included in the codebase) and a `SUPABASE_KEY` with appropriate permissions
+- Egy Supabase projekt (a URL megtalálható a kódban) és egy `SUPABASE_KEY`, amely megfelelő jogosultságokkal rendelkezik
 
-**Environment variables**
+**Környezeti változók**
 
-- `SUPABASE_KEY` — service role or anon key used by the backend to access Supabase. For production, use a key with only the required privileges.
-- `JWT_SECRET` — secret used to sign JWTs (change from the default in `.env.example`).
-- `PORT` — optional server port (defaults to 3000).
+- `SUPABASE_KEY` — a backend által a Supabase eléréséhez használt service role vagy anon kulcs. Éles környezetben csak a szükséges jogosultságokkal rendelkező kulcsot használj.
+- `JWT_SECRET` — a JWT-k aláírásához használt titok (változtasd meg a `.env.example` alapértelmezett értékét).
+- `PORT` — opcionális szerverport (alapértelmezett: 3000).
 
-See `backend/.env.example` for an editable template.
+Lásd a `backend/.env.example` fájlt szerkeszthető sablonért.
 
-**Installation & run**
+**Telepítés és futtatás**
 
-1. Open a terminal and change to the backend directory:
+1. Nyiss egy terminált és lépj a backend könyvtárba:
 
 ```bash
 cd backend
 ```
 
-2. Install dependencies:
+2. Telepítsd a függőségeket:
 
 ```bash
 npm install
 ```
 
-3. Create a `.env` file from `.env.example` and set `SUPABASE_KEY` and `JWT_SECRET`.
+3. Hozz létre egy `.env` fájlt a `.env.example` alapján, és állítsd be a `SUPABASE_KEY`-t és a `JWT_SECRET`-et.
 
-4. Run the server (development):
+4. Indítsd el a szervert (fejlesztés):
 
 ```bash
 npm run dev
 ```
 
-The health endpoint will be available at `http://localhost:3000/health` (or the port you set).
+A health végpont elérhető lesz a `http://localhost:3000/health` címen (vagy azon a porton, amelyet beállítottál).
 
-**API reference**
+**API referencia**
 
-All endpoints accept and return JSON. Endpoints that require authentication need an `Authorization: Bearer <token>` header.
+Minden végpont JSON-t fogad és JSON-t ad vissza. A hitelesítést igénylő végpontoknál az `Authorization: Bearer <token>` fejléc szükséges.
 
 - `GET /health`
-	- Purpose: Service health and Supabase reachability.
-	- Response: `{ status: 'ok', supabase: 'reachable' }` or error details.
+	- Cél: A szolgáltatás állapota és Supabase elérhetősége.
+	- Válasz: `{ status: 'ok', supabase: 'reachable' }` vagy hibadetalok.
 
 - `POST /auth/register`
-	- Purpose: Create a new user.
+	- Cél: Új felhasználó létrehozása.
 	- Body: `{ email, password, username?, fullName?, role? }`
-	- Response: `{ user: { id, email, username, fullName, role }, token }
-	- Notes: Passwords are hashed and stored in `users.password_hash`.
+	- Válasz: `{ user: { id, email, username, fullName, role }, token }`
+	- Megjegyzés: A jelszavakat hash-elik és a `users.password_hash` mezőben tárolják.
 
 - `POST /auth/login`
-	- Purpose: Authenticate with `email` or `username` and `password`.
-	- Body: `{ email? | username?, password }
-	- Response: `{ user: { id, email, username, fullName, role }, token }
+	- Cél: Bejelentkezés `email` vagy `username` és `password` használatával.
+	- Body: `{ email? | username?, password }`
+	- Válasz: `{ user: { id, email, username, fullName, role }, token }`
 
 - `GET /me`
-	- Purpose: Get current user's profile.
-	- Auth: required.
-	- Response: `{ user: { id, email, username, fullName, role } }
+	- Cél: A bejelentkezett felhasználó profiljának lekérése.
+	- Hitelesítés: szükséges.
+	- Válasz: `{ user: { id, email, username, fullName, role } }`
 
 - `GET /products`
-	- Purpose: List all products.
-	- Response: `{ products: [ ... ] }`
+	- Cél: Az összes termék listázása.
+	- Válasz: `{ products: [ ... ] }`
 
 - `POST /products`
-	- Purpose: Create a product.
-	- Auth: required.
-	- Body: any product fields (e.g., `{ name, description, price, stock, metadata }`)
-	- Response: `{ product: { ... } }`
+	- Cél: Termék létrehozása.
+	- Hitelesítés: szükséges.
+	- Body: tetszőleges termékmezők (pl. `{ name, description, price, stock, metadata }`)
+	- Válasz: `{ product: { ... } }`
 
 - `POST /orders`
-	- Purpose: Create an order for the authenticated user.
-	- Auth: required.
-	- Body: e.g., `{ total, items: [ { product_id, qty, price } ], status? }`
-	- Response: `{ order: { ... } }`
+	- Cél: Rendelés létrehozása a bejelentkezett felhasználó részére.
+	- Hitelesítés: szükséges.
+	- Body: pl. `{ total, items: [ { product_id, qty, price } ], status? }`
+	- Válasz: `{ order: { ... } }`
 
 - `GET /orders`
-	- Purpose: List orders. Admins may see all orders.
-	- Auth: required.
-	- Query: `?userId=all` may return all orders for admin (endpoint uses role check).
-	- Response: `{ orders: [ ... ] }`
+	- Cél: Rendelések listázása. Adminok minden rendelést láthatnak.
+	- Hitelesítés: szükséges.
+	- Query: `?userId=all` admin esetén visszaadhatja az összes rendelést (a végpont szerepkör ellenőrzést végez).
+	- Válasz: `{ orders: [ ... ] }`
 
-**Database schema**
+**Adatbázis séma**
 
-This backend expects three primary tables: `users`, `products`, and `orders`. The code is permissive with product and order schemas (inserting supplied JSON), but a recommended minimal schema is shown below.
+Ez a backend három elsődleges táblát vár: `users`, `products` és `orders`. A kód engedékeny a termék- és rendelés-sémákkal kapcsolatban (a beküldött JSON-t beszúrja), de alább egy ajánlott minimális séma található.
 
-Suggested SQL (Postgres):
+Javasolt SQL (Postgres):
 
 ```sql
 -- users
 CREATE TABLE users (
-	id BIGSERIAL PRIMARY KEY,
-	email TEXT UNIQUE NOT NULL,
-	username TEXT UNIQUE,
-	password_hash TEXT NOT NULL,
-	full_name TEXT,
-	role TEXT NOT NULL DEFAULT 'user',
-	created_at TIMESTAMPTZ DEFAULT now()
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    username TEXT UNIQUE,
+    password_hash TEXT NOT NULL,
+    full_name TEXT,
+    role TEXT NOT NULL DEFAULT 'user',
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- products
 CREATE TABLE products (
-	id BIGSERIAL PRIMARY KEY,
-	name TEXT NOT NULL,
-	description TEXT,
-	price NUMERIC(10,2) NOT NULL DEFAULT 0,
-	stock INTEGER DEFAULT 0,
-	metadata JSONB,
-	created_at TIMESTAMPTZ DEFAULT now()
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price NUMERIC(10,2) NOT NULL DEFAULT 0,
+    stock INTEGER DEFAULT 0,
+    metadata JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- orders
 CREATE TABLE orders (
-	id BIGSERIAL PRIMARY KEY,
-	user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-	total NUMERIC(10,2) NOT NULL DEFAULT 0,
-	status TEXT DEFAULT 'pending',
-	items JSONB,
-	created_at TIMESTAMPTZ DEFAULT now()
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    total NUMERIC(10,2) NOT NULL DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    items JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-If you use Supabase, you can run this SQL in the Supabase SQL editor or apply it through migrations.
+Ha Supabase-t használsz, ezt az SQL-t a Supabase SQL szerkesztőjében futtathatod vagy migrációként alkalmazhatod.
 
-**Seeding data**
+**Seed adatok**
 
-Use the SQL above then insert sample records. Example inserts:
+Használd a fenti SQL-t, majd illessz be mintarekordokat. Példa beszúrások:
 
 ```sql
 INSERT INTO users (email, username, password_hash, full_name, role)
 VALUES
-	('admin@example.com', 'admin', crypt('AdminPass123!', gen_salt('bf')), 'Admin User', 'admin'),
-	('alice@example.com', 'alice', crypt('password123', gen_salt('bf')), 'Alice Johnson', 'user');
+    ('admin@example.com', 'admin', crypt('AdminPass123!', gen_salt('bf')), 'Admin User', 'admin'),
+    ('alice@example.com', 'alice', crypt('password123', gen_salt('bf')), 'Alice Johnson', 'user');
 
 INSERT INTO products (name, description, price, stock, metadata)
 VALUES ('Gaming PC - GTX', 'High performance gaming PC', 1299.99, 5, '{"category":"gaming"}');
@@ -159,25 +159,25 @@ INSERT INTO orders (user_id, total, status, items)
 VALUES ( (SELECT id FROM users WHERE email='alice@example.com'), 1299.99, 'completed', '[{"product_id":1,"qty":1,"price":1299.99}]' );
 ```
 
-Notes:
-- `pgcrypto` extension is useful for `crypt()` password hashing if you seed directly on Postgres. The backend uses `bcryptjs` and manages hashing in application code.
+Megjegyzések:
+- A `pgcrypto` kiterjesztés hasznos lehet a `crypt()` jelszóhash-eléshez, ha közvetlenül Postgres-ben seed-elsz. A backend `bcryptjs`-t használ és az alkalmazás kezeli a hash-elést.
 
-**Security notes**
+**Biztonsági megjegyzések**
 
-- Use a least-privilege `SUPABASE_KEY` for the backend in production. For administrative actions you may need a service role key — store it securely and do not commit secrets.
-- Change `JWT_SECRET` to a strong, random value and rotate keys periodically.
-- Consider integrating Supabase Auth for production authentication flows (email verification, password reset) instead of rolling a custom JWT solution.
-- Validate and sanitize user input before inserting into the database. The current code is demonstrative and intentionally minimal.
+- Használj legalacsonyabb jogosultságú `SUPABASE_KEY`-t a backendhez éles környezetben. Adminisztratív műveletekhez szükség lehet service role kulcsra — tárold biztonságosan és ne commit-olj titkokat.
+- Változtasd meg a `JWT_SECRET`-et egy erős, véletlenszerű értékre, és rendszeresen forgasd a kulcsokat.
+- Érdemes integrálni a Supabase Auth-ot éles hitelesítési folyamatokhoz (email ellenőrzés, jelszó visszaállítás) a saját JWT-megoldás helyett.
+- Ellenőrizd és sanitize-oljad a felhasználói bemenetet mielőtt adatbázisba írnád. A jelenlegi kód demonstratív és szándékosan minimális.
 
-**Next steps and suggestions**
+**Következő lépések és javaslatok**
 
-- Add database migrations and a seed script to keep environments reproducible.
-- Replace custom JWT implementation with Supabase Auth to leverage built-in security features.
-- Add input validation middleware (e.g., `joi` or `zod`).
-- Add role-based access control for admin-only endpoints.
-- Add tests for endpoints (supertest + mocha/jest) and a CI job to run them.
+- Adj hozzá adatbázis migrációkat és egy seed scriptet a környezetek reprodukálhatóságához.
+- Cseréld le az egyedi JWT-megoldást Supabase Auth-ra a beépített biztonsági funkciók kihasználásához.
+- Adj hozzá bemeneti validációs middleware-t (pl. `joi` vagy `zod`).
+- Implementálj szerepalapú hozzáférés-ellenőrzést az admin végpontokhoz.
+- Írj teszteket a végpontokhoz (supertest + mocha/jest) és adj hozzá CI feladatot a futtatásukhoz.
 
-If you want, I can:
-- generate migration SQL files for Supabase,
-- create a `scripts/seed.js` runner that uses the Supabase client to populate data,
-- or update the endpoints to match fields expected by the frontend.
+Ha szeretnéd, készíthetek:
+- migrációs SQL fájlokat Supabase-hez,
+- egy `scripts/seed.js` futtatót, amely a Supabase klienset használja az adatok feltöltéséhez,
+- vagy frissítem a végpontokat, hogy megfeleljenek a frontend által elvárt mezőknek.
