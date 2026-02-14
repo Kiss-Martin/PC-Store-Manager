@@ -1,0 +1,26 @@
+@if (show) {
+  <div class="modal-overlay" (click)="onCancel()">
+    <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="modal-icon" [class.danger]="confirmColor === 'danger'">
+        <lucide-icon [name]="icon" size="32"></lucide-icon>
+      </div>
+
+      <div class="modal-text">
+        <h2>{{ title }}</h2>
+        <p>{{ message }}</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onCancel()">
+          {{ cancelText }}
+        </button>
+        <button
+          class="btn-confirm"
+          [class.danger]="confirmColor === 'danger'"
+          (click)="onConfirm()">
+          {{ confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
