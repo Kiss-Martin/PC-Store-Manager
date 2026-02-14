@@ -6,8 +6,17 @@ import jwt from 'jsonwebtoken'
 import supabase from './db.js'
 
 const app = express()
-app.use(cors())
-app.use(express.json())
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:4200",
+      "pc-store-manager-git-main-kiss-martins-projects.vercel.app"
+    ],
+    credentials: true,
+  }),
+);app.use(express.json())
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret'
 
