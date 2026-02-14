@@ -2,6 +2,7 @@ import { Component, NgModule, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
+import { ThemeService } from '../theme.service';
 
 interface DashboardCard {
   title: string;
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit {
   constructor(
     private router: Router,
     private auth: AuthService,
+    public theme: ThemeService
   ) {}
   stats: DashboardCard[] = [];
   activities: Activity[] = [];
@@ -107,5 +109,9 @@ export class DashboardComponent implements OnInit {
 
   navigate(path: string) {
     this.router.navigate([path]);
+  }
+
+  addNewProduct() {
+    this.router.navigate(['products'], { queryParams: { action: 'add' } });
   }
 }
