@@ -1,1 +1,299 @@
-<p>orders.component works!</p>
+<div class="orders-container">
+  <!-- Header -->
+  <div class="orders-header">
+    <div>
+      <h1>Orders</h1>
+      <p class="subtitle">Manage customer orders</p>
+    </div>
+    @if (auth.isAdmin()) {
+      <button class="btn-primary" (click)="exportOrders()">
+        <lucide-icon name="download" size="18"></lucide-icon>
+        Export Orders
+      </button>
+    }
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <lucide-icon name="shopping-bag" size="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">Total Orders</p>
+        <h3 class="stat-value">{{ stats.total }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon pending">
+        <lucide-icon name="clock" size="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">Pending</p>
+        <h3 class="stat-value">{{ stats.pending }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon processing">
+        <lucide-icon name="package" size="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">Processing</p>
+        <h3 class="stat-value">{{ stats.processing }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon completed">
+        <lucide-icon name="circle-check" size="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">Completed</p>
+        <h3 class="stat-value">{{ stats.completed }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card revenue">
+      <div class="stat-icon revenue-icon">
+        <lucide-icon name="dollar-sign" size="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <p class="stat-label">Total Revenue</p>
+        <h3 class="stat-value">${{ stats.totalRevenue.toLocaleString() }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-bar">
+      <lucide-icon name="search" size="20" class="search-icon"></lucide-icon>
+      <input
+        type="text"
+        placeholder="Search orders, products, customers..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        class="search-input"
+      >
+    </div>
+
+    <div class="status-filter">
+      <lucide-icon name="sliders-horizontal" size="18"></lucide-icon>
+      <select title="Filter" aria-label="Filter Orders by Status" [(ngModel)]="selectedStatus" (change)="onStatusFilterChange()" class="filter-select">
+        <option value="all">All Orders</option>
+        <option value="pending">Pending</option>
+        <option value="processing">Processing</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading">
+      <lucide-icon name="loader-circle" size="32" class="spin"></lucide-icon>
+      <p>Loading orders...</p>
+    </div>
+  }
+
+  <!-- Orders Table -->
+  @if (!isLoading && filteredOrders.length > 0) {
+    <div class="table-container">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Product</th>
+            <th>Customer</th>
+            <th>Quantity</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of filteredOrders; track order.id) {
+            <tr (click)="openDetailsModal(order)" class="clickable-row">
+              <td class="order-number">{{ order.orderNumber }}</td>
+              <td class="product-name">{{ order.product }}</td>
+              <td>{{ order.customer }}</td>
+              <td>{{ order.quantity }}</td>
+              <td class="amount">${{ order.totalAmount.toLocaleString() }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                  <lucide-icon [name]="getStatusIcon(order.status)" size="14"></lucide-icon>
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="date">{{ formatDate(order.date) }}</td>
+              <td class="actions" (click)="$event.stopPropagation()">
+                @if (auth.isAdmin() && order.status !== 'cancelled' && order.status !== 'completed') {
+                  <button class="btn-icon btn-edit" (click)="openStatusModal(order)" title="Update Status">
+                    <lucide-icon name="pencil" size="16"></lucide-icon>
+                  </button>
+                }
+                @if (auth.isAdmin() && order.status === 'pending') {
+                  <button class="btn-icon btn-cancel" (click)="confirmCancelOrder(order)" title="Cancel Order">
+                    <lucide-icon name="x" size="16"></lucide-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Empty State -->
+@if (!isLoading && filteredOrders.length === 0) {
+  <div class="empty-state">
+    <lucide-icon name="shopping-bag" size="64" class="empty-icon"></lucide-icon>  <!-- ✅ Confirmed correct -->
+    <h3>No orders found</h3>
+    <p>{{ searchTerm || selectedStatus !== 'all' ? 'Try adjusting your filters' : 'Orders will appear here when customers make purchases' }}</p>
+  </div>
+}
+
+  <!-- Order Details Modal -->
+  @if (showDetailsModal && selectedOrder) {
+    <div class="modal-overlay" (click)="closeDetailsModal()">
+      <div class="modal-content details-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2>Order Details</h2>
+            <p class="order-number-header">{{ selectedOrder.orderNumber }}</p>
+          </div>
+          <button aria-label="Bezárás" class="btn-close" (click)="closeDetailsModal()">
+            <lucide-icon name="x" size="24"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="detail-section">
+            <div class="detail-row">
+              <span class="detail-label">Status</span>
+              <span class="status-badge" [ngClass]="getStatusClass(selectedOrder.status)">
+                <lucide-icon [name]="getStatusIcon(selectedOrder.status)" size="14"></lucide-icon>
+                {{ selectedOrder.status }}
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Customer</span>
+              <span class="detail-value">{{ selectedOrder.customer }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date</span>
+              <span class="detail-value">{{ formatDate(selectedOrder.date) }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Product Information</h3>
+            <div class="detail-row">
+              <span class="detail-label">Product</span>
+              <span class="detail-value">{{ selectedOrder.product }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Quantity</span>
+              <span class="detail-value">{{ selectedOrder.quantity }} units</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Unit Price</span>
+              <span class="detail-value">${{ selectedOrder.unitPrice.toLocaleString() }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section total-section">
+            <div class="detail-row total-row">
+              <span class="detail-label">Total Amount</span>
+              <span class="detail-value total-amount">${{ selectedOrder.totalAmount.toLocaleString() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeDetailsModal()">Close</button>
+          @if (auth.isAdmin() && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed') {
+            <button class="btn-primary" (click)="openStatusModal(selectedOrder); closeDetailsModal()">
+              Update Status
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Status Update Modal -->
+  @if (showStatusModal && orderToUpdate) {
+    <div class="modal-overlay" (click)="closeStatusModal()">
+      <div class="modal-content status-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Update Order Status</h2>
+          <button aria-label="Bezárás" class="btn-close" (click)="closeStatusModal()">
+            <lucide-icon name="x" size="24"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-description">Update status for order {{ orderToUpdate.orderNumber }}</p>
+
+          <div class="status-options">
+            <label class="status-option" [class.selected]="newStatus === 'pending'">
+              <input type="radio" name="status" value="pending" [(ngModel)]="newStatus">
+              <div class="option-content">
+                <lucide-icon name="clock" size="20"></lucide-icon>
+                <span>Pending</span>
+              </div>
+            </label>
+
+            <label class="status-option" [class.selected]="newStatus === 'processing'">
+              <input type="radio" name="status" value="processing" [(ngModel)]="newStatus">
+              <div class="option-content">
+                <lucide-icon name="loader-circle" size="20"></lucide-icon>
+                <span>Processing</span>
+              </div>
+            </label>
+
+            <label class="status-option" [class.selected]="newStatus === 'completed'">
+              <input type="radio" name="status" value="completed" [(ngModel)]="newStatus">
+              <div class="option-content">
+                <lucide-icon name="circle-check" size="20"></lucide-icon>
+                <span>Completed</span>
+              </div>
+            </label>
+
+            <label class="status-option" [class.selected]="newStatus === 'cancelled'">
+              <input type="radio" name="status" value="cancelled" [(ngModel)]="newStatus">
+              <div class="option-content">
+                <lucide-icon name="ban" size="20"></lucide-icon>
+                <span>Cancelled</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeStatusModal()">Cancel</button>
+          <button class="btn-primary" (click)="updateOrderStatus()">Update Status</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Cancel Confirmation Modal -->
+  <app-confirmation-modal
+    [show]="showCancelConfirm"
+    [title]="'Cancel Order'"
+    [message]="'Are you sure you want to cancel order ' + (orderToCancel?.orderNumber || '') + '? This action cannot be undone.'"
+    [confirmText]="'Cancel Order'"
+    [cancelText]="'Keep Order'"
+    [confirmColor]="'danger'"
+    [icon]="'ban'"
+    (confirm)="cancelOrder()"
+    (cancel)="closeCancelConfirm()">
+  </app-confirmation-modal>
+</div>
