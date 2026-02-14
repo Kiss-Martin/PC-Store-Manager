@@ -169,10 +169,17 @@ app.get('/items', async (req, res) => {
 app.get('/dashboard', authMiddleware, async (req, res) => {
   try {
     // total products
-    const { data: itemsData, error: itemsErr } = await supabase.from('items').select('id, name, created_at').order('created_at', { ascending: false }).limit(10)
+    const { data: itemsData, error: itemsErr } = await supabase
+      .from('items')
+      .select('id, name')  // ✅ Removed created_at
+      .limit(10)
+    
     if (itemsErr) return res.status(500).json({ error: itemsErr.message })
 
-    const { data: allItems, error: allItemsErr } = await supabase.from('items').select('id')
+    const { data: allItems, error: allItemsErr } = await supabase
+      .from('items')
+      .select('id')
+    
     if (allItemsErr) return res.status(500).json({ error: allItemsErr.message })
 
     const totalProducts = Array.isArray(allItems) ? allItems.length : 0
@@ -183,10 +190,10 @@ app.get('/dashboard', authMiddleware, async (req, res) => {
     const customers = 0
 
     // Recent activities: use recent items as a proxy
-    const recent = (itemsData || []).map((it) => ({
+    const recent = (itemsData || []).map((it, idx) => ({
       id: it.id,
-      description: `Item added: ${it.name || 'Unnamed'}`,
-      timestamp: it.created_at || null,
+      description: `Item in stock: ${it.name || 'Unnamed'}`,
+      timestamp: `Item #${idx + 1}`,  // ✅ Simple placeholder since no created_at
       type: 'inventory'
     }))
 

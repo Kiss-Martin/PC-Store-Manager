@@ -98,7 +98,7 @@ export class RegisterComponent {
   selectRole(role: string) {
     this.formData.role = role;
     const roleIcons: { [key: string]: string } = {
-      'admin': 'briefcase',
+      'admin': 'shield',
       'worker': 'user'
     };
     this.formData.icon = roleIcons[role];

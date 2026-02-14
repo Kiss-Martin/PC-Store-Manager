@@ -23,7 +23,7 @@ export class ProfileComponent {
     this.auth.logout();
     this.router.navigate(['/login']);
   }
-  
+
   startEdit() {
     this.editData = {
       fullname: this.user?.fullname || '',
@@ -59,10 +59,10 @@ export class ProfileComponent {
     this.isEditing = false;
     this.editData = {};
   }
-  
+
   get roleIcon(): string {
     const r = (this.user?.role || '').toString().toLowerCase();
-    if (r.includes('admin')) return 'briefcase';
+    if (r.includes('admin')) return 'shield';
     return 'user';
   }
 }

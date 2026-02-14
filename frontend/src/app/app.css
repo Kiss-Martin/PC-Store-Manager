@@ -108,6 +108,10 @@ body {
   cursor: pointer;
 }
 
+.dark-theme .menu-toggle {
+  color: #d6b7ff;
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
@@ -135,6 +139,15 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+  }
+
+  .dark-theme .nav-menu {
+    background: rgba(15, 23, 36, 0.95);
+    border-bottom-color: rgba(255, 255, 255);
+  }
+
+  .dark-theme .nav-menu li {
+    border-bottom-color: rgba(255, 255, 255);
   }
 
   .nav-menu.active {
@@ -182,7 +195,7 @@ body {
 
 /* Dark theme element overrides */
 .dark-theme .navbar {
-  background: rgba(6, 8, 15, 0.6);
+  background: #0f1724;
   border-bottom-color: rgba(255,255,255,0.04);
 }
 
@@ -302,6 +315,16 @@ body {
   padding: 6px 10px;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.dark-theme .theme-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark-theme .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Generic button styles to match app look */
