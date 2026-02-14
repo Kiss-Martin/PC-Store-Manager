@@ -7,7 +7,7 @@
         <span class="brand">PC Store</span>
         <button type="button" class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-          <span style="margin-left:8px">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+          <span class="ml-8">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
         </button>
       </div>
       <h1 class="register-header">Create Your Account</h1>
