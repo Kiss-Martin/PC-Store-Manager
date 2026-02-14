@@ -1,1 +1,158 @@
-<p>products.component works!</p>
+<div class="products-container">
+  <!-- Header -->
+  <div class="products-header">
+    <div>
+      <h1>Products</h1>
+      <p class="subtitle">Manage your inventory</p>
+    </div>
+    @if (auth.isAdmin()) {
+      <button class="btn-primary" (click)="openAddModal()">
+        <lucide-icon name="plus" size="18"></lucide-icon>
+        Add Product
+      </button>
+    }
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <lucide-icon name="search" size="20" class="search-icon"></lucide-icon>
+    <input
+      type="text"
+      placeholder="Search products, models, brands..."
+      [(ngModel)]="searchTerm"
+      (input)="filterProducts()"
+      class="search-input"
+    >
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading">
+      <lucide-icon name="loader-circle" size="32" class="spin"></lucide-icon>
+      <p>Loading products...</p>
+    </div>
+  }
+
+  <!-- Products Table -->
+  @if (!isLoading && filteredProducts.length > 0) {
+    <div class="table-container">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Model</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Warranty</th>
+            @if (auth.isAdmin()) {
+              <th>Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of filteredProducts; track product.id) {
+            <tr>
+              <td class="product-name">{{ product.name }}</td>
+              <td>{{ product.model || 'N/A' }}</td>
+              <td>{{ getBrandName(product) }}</td>
+              <td>{{ getCategoryName(product) }}</td>
+              <td>
+                <span class="stock-badge" [class.low-stock]="product.amount < 10">
+                  {{ product.amount }}
+                </span>
+              </td>
+              <td>{{ product.warranty || 'N/A' }}</td>
+              @if (auth.isAdmin()) {
+                <td class="actions">
+                  <button class="btn-icon btn-edit" (click)="openEditModal(product)" title="Edit">
+                    <lucide-icon name="pencil" size="16"></lucide-icon>
+                  </button>
+                      <button class="btn-icon btn-delete" (click)="confirmDelete(product)" title="Delete">
+                    <lucide-icon name="trash-2" size="16"></lucide-icon>
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && filteredProducts.length === 0) {
+    <div class="empty-state">
+      <lucide-icon name="package-x" size="64" class="empty-icon"></lucide-icon>
+      <h3>No products found</h3>
+      <p>{{ searchTerm ? 'Try a different search term' : 'Start by adding your first product' }}</p>
+      @if (auth.isAdmin() && !searchTerm) {
+        <button class="btn-primary" (click)="openAddModal()">
+          <lucide-icon name="plus" size="18"></lucide-icon>
+          Add Product
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Add/Edit Modal -->
+  @if (showAddModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h2>
+          <button aria-label="Bezárás" class="btn-close" (click)="closeModal()">
+            <lucide-icon name="x" size="24"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" [(ngModel)]="newProduct.name" placeholder="e.g. Intel Core i7" class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Model</label>
+              <input type="text" [(ngModel)]="newProduct.model" placeholder="e.g. i7-12700K" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Stock Amount *</label>
+              <input type="number" [(ngModel)]="newProduct.amount" placeholder="0" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Specifications</label>
+            <textarea [(ngModel)]="newProduct.specifications" placeholder="Technical details..." class="form-input" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Warranty</label>
+            <input type="text" [(ngModel)]="newProduct.warranty" placeholder="e.g. 3 years" class="form-input">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn-primary" (click)="saveProduct()">
+            {{ editingProduct ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  <!-- Delete Confirmation Modal -->
+  <app-confirmation-modal
+    [show]="showDeleteConfirm"
+    [title]="'Delete Product'"
+    [message]="'Are you sure you want to delete ' + (productToDelete?.name || '') + '? This action cannot be undone.'"
+    [confirmText]="'Delete'"
+    [cancelText]="'Cancel'"
+    [confirmColor]="'danger'"
+    [icon]="'trash-2'"
+    (confirm)="deleteProduct()"
+    (cancel)="cancelDelete()">
+  </app-confirmation-modal>
+</div>
