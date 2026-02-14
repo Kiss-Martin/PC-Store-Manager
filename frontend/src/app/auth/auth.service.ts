@@ -115,13 +115,17 @@ export class AuthService {
   }
 
   updateOrderStatus(orderId: string, status: string): Observable<any> {
-    return this.http.patch(`${this.ApiUrl}/orders/${orderId}/status`, { status }, { headers: this.getHeaders() });
+    return this.http.patch(
+      `${this.ApiUrl}/orders/${orderId}/status`,
+      { status },
+      { headers: this.getHeaders() },
+    );
   }
 
   exportOrders(status: string = 'all'): Observable<Blob> {
     return this.http.get(`${this.ApiUrl}/orders/export?status=${status}`, {
       headers: this.getHeaders(),
-      responseType: 'blob'
+      responseType: 'blob',
     });
   }
 }
