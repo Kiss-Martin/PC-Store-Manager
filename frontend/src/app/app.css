@@ -142,12 +142,12 @@ body {
   }
 
   .dark-theme .nav-menu {
-    background: rgba(15, 23, 36, 0.95);
-    border-bottom-color: rgba(255, 255, 255);
+    background: #0f1724;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
   }
 
   .dark-theme .nav-menu li {
-    border-bottom-color: rgba(255, 255, 255);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
   }
 
   .nav-menu.active {
