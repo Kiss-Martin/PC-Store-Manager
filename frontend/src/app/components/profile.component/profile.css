@@ -78,7 +78,7 @@
   gap: 8px;
     color: var(--muted);
  }
-.button-prev:hover { background: #f8fafc }
+.button-prev:hover { background: #a78bfa; border-color: #c4b5fd; color: var(--text) }
 
 .button-next,
 .button-submit {
