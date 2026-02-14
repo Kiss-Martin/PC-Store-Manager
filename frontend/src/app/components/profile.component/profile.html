@@ -32,21 +32,21 @@
         @if (!isEditing) {
           <button class="button-prev" (click)="logout()">
             <lucide-icon name="log-out" size="16"></lucide-icon>
-            <span style="margin-left:8px">Logout</span>
+            <span class="ml-8">Logout</span>
           </button>
           <button class="button-next" (click)="startEdit()">
             <lucide-icon name="pen-line" size="16"></lucide-icon>
-            <span style="margin-left:8px">Edit Profile</span>
+            <span class="ml-8">Edit Profile</span>
           </button>
         }
         @if (isEditing) {
           <button class="button-submit" (click)="saveEdit()">
             <lucide-icon name="check" size="16"></lucide-icon>
-            <span style="margin-left:8px">Save</span>
+            <span class="ml-8">Save</span>
           </button>
           <button class="button-prev" (click)="cancelEdit()">
             <lucide-icon name="x" size="16"></lucide-icon>
-            <span style="margin-left:8px">Cancel</span>
+            <span class="ml-8">Cancel</span>
           </button>
         }
       </div>
