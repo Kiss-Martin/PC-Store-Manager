@@ -7,7 +7,7 @@ import { tap } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class AuthService {
-  private ApiUrl = 'http://localhost:3000';
+  private ApiUrl = 'https://pc-store-manager.onrender.com';
 
   constructor(private http: HttpClient) {}
 
