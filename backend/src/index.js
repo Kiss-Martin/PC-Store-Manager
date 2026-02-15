@@ -11,9 +11,12 @@ app.use(
   cors({
     origin: [
       "http://localhost:4200",
-      "pc-store-manager-git-main-kiss-martins-projects.vercel.app"
+      "https://pc-store-manager-80iz98a54-kiss-martins-projects.vercel.app", 
+      "https://pc-store-manager.vercel.app", 
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json())
