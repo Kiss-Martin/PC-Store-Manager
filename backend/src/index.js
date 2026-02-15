@@ -1021,11 +1021,19 @@ app.post("/items", authMiddleware, async (req, res) => {
         warranty: warranty || "",
         brand_id,
         price: price || 0,
+        date_added: new Date().toISOString().split("T")[0]
       })
       .select()
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return res.status(500).json({ error: error.message })
+
+          await supabase.from("logs").insert({
+            item_id: data.id,
+            action: "stock_in",
+            details: `Added new item: ${name}`,
+            timestamp: new Date().toISOString(),
+          });
 
     res.json({ item: data });
   } catch (err) {
