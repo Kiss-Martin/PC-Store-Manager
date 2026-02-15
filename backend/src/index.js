@@ -894,6 +894,155 @@ app.get('/orders/export', authMiddleware, async (req, res) => {
   }
 })
 
+app.get("/categories", authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ categories: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Get brands
+app.get("/brands", authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("brands")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ brands: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Get all items with category and brand names
+app.get("/items", authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("items")
+      .select(
+        `
+        *,
+        categories(name),
+        brands(name)
+      `,
+      )
+      .order("name", { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Flatten the response
+    const items = (data || []).map((item) => ({
+      ...item,
+      category: item.categories?.name,
+      brand: item.brands?.name,
+    }));
+
+    res.json({ items });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Create new item (admin only)
+app.post("/items", authMiddleware, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
+  try {
+    const {
+      name,
+      amount,
+      category_id,
+      model,
+      specifications,
+      warranty,
+      brand_id,
+      price,
+    } = req.body;
+
+    if (!name || !category_id || !brand_id) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const { data, error } = await supabase
+      .from("items")
+      .insert({
+        name,
+        amount: amount || 0,
+        category_id,
+        model: model || "",
+        specifications: specifications || "",
+        warranty: warranty || "",
+        brand_id,
+        price: price || 0,
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ item: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Update item (admin only)
+app.patch("/items/:id", authMiddleware, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const { data, error } = await supabase
+      .from("items")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ item: data });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Delete item (admin only)
+app.delete("/items/:id", authMiddleware, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase.from("items").delete().eq("id", id);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`🚀 Backend running: http://localhost:${PORT}/health`)
