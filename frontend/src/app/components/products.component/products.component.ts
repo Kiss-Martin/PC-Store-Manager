@@ -41,12 +41,14 @@ export class ProductsComponent implements OnInit {
 
   newProduct = {
     name: '',
-    amount: 0,
     model: '',
     specifications: '',
+    price: 0,
+    amount: 0,
     warranty: '',
     brand_id: '',
     category_id: '',
+    date_added: ''
   };
 
   constructor(
@@ -60,13 +62,13 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
 
     // Check for query params to auto-open add modal
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       if (params['action'] === 'add') {
         this.openAddModal();
         // Clear the query param after opening modal
         this.router.navigate([], {
           queryParams: {},
-          replaceUrl: true
+          replaceUrl: true,
         });
       }
     });
@@ -115,6 +117,8 @@ export class ProductsComponent implements OnInit {
       warranty: product.warranty || '',
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',
+      price: 0,
+      date_added: ''
     };
   }
 
@@ -133,6 +137,8 @@ export class ProductsComponent implements OnInit {
       warranty: '',
       brand_id: '',
       category_id: '',
+      price: 0,
+      date_added: ''
     };
   }
 

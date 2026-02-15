@@ -112,6 +112,32 @@
             <input type="text" [(ngModel)]="newProduct.name" placeholder="e.g. Intel Core i7" class="form-input">
           </div>
 
+        <!-- ✅ ADD THIS PRICE FIELD RIGHT HERE -->
+        <div class="form-group">
+          <label>Price *</label>
+          <input
+            type="number"
+            [(ngModel)]="newProduct.price"
+            min="0"
+            step="0.01"
+            class="form-input"
+            placeholder="Enter price">
+        </div>
+
+        <!-- ✅ ADD THIS CATEGORY FIELD RIGHT HERE -->
+        <div class="form-group">
+          <label>Category *</label>
+          <select aria-label="Category" [(ngModel)]="newProduct.category_id" class="form-select">
+            <option value="">Select a category</option>
+            <option value="cpu">CPU</option>
+            <option value="gpu">GPU</option>
+            <option value="ram">RAM</option>
+            <option value="storage">Storage</option>
+            <option value="motherboard">Motherboard</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>Model</label>
