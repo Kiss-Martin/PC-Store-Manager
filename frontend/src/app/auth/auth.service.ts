@@ -94,6 +94,7 @@ export class AuthService {
   }
 
   createItem(item: any): Observable<any> {
+    console.log('Creating item:', item);
     return this.http.post(`${this.ApiUrl}/items`, item, { headers: this.getHeaders() });
   }
 

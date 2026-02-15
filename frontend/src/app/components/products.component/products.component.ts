@@ -11,6 +11,7 @@ interface Product {
   id: string;
   name: string;
   amount: number;
+  price: number;
   model?: string;
   specifications?: string;
   warranty?: string;
@@ -50,7 +51,6 @@ export class ProductsComponent implements OnInit {
     warranty: '',
     brand_id: '',
     category_id: '',
-    date_added: '',
   };
 
   constructor(
@@ -134,13 +134,12 @@ export class ProductsComponent implements OnInit {
     this.newProduct = {
       name: product.name,
       amount: product.amount,
+      price: product.price || 0,
       model: product.model || '',
       specifications: product.specifications || '',
       warranty: product.warranty || '',
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',
-      price: 0,
-      date_added: '',
     };
   }
 
@@ -160,11 +159,11 @@ export class ProductsComponent implements OnInit {
       brand_id: '',
       category_id: '',
       price: 0,
-      date_added: '',
     };
   }
 
   saveProduct() {
+    console.log('Saving product:', this.newProduct);
     if (!this.newProduct.name) return;
 
     if (this.editingProduct) {
