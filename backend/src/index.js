@@ -6,7 +6,6 @@ import jwt from 'jsonwebtoken'
 import supabase from './db.js'
 
 const app = express()
-const cors = require("cors");
 
 app.use(
   cors({
@@ -16,7 +15,8 @@ app.use(
     ],
     credentials: true,
   }),
-);app.use(express.json())
+);
+app.use(express.json())
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret'
 
