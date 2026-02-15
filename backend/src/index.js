@@ -272,52 +272,6 @@ app.get('/dashboard', authMiddleware, async (req, res) => {
   }
 })
 
-app.post("/items", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin only" });
-  }
-
-  try {
-    const { name, model, specifications, price, amount, warranty, category_id } =
-      req.body; // ✅ Add category_id
-
-    // ✅ Validate required fields
-    if (!name || !price || !category_id) {
-      return res
-        .status(400)
-        .json({ error: "Name, price, and category are required" });
-    }
-
-    const { data, error } = await supabase
-      .from("items")
-      .insert({
-        name,
-        model,
-        specifications,
-        price,
-        amount,
-        warranty,
-        category_id, // ✅ Add this
-        date_added: new Date().toISOString().split("T")[0], // ✅ Add this (auto-set date)
-      })
-      .select()
-      .single();
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    await supabase.from("logs").insert({
-      item_id: data.id,
-      action: "stock_in",
-      details: `Added new item: ${name}`,
-      timestamp: new Date().toISOString(),
-    });
-
-    res.json({ success: true, item: data });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
 // Update item (admin only)
 app.patch('/items/:id', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin')
