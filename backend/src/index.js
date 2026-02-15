@@ -989,57 +989,50 @@ app.get("/items", authMiddleware, async (req, res) => {
 });
 
 // Create new item (admin only)
-app.post("/items", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin only" });
+// Create item (admin only)
+app.post('/items', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
   }
 
   try {
-    const {
-      name,
-      amount,
-      category_id,
-      model,
-      specifications,
-      warranty,
-      brand_id,
-      price,
-    } = req.body;
+    const { name, model, specs, price, amount, warranty, category_id, brand_id } = req.body  // ✅ Add brand_id
 
-    if (!name || !category_id || !brand_id) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // ✅ Validate required fields
+    if (!name || !price || !category_id || !brand_id) {
+      return res.status(400).json({ error: 'Name, price, category, and brand are required' })
     }
 
     const { data, error } = await supabase
-      .from("items")
-      .insert({
-        name,
-        amount: amount || 0,
+      .from('items')
+      .insert({ 
+        name, 
+        model, 
+        specs, 
+        price, 
+        amount, 
+        warranty,
         category_id,
-        model: model || "",
-        specifications: specifications || "",
-        warranty: warranty || "",
-        brand_id,
-        price: price || 0,
-        date_added: new Date().toISOString().split("T")[0]
+        brand_id,  // ✅ Add this
+        date_added: new Date().toISOString().split('T')[0]
       })
       .select()
-      .single();
+      .single()
 
     if (error) return res.status(500).json({ error: error.message })
 
-          await supabase.from("logs").insert({
-            item_id: data.id,
-            action: "stock_in",
-            details: `Added new item: ${name}`,
-            timestamp: new Date().toISOString(),
-          });
+    await supabase.from('logs').insert({
+      item_id: data.id,
+      action: 'stock_in',
+      details: `Added new item: ${name}`,
+      timestamp: new Date().toISOString()
+    })
 
-    res.json({ item: data });
+    res.json({ success: true, item: data })
   } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
+    res.status(500).json({ error: err.message || String(err) })
   }
-});
+})
 
 // Update item (admin only)
 app.patch("/items/:id", authMiddleware, async (req, res) => {
@@ -1084,6 +1077,37 @@ app.delete("/items/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ error: err.message || String(err) });
   }
 });
+
+app.get("/categories", authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name")
+      .order("name", { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ categories: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+// Get all brands
+app.get('/brands', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('brands')
+      .select('id, name')
+      .order('name', { ascending: true })
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    res.json({ brands: data || [] })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {

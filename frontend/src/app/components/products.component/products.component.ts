@@ -30,6 +30,8 @@ interface Product {
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
+  categories: any[] = [];
+  brands: any[] = [];
   isLoading = true;
   searchTerm = '';
   showAddModal = false;
@@ -48,7 +50,7 @@ export class ProductsComponent implements OnInit {
     warranty: '',
     brand_id: '',
     category_id: '',
-    date_added: ''
+    date_added: '',
   };
 
   constructor(
@@ -60,6 +62,8 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit() {
     this.loadProducts();
+    this.loadCategories();
+    this.loadBrands();
 
     // Check for query params to auto-open add modal
     this.route.queryParams.subscribe((params) => {
@@ -86,6 +90,24 @@ export class ProductsComponent implements OnInit {
         console.error('Failed to load products:', err);
         this.isLoading = false;
       },
+    });
+  }
+
+  loadCategories() {
+    this.auth.getCategories().subscribe({
+      next: (res: any) => {
+        this.categories = res.categories || [];
+      },
+      error: (err) => console.error('Failed to load categories:', err),
+    });
+  }
+
+  loadBrands() {
+    this.auth.getBrands().subscribe({
+      next: (res: any) => {
+        this.brands = res.brands || [];
+      },
+      error: (err) => console.error('Failed to load brands:', err),
     });
   }
 
@@ -118,7 +140,7 @@ export class ProductsComponent implements OnInit {
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',
       price: 0,
-      date_added: ''
+      date_added: '',
     };
   }
 
@@ -138,7 +160,7 @@ export class ProductsComponent implements OnInit {
       brand_id: '',
       category_id: '',
       price: 0,
-      date_added: ''
+      date_added: '',
     };
   }
 

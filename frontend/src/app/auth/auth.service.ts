@@ -85,6 +85,14 @@ export class AuthService {
     return this.http.get(`${this.ApiUrl}/items`);
   }
 
+  getCategories(): Observable<any> {
+    return this.http.get(`${this.ApiUrl}/categories`, { headers: this.getHeaders() });
+  }
+
+  getBrands(): Observable<any> {
+    return this.http.get(`${this.ApiUrl}/brands`, { headers: this.getHeaders() });
+  }
+
   createItem(item: any): Observable<any> {
     return this.http.post(`${this.ApiUrl}/items`, item, { headers: this.getHeaders() });
   }

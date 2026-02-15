@@ -125,15 +125,22 @@
 
         <div class="form-group">
           <label>Category *</label>
-          <select aria-label="Category" [(ngModel)]="newProduct.category_id" class="form-select">
+          <select aria-label="select" [(ngModel)]="newProduct.category_id" class="form-select">
             <option value="">Select a category</option>
-            <option value="cpu">CPU</option>
-            <option value="gpu">GPU</option>
-            <option value="ram">RAM</option>
-            <option value="storage">Storage</option>
-            <option value="motherboard">Motherboard</option>
-            <option value="other">Other</option>
+            @for (category of categories; track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
           </select>
+        </div>
+
+          <div class="form-group">
+            <label>Brand *</label>
+            <select aria-label="brand" [(ngModel)]="newProduct.brand_id" class="form-select">
+            <option value="">Select a brand</option>
+                @for (brand of brands; track brand.id) {
+                  <option [value]="brand.id">{{ brand.name }}</option>
+                }
+            </select>
         </div>
 
           <div class="form-row">
