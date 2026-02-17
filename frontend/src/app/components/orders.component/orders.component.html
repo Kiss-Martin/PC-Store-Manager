@@ -5,12 +5,18 @@
       <h1>Orders</h1>
       <p class="subtitle">Manage customer orders</p>
     </div>
-    @if (auth.isAdmin()) {
-      <button class="btn-primary" (click)="exportOrders()">
-        <lucide-icon name="download" size="18"></lucide-icon>
-        Export Orders
-      </button>
-    }
+    <div class="header-actions">
+      @if (auth.isAdmin()) {
+        <button class="btn-record" (click)="openAddOrderModal()">
+          <lucide-icon name="circle-plus" size="20"></lucide-icon>
+          Record Order
+        </button>
+        <button class="btn-primary" (click)="exportOrders()">
+          <lucide-icon name="download" size="18"></lucide-icon>
+          Export Orders
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Stats Cards -->
@@ -296,4 +302,154 @@
     (confirm)="cancelOrder()"
     (cancel)="closeCancelConfirm()">
   </app-confirmation-modal>
+  <!-- Add Order Modal -->
+@if (showAddOrderModal) {
+  <div class="modal-overlay" (click)="closeAddOrderModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <lucide-icon name="circle-plus" size="24"></lucide-icon>
+          Record New Order
+        </h2>
+        <button aria-label="Close" class="btn-close" (click)="closeAddOrderModal()">
+          <lucide-icon name="x" size="24"></lucide-icon>
+        </button>
+      </div>
+
+      <form (ngSubmit)="createOrder()" class="modal-body">
+        @if (orderError) {
+          <div class="modal-alert error">
+            <lucide-icon name="circle-alert" size="20"></lucide-icon>
+            {{ orderError }}
+          </div>
+        }
+
+        @if (orderSuccess) {
+          <div class="modal-alert success">
+            <lucide-icon name="circle-check" size="20"></lucide-icon>
+            {{ orderSuccess }}
+          </div>
+        }
+
+        <!-- Product Selection -->
+        <div class="form-group">
+          <label for="product">Product *</label>
+          <select
+            id="product"
+            [(ngModel)]="newOrder.item_id"
+            name="product"
+            class="form-select"
+            required
+          >
+            <option value="">Select a product</option>
+            <option *ngFor="let product of products" [value]="product.id">
+              {{ product.name }} <span *ngIf="product.stock > 0">({{ product.stock }} in stock)</span><span *ngIf="product.stock === 0">(Out of stock)</span>
+            </option>
+          </select>
+        </div>
+
+        <!-- Customer Selection -->
+        <div class="form-group">
+          <label for="customer">Customer *</label>
+          @if (!showNewCustomerForm) {
+            <div class="customer-select-group">
+              <select
+                id="customer"
+                [(ngModel)]="newOrder.customer_id"
+                name="customer"
+                class="form-select"
+                required
+              >
+                <option value="">Select a customer</option>
+                @for (customer of customers; track customer.id) {
+                  <option [value]="customer.id">
+                    {{ customer.name }} @if (customer.email) { ({{ customer.email }}) }
+                  </option>
+                }
+              </select>
+              <button aria-label="Add Customer" type="button" class="btn-add-customer" (click)="toggleNewCustomerForm()">
+                <lucide-icon name="user-plus" size="18"></lucide-icon>
+              </button>
+            </div>
+          } @else {
+            <!-- New Customer Form -->
+            <div class="new-customer-form">
+              <input
+                type="text"
+                [(ngModel)]="newCustomer.name"
+                name="customerName"
+                class="form-input"
+                placeholder="Customer name *"
+                required
+              />
+              <input
+                type="email"
+                [(ngModel)]="newCustomer.email"
+                name="customerEmail"
+                class="form-input"
+                placeholder="Email (optional)"
+              />
+              <input
+                type="tel"
+                [(ngModel)]="newCustomer.phone"
+                name="customerPhone"
+                class="form-input"
+                placeholder="Phone (optional)"
+              />
+              <div class="customer-actions">
+                <button type="button" class="btn-cancel" (click)="toggleNewCustomerForm()">
+                  Cancel
+                </button>
+                <button type="button" class="btn-save" (click)="createCustomer()" [disabled]="isSavingCustomer">
+                  @if (isSavingCustomer) {
+                    <span class="spinner-small"></span>
+                  } @else {
+                    <lucide-icon name="check" size="18"></lucide-icon>
+                  }
+                  Create
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group">
+          <label for="quantity">Quantity *</label>
+          <input
+            type="number"
+            id="quantity"
+            [(ngModel)]="newOrder.quantity"
+            name="quantity"
+            class="form-input"
+            min="1"
+            [max]="getProductStock(newOrder.item_id)"
+            required
+          />
+          @if (newOrder.item_id) {
+            <small class="stock-hint">
+              Available: {{ getProductStock(newOrder.item_id) }} units
+            </small>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeAddOrderModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-submit" [disabled]="isSavingOrder || showNewCustomerForm">
+            @if (isSavingOrder) {
+              <span class="spinner-small"></span>
+              Creating...
+            } @else {
+              <lucide-icon name="circle-check" size="18"></lucide-icon>
+              Record Order
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
 </div>
