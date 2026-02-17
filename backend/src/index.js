@@ -1112,6 +1112,123 @@ app.get('/brands', authMiddleware, async (req, res) => {
   }
 })
 
+// Get all customers (needed for order creation)
+app.get('/customers', authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, name, email, phone')
+      .order('name', { ascending: true })
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    res.json({ customers: data || [] })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
+// Create customer (if needed)
+app.post('/customers', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
+  }
+
+  try {
+    const { name, email, phone } = req.body
+
+    if (!name) {
+      return res.status(400).json({ error: 'Customer name is required' })
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({ name, email, phone })
+      .select()
+      .single()
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    res.json({ success: true, customer: data })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
+// Create manual order (admin only)
+app.post('/orders', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
+  }
+
+  try {
+    const { item_id, customer_id, quantity } = req.body
+
+    if (!item_id || !customer_id || !quantity || quantity < 1) {
+      return res.status(400).json({ error: 'Item, customer, and valid quantity are required' })
+    }
+
+    // Get item details and check stock
+    const { data: item, error: itemErr } = await supabase
+      .from('items')
+      .select('id, name, price, amount')
+      .eq('id', item_id)
+      .single()
+
+    if (itemErr || !item) {
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    if (item.amount < quantity) {
+      return res.status(400).json({ error: `Insufficient stock. Only ${item.amount} available` })
+    }
+
+    // Generate order number
+    const orderNumber = Math.floor(1000 + Math.random() * 9000)
+
+    // Update item stock
+    const { error: updateErr } = await supabase
+      .from('items')
+      .update({ amount: item.amount - quantity })
+      .eq('id', item_id)
+
+    if (updateErr) {
+      return res.status(500).json({ error: updateErr.message })
+    }
+
+    // Create log entry
+    const { data: log, error: logErr } = await supabase
+      .from('logs')
+      .insert({
+        item_id: item_id,
+        customer_id: customer_id,
+        action: 'stock_out',
+        details: `Sold ${quantity} unit${quantity > 1 ? 's' : ''} - Order #${orderNumber}`,
+        timestamp: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (logErr) {
+      return res.status(500).json({ error: logErr.message })
+    }
+
+    res.json({ 
+      success: true, 
+      order: {
+        id: log.id,
+        orderNumber: `#${orderNumber}`,
+        product: item.name,
+        quantity,
+        totalAmount: item.price * quantity,
+        status: 'completed'
+      }
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`🚀 Backend running: http://localhost:${PORT}/health`)

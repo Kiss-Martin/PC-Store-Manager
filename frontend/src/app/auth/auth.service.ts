@@ -205,6 +205,29 @@ export class AuthService {
     });
   }
 
+  getCustomers(): Observable<{ customers: any[] }> {
+    return this.http.get<{ customers: any[] }>(`${this.ApiUrl}/customers`, { 
+      headers: this.getHeaders() 
+    });
+  }
+
+  createCustomer(customer: { name: string; email?: string; phone?: string }): Observable<{ success: boolean; customer: any }> {
+    return this.http.post<{ success: boolean; customer: any }>(
+      `${this.ApiUrl}/customers`,
+      customer,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Create manual order
+  createOrder(order: { item_id: string; customer_id: string; quantity: number }): Observable<{ success: boolean; order: any }> {
+    return this.http.post<{ success: boolean; order: any }>(
+      `${this.ApiUrl}/orders`,
+      order,
+      { headers: this.getHeaders() }
+    );
+  }
+
   exportAnalytics(period: string = '7days'): Observable<Blob> {
     return this.http.get(
       `${this.ApiUrl}/analytics/export?period=${period}`,
