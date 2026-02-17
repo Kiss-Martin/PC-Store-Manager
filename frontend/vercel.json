@@ -1,17 +1,31 @@
 {
-  "version": 2,
-  "framework": "angular",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "npm install && npm run build -- --configuration=production",
   "outputDirectory": "dist/frontend/browser",
-  "routes": [
+  "installCommand": "npm install --legacy-peer-deps",
+  "rewrites": [
     {
-      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot|json))",
-      "dest": "/$1"
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)\\.(js|css|woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|ico)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 }
