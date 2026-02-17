@@ -5,7 +5,6 @@ import { RegisterComponent } from './auth/register/register';
 import { AuthGuard } from './auth/auth.guard';
 import { OrdersComponent } from './components/orders.component/orders.component';
 import { AnalyticsComponent } from './components/analytics.component/analytics.component';
-import { SettingsComponent } from './components/settings.component/settings.component';
 import { ProductsComponent } from './components/products.component/products.component';
 import { ProfileComponent } from './components/profile.component/profile';
 
@@ -40,11 +39,6 @@ export const routes: Routes = [
     path: 'analytics',
     component: AnalyticsComponent
   },
-  {
-    path: 'settings',
-    component: SettingsComponent
-  }
-  ,
   {
     path: 'profile',
     component: ProfileComponent,
