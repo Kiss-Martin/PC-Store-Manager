@@ -6,7 +6,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { OrdersComponent } from './components/orders.component/orders.component';
 import { AnalyticsComponent } from './components/analytics.component/analytics.component';
 import { ProductsComponent } from './components/products.component/products.component';
-import { ProfileComponent } from './components/profile.component/profile';
+import { ProfileComponent } from './components/profile.component/profile.component';
 
 export const routes: Routes = [
   {

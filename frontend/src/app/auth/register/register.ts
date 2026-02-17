@@ -113,7 +113,7 @@ submitRegistration() {
     email: this.formData.email,
     username: this.formData.username,
     password: this.formData.password,
-    fullname: this.formData.fullName,
+    fullname: this.formData.fullName,  // ✅ This maps correctly to backend
     role: this.formData.role
   }).subscribe({
     next: (res) => {
@@ -121,9 +121,9 @@ submitRegistration() {
       this.isLoading = false;
       this.router.navigate(['/login']);
     },
-    error: (err) => {
+    error: (err: any) => {  // ✅ Just add type annotation
       console.error(err);
-      this.errors['general'] = err.error?.message || 'Registration failed';
+      this.errors['general'] = err.error?.error || err.error?.message || 'Registration failed';
       this.isLoading = false;
     }
   });

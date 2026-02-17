@@ -1,0 +1,317 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>
+      <lucide-icon name="user" [size]="32"></lucide-icon>
+      My Profile
+    </h1>
+    <p>Manage your account settings and preferences</p>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading profile...</p>
+    </div>
+  }
+
+  <!-- Success/Error Messages -->
+  @if (successMessage) {
+    <div class="alert alert-success">
+      <lucide-icon name="circle-check" [size]="20"></lucide-icon>
+      {{ successMessage }}
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert alert-error">
+      <lucide-icon name="circle-alert" [size]="20"></lucide-icon>
+      {{ errorMessage }}
+    </div>
+  }
+
+  <!-- Profile Content -->
+  @if (!isLoading && user) {
+    <div class="profile-content">
+      <!-- Profile Overview Card -->
+      <div class="profile-card main-card">
+        <div class="profile-avatar-section">
+          <div class="profile-avatar">
+            <lucide-icon name="circle-user" [size]="80"></lucide-icon>
+          </div>
+          <div class="profile-info">
+            <h2>{{ user.fullname || user.username }}</h2>
+            <p class="username">@{{ user.username }}</p>
+            <span class="role-badge" [class.admin]="user.role === 'admin'">
+              <lucide-icon name="shield" [size]="14"></lucide-icon>
+              {{ user.role || 'User' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="profile-quick-actions">
+          <button class="btn-secondary" (click)="toggleEditMode()">
+            <lucide-icon [name]="isEditingProfile ? 'X' : 'pen'" [size]="18"></lucide-icon>
+            {{ isEditingProfile ? 'Cancel' : 'Edit Profile' }}
+          </button>
+          <button class="btn-secondary" (click)="openPasswordModal()">
+            <lucide-icon name="key" [size]="18"></lucide-icon>
+            Change Password
+          </button>
+        </div>
+      </div>
+
+      <!-- Profile Details / Edit Form -->
+      <div class="profile-card">
+        <div class="card-header">
+          <h3>
+            <lucide-icon name="user" [size]="20"></lucide-icon>
+            Profile Information
+          </h3>
+        </div>
+
+        @if (!isEditingProfile) {
+          <!-- View Mode -->
+          <div class="profile-details">
+            <div class="detail-item">
+              <lucide-icon name="mail" [size]="20"></lucide-icon>
+              <div>
+                <label>Email Address</label>
+                <p>{{ user.email }}</p>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <lucide-icon name="user" [size]="20"></lucide-icon>
+              <div>
+                <label>Username</label>
+                <p>{{ user.username }}</p>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <lucide-icon name="file-text" [size]="20"></lucide-icon>
+              <div>
+                <label>Full Name</label>
+                <p>{{ user.fullname || 'Not set' }}</p>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Edit Mode -->
+          <form (ngSubmit)="updateProfile()" class="profile-form">
+            <div class="form-group">
+              <label for="email">
+                <lucide-icon name="mail" [size]="16"></lucide-icon>
+                Email Address *
+              </label>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="profileForm.email"
+                name="email"
+                class="form-input"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="username">
+                <lucide-icon name="user" [size]="16"></lucide-icon>
+                Username *
+              </label>
+              <input
+                type="text"
+                id="username"
+                [(ngModel)]="profileForm.username"
+                name="username"
+                class="form-input"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="fullname">
+                <lucide-icon name="file-text" [size]="16"></lucide-icon>
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullname"
+                [(ngModel)]="profileForm.fullname"
+                name="fullname"
+                class="form-input"
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="toggleEditMode()">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" [disabled]="isSaving">
+                @if (isSaving) {
+                  <span class="spinner-small"></span>
+                  Saving...
+                } @else {
+                  <lucide-icon name="save" [size]="18"></lucide-icon>
+                  Save Changes
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+
+      <!-- Security & Preferences -->
+      <div class="profile-grid">
+        <!-- Security Card -->
+        <div class="profile-card">
+          <div class="card-header">
+            <h3>
+              <lucide-icon name="Lock" [size]="20"></lucide-icon>
+              Security
+            </h3>
+          </div>
+
+          <div class="security-content">
+            <div class="security-item">
+              <div class="security-icon">
+                <lucide-icon name="Key" [size]="24"></lucide-icon>
+              </div>
+              <div class="security-info">
+                <h4>Password</h4>
+                <p>Keep your account secure</p>
+              </div>
+            </div>
+            <button class="btn-outline" (click)="openPasswordModal()">
+              Change
+            </button>
+          </div>
+        </div>
+
+        <!-- Appearance Card -->
+        <div class="profile-card">
+          <div class="card-header">
+            <h3>
+              <lucide-icon name="Palette" [size]="20"></lucide-icon>
+              Appearance
+            </h3>
+          </div>
+
+          <div class="appearance-content">
+            <div class="appearance-item">
+              <div class="appearance-icon">
+                @if (theme.isDark()) {
+                  <lucide-icon name="Moon" [size]="24"></lucide-icon>
+                } @else {
+                  <lucide-icon name="Sun" [size]="24"></lucide-icon>
+                }
+              </div>
+              <div class="appearance-info">
+                <h4>Theme</h4>
+                <p>{{ theme.isDark() ? 'Dark' : 'Light' }} mode</p>
+              </div>
+            </div>
+            <button class="btn-outline" (click)="toggleTheme()">
+              Switch
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Actions -->
+      <div class="profile-card danger-zone">
+        <div class="card-header">
+          <h3>
+            <lucide-icon name="triangle-alert" [size]="20"></lucide-icon>
+            Account Actions
+          </h3>
+        </div>
+
+        <div class="danger-content">
+          <p>Once you logout, you'll need to sign in again to access your account.</p>
+          <button class="btn-danger" (click)="logout()">
+            <lucide-icon name="LogOut" [size]="18"></lucide-icon>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Change Password Modal -->
+@if (showPasswordModal) {
+  <div class="modal-overlay" (click)="closePasswordModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          <lucide-icon name="Key" [size]="24"></lucide-icon>
+          Change Password
+        </h2>
+        <button class="btn-close" (click)="closePasswordModal()">
+          <lucide-icon name="X" [size]="24"></lucide-icon>
+        </button>
+      </div>
+
+      <form (ngSubmit)="changePassword()" class="modal-body">
+        <div class="form-group">
+          <label for="currentPassword">Current Password *</label>
+          <input
+            type="password"
+            id="currentPassword"
+            [(ngModel)]="passwordForm.currentPassword"
+            name="currentPassword"
+            class="form-input"
+            placeholder="Enter current password"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="newPassword">New Password *</label>
+          <input
+            type="password"
+            id="newPassword"
+            [(ngModel)]="passwordForm.newPassword"
+            name="newPassword"
+            class="form-input"
+            placeholder="Enter new password (min 6 characters)"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm New Password *</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            [(ngModel)]="passwordForm.confirmPassword"
+            name="confirmPassword"
+            class="form-input"
+            placeholder="Confirm new password"
+            required
+          />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closePasswordModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving">
+            @if (isSaving) {
+              <span class="spinner-small"></span>
+              Changing...
+            } @else {
+              <lucide-icon name="Check" [size]="18"></lucide-icon>
+              Change Password
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -273,21 +273,23 @@ export class AnalyticsComponent implements OnInit {
   }
 
   exportReport() {
-    this.auth.exportAnalytics(this.selectedPeriod).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `analytics-report-${this.selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: (err) => {
-        console.error('Failed to export report:', err);
-        alert('Export failed. Please try again.');
-      },
-    });
-  }
+  this.auth.exportAnalytics(this.selectedPeriod).subscribe({
+    next: (blob: Blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales-report-${this.selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
+    error: (err: any) => {
+      console.error('Export failed:', err);
+      alert('Failed to export data');
+    }
+  });
+}
 
   getStatusClass(status: string): string {
     return status === 'completed' ? 'status-completed' : 'status-pending';

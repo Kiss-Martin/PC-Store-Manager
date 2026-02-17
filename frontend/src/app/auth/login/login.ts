@@ -21,29 +21,26 @@ export class LoginComponent {
   constructor(private router: Router, private authService: AuthService, public theme: ThemeService) {}
 
   login() {
+  if (!this.email || !this.password) {
+    this.errorMessage = 'Please enter both email and password';
+    return;
+  }
+
   this.isLoading = true;
   this.errorMessage = '';
 
-  this.authService.login(this.email, this.password, { email: this.email, password: this.password })
-    .subscribe({
-      next: (res) => {
-
-        // BACKEND JWT TOKEN visszaadja?
-        const token = res.token || res.accessToken || res.access_token;
-
-        if (token) {
-          localStorage.setItem('token', token);
-        }
-
-        this.isLoading = false;
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Login failed';
-        this.isLoading = false;
-      }
-    });
+  this.authService.login(this.email, this.password).subscribe({
+    next: () => {
+      this.isLoading = false;
+      this.router.navigate(['/dashboard']);
+    },
+    error: (err: any) => {
+      this.isLoading = false;
+      this.errorMessage = err.error?.error || 'Login failed';
+    }
+  });
 }
+
   goToRegister() {
     this.router.navigate(['/register']);
   }
