@@ -1175,10 +1175,14 @@ app.post('/orders', authMiddleware, async (req, res) => {
   }
 
   try {
-    const { item_id, customer_id, quantity } = req.body
+    const { item_id, customer_id, quantity, status = 'pending' } = req.body
 
     if (!item_id || !customer_id || !quantity || quantity < 1) {
       return res.status(400).json({ error: 'Item, customer, and valid quantity are required' })
+    }
+
+    if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' })
     }
 
     // Get item details and check stock
@@ -1199,14 +1203,16 @@ app.post('/orders', authMiddleware, async (req, res) => {
     // Generate order number
     const orderNumber = Math.floor(1000 + Math.random() * 9000)
 
-    // Update item stock
-    const { error: updateErr } = await supabase
-      .from('items')
-      .update({ amount: item.amount - quantity })
-      .eq('id', item_id)
+    // Update item stock (only if status is completed or processing)
+    if (status === 'completed' || status === 'processing') {
+      const { error: updateErr } = await supabase
+        .from('items')
+        .update({ amount: item.amount - quantity })
+        .eq('id', item_id)
 
-    if (updateErr) {
-      return res.status(500).json({ error: updateErr.message })
+      if (updateErr) {
+        return res.status(500).json({ error: updateErr.message })
+      }
     }
 
     // Create log entry
@@ -1226,6 +1232,20 @@ app.post('/orders', authMiddleware, async (req, res) => {
       return res.status(500).json({ error: logErr.message })
     }
 
+    // Create order status record
+    const { error: statusErr } = await supabase
+      .from('orders_status')
+      .insert({
+        log_id: log.id,
+        status: status,
+        updated_by: req.user.id,
+        updated_at: new Date().toISOString()
+      })
+
+    if (statusErr) {
+      return res.status(500).json({ error: statusErr.message })
+    }
+
     res.json({ 
       success: true, 
       order: {
@@ -1234,7 +1254,7 @@ app.post('/orders', authMiddleware, async (req, res) => {
         product: item.name,
         quantity,
         totalAmount: item.price * quantity,
-        status: 'completed'
+        status: status
       }
     })
   } catch (err) {
