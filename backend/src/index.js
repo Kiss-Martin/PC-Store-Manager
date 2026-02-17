@@ -212,18 +212,31 @@ app.patch('/me/password', authMiddleware, async (req, res) => {
   }
 })
 
-app.get('/items', async (req, res) => {
-  const { data, error } = await supabase
-    .from('items')
-    .select(`
-      *,
-      brands(name),
-      categories(name)
-    `)
+app.get("/items", authMiddleware, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("items")
+      .select(
+        `
+        *,
+        categories(name),
+        brands(name)
+      `,
+      )
+      .order("name", { ascending: true });
 
-  if (error) return res.status(500).json({ error: error.message })
+    if (error) return res.status(500).json({ error: error.message });
 
-  res.json({ items: data })
+    const items = (data || []).map((item) => ({
+      ...item,
+      category: item.categories?.name,
+      brand: item.brands?.name,
+    }));
+
+    res.json({ items });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
 })
 
 // Dashboard summary endpoint
