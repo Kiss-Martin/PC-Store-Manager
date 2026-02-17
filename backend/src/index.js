@@ -163,6 +163,55 @@ app.patch('/me', authMiddleware, async (req, res) => {
   res.json({ user: data })
 })
 
+// Change password
+app.patch('/me/password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current password and new password required' })
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters' })
+  }
+
+  try {
+    // Get current user with password
+    const { data: user, error: fetchErr } = await supabase
+      .from('users')
+      .select('password_hash')
+      .eq('id', req.user.id)
+      .single()
+
+    if (fetchErr || !user) {
+      return res.status(500).json({ error: 'Failed to fetch user' })
+    }
+
+    // Verify current password
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' })
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(newPassword, 10)
+
+    // Update password
+    const { error: updateErr } = await supabase
+      .from('users')
+      .update({ password_hash: hashed })
+      .eq('id', req.user.id)
+
+    if (updateErr) {
+      return res.status(500).json({ error: updateErr.message })
+    }
+
+    res.json({ success: true, message: 'Password updated successfully' })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
 app.get('/items', async (req, res) => {
   const { data, error } = await supabase
     .from('items')
