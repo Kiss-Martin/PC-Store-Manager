@@ -15,21 +15,6 @@
     </div>
   }
 
-  <!-- Success/Error Messages -->
-  @if (successMessage) {
-    <div class="alert alert-success">
-      <lucide-icon name="circle-check" [size]="20"></lucide-icon>
-      {{ successMessage }}
-    </div>
-  }
-
-  @if (errorMessage) {
-    <div class="alert alert-error">
-      <lucide-icon name="circle-alert" [size]="20"></lucide-icon>
-      {{ errorMessage }}
-    </div>
-  }
-
   <!-- Profile Content -->
   @if (!isLoading && user) {
     <div class="profile-content">
@@ -258,6 +243,20 @@
       </div>
 
       <form (ngSubmit)="changePassword()" class="modal-body">
+        @if (errorMessage) {
+          <div class="modal-alert modal-alert-error">
+            <lucide-icon name="circle-alert" [size]="20"></lucide-icon>
+            {{ errorMessage }}
+          </div>
+        }
+
+        @if (successMessage) {
+          <div class="modal-alert modal-alert-success">
+            <lucide-icon name="circle-check" [size]="20"></lucide-icon>
+            {{ successMessage }}
+          </div>
+        }
+
         <div class="form-group">
           <label for="currentPassword">Current Password *</label>
           <input

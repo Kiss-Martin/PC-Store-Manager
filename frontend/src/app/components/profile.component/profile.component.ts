@@ -111,6 +111,7 @@ export class ProfileComponent implements OnInit {
       newPassword: '',
       confirmPassword: ''
     };
+    this.clearMessages();
   }
 
   changePassword(): void {
