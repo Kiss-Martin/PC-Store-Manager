@@ -8,7 +8,7 @@
     <div class="header-actions">
       @if (auth.isAdmin()) {
         <button class="btn-record" (click)="openAddOrderModal()">
-          <lucide-icon name="circle-plus" size="20"></lucide-icon>
+          <lucide-icon name="plus-circle" size="20"></lucide-icon>
           Record Order
         </button>
         <button class="btn-primary" (click)="exportOrders()">
@@ -308,10 +308,10 @@
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>
-          <lucide-icon name="circle-plus" size="24"></lucide-icon>
+          <lucide-icon name="plus-circle" size="24"></lucide-icon>
           Record New Order
         </h2>
-        <button aria-label="Close" class="btn-close" (click)="closeAddOrderModal()">
+        <button class="btn-close" (click)="closeAddOrderModal()">
           <lucide-icon name="x" size="24"></lucide-icon>
         </button>
       </div>
@@ -319,14 +319,14 @@
       <form (ngSubmit)="createOrder()" class="modal-body">
         @if (orderError) {
           <div class="modal-alert error">
-            <lucide-icon name="circle-alert" size="20"></lucide-icon>
+            <lucide-icon name="alert-circle" size="20"></lucide-icon>
             {{ orderError }}
           </div>
         }
 
         @if (orderSuccess) {
           <div class="modal-alert success">
-            <lucide-icon name="circle-check" size="20"></lucide-icon>
+            <lucide-icon name="check-circle" size="20"></lucide-icon>
             {{ orderSuccess }}
           </div>
         }
@@ -343,7 +343,7 @@
           >
             <option value="">Select a product</option>
             <option *ngFor="let product of products" [value]="product.id">
-              {{ product.name }} <span *ngIf="product.stock > 0">({{ product.stock }} in stock)</span><span *ngIf="product.stock === 0">(Out of stock)</span>
+              {{ product.name }} (Stock: {{ product.amount }})
             </option>
           </select>
         </div>
@@ -361,13 +361,11 @@
                 required
               >
                 <option value="">Select a customer</option>
-                @for (customer of customers; track customer.id) {
-                  <option [value]="customer.id">
-                    {{ customer.name }} @if (customer.email) { ({{ customer.email }}) }
-                  </option>
-                }
+                <option *ngFor="let customer of customers" [value]="customer.id">
+                  {{ customer.name }}<span *ngIf="customer.email"> ({{ customer.email }})</span>
+                </option>
               </select>
-              <button aria-label="Add Customer" type="button" class="btn-add-customer" (click)="toggleNewCustomerForm()">
+              <button type="button" class="btn-add-customer" (click)="toggleNewCustomerForm()">
                 <lucide-icon name="user-plus" size="18"></lucide-icon>
               </button>
             </div>
@@ -443,7 +441,7 @@
               <span class="spinner-small"></span>
               Creating...
             } @else {
-              <lucide-icon name="circle-check" size="18"></lucide-icon>
+              <lucide-icon name="check-circle" size="18"></lucide-icon>
               Record Order
             }
           </button>
