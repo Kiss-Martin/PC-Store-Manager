@@ -110,12 +110,12 @@ export class OrdersComponent implements OnInit {
   loadProducts() {
     this.auth.getItems().subscribe({
       next: (res: any) => {
-        this.products = res.products || [];
+        this.products = res.items || [];
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load products:', err);
-      },
+      }
     });
   }
 
@@ -125,9 +125,9 @@ export class OrdersComponent implements OnInit {
         this.customers = res.customers || [];
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load customers:', err);
-      },
+      }
     });
   }
 
