@@ -120,7 +120,7 @@
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.1);
-  border-color: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.6);
 }
 
 .stat-icon {
