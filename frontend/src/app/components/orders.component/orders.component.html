@@ -87,14 +87,39 @@
 
     <div class="status-filter">
       <lucide-icon name="sliders-horizontal" size="18"></lucide-icon>
-      <select title="Filter" aria-label="Filter Orders by Status" [(ngModel)]="selectedStatus" (change)="onStatusFilterChange()" class="filter-select">
-        <option value="all">All Orders</option>
-        <option value="pending">Pending</option>
-        <option value="processing">Processing</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
+      <div class="custom-dropdown" (click)="toggleStatusFilterDropdown()">
+        <div class="dropdown-selected">
+          @if (selectedStatus !== 'all') {
+            <lucide-icon [name]="getStatusIcon(selectedStatus)" size="16"></lucide-icon>
+          }
+          <span>{{ getStatusFilterLabel() }}</span>
+          <lucide-icon name="chevron-down" size="16" [class.rotate]="showStatusFilterDropdown"></lucide-icon>
+        </div>
+        @if (showStatusFilterDropdown) {
+          <div class="dropdown-options" (click)="$event.stopPropagation()">
+            <div class="dropdown-option" [class.selected]="selectedStatus === 'all'" (click)="selectStatusFilter('all')">
+              <span>All Orders</span>
+            </div>
+            <div class="dropdown-option" [class.selected]="selectedStatus === 'pending'" (click)="selectStatusFilter('pending')">
+              <lucide-icon name="clock" size="16"></lucide-icon>
+              <span>Pending</span>
+            </div>
+            <div class="dropdown-option" [class.selected]="selectedStatus === 'processing'" (click)="selectStatusFilter('processing')">
+              <lucide-icon name="loader-circle" size="16"></lucide-icon>
+              <span>Processing</span>
+            </div>
+            <div class="dropdown-option" [class.selected]="selectedStatus === 'completed'" (click)="selectStatusFilter('completed')">
+              <lucide-icon name="circle-check" size="16"></lucide-icon>
+              <span>Completed</span>
+            </div>
+            <div class="dropdown-option" [class.selected]="selectedStatus === 'cancelled'" (click)="selectStatusFilter('cancelled')">
+              <lucide-icon name="ban" size="16"></lucide-icon>
+              <span>Cancelled</span>
+            </div>
+          </div>
+        }
       </div>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -144,7 +169,7 @@
                 }
                 @if (auth.isAdmin() && order.status === 'pending') {
                   <button class="btn-icon btn-cancel" (click)="confirmCancelOrder(order)" title="Cancel Order">
-                    <lucide-icon name="x" size="16"></lucide-icon>
+                    <lucide-icon color="red" name="x" size="16"></lucide-icon>
                   </button>
                 }
               </td>
@@ -339,13 +364,27 @@
             [(ngModel)]="newOrder.item_id"
             name="product"
             class="form-select"
+            (change)="onProductChange()"
             required
           >
             <option value="">Select a product</option>
-            <option *ngFor="let product of products" [value]="product.id">
-              {{ product.name }} <span *ngIf="product.stock > 0">({{ product.stock }} in stock)</span><span *ngIf="product.stock === 0">(Out of stock)</span>
-            </option>
+            @for (product of products; track product.id) {
+              <option [value]="product.id" [disabled]="product.amount === 0">
+                {{ product.name }} - ${{ product.price?.toLocaleString() || 0 }}
+                @if (product.amount > 0) {
+                  ({{ product.amount }} in stock)
+                } @else {
+                  (Out of stock)
+                }
+              </option>
+            }
           </select>
+          @if (newOrder.item_id && getProductStock(newOrder.item_id) === 0) {
+            <small class="error-hint">
+              <lucide-icon name="alert-triangle" size="14"></lucide-icon>
+              This product is out of stock
+            </small>
+          }
         </div>
 
         <!-- Customer Selection -->
@@ -422,16 +461,93 @@
             [(ngModel)]="newOrder.quantity"
             name="quantity"
             class="form-input"
+            (input)="onQuantityChange()"
             min="1"
             [max]="getProductStock(newOrder.item_id)"
             required
           />
           @if (newOrder.item_id) {
             <small class="stock-hint">
+              <lucide-icon name="package" size="14"></lucide-icon>
               Available: {{ getProductStock(newOrder.item_id) }} units
             </small>
           }
         </div>
+
+        <!-- Order Status -->
+        <div class="form-group">
+          <label for="status">Order Status *</label>
+          <div class="custom-dropdown" (click)="toggleOrderStatusDropdown()">
+            <div class="dropdown-selected">
+              <lucide-icon [name]="getStatusIcon(newOrder.status)" size="16"></lucide-icon>
+              <span>{{ newOrder.status.charAt(0).toUpperCase() + newOrder.status.slice(1) }}</span>
+              <lucide-icon name="chevron-down" size="16" [class.rotate]="showOrderStatusDropdown"></lucide-icon>
+            </div>
+            @if (showOrderStatusDropdown) {
+              <div class="dropdown-options" (click)="$event.stopPropagation()">
+                <div class="dropdown-option" [class.selected]="newOrder.status === 'pending'" (click)="selectOrderStatus('pending')">
+                  <lucide-icon name="clock" size="16"></lucide-icon>
+                  <div class="option-details">
+                    <span class="option-title">Pending</span>
+                    <span class="option-desc">Awaiting processing</span>
+                  </div>
+                </div>
+                <div class="dropdown-option" [class.selected]="newOrder.status === 'processing'" (click)="selectOrderStatus('processing')">
+                  <lucide-icon name="loader-circle" size="16"></lucide-icon>
+                  <div class="option-details">
+                    <span class="option-title">Processing</span>
+                    <span class="option-desc">Being prepared</span>
+                  </div>
+                </div>
+                <div class="dropdown-option" [class.selected]="newOrder.status === 'completed'" (click)="selectOrderStatus('completed')">
+                  <lucide-icon name="circle-check" size="16"></lucide-icon>
+                  <div class="option-details">
+                    <span class="option-title">Completed</span>
+                    <span class="option-desc">Order fulfilled</span>
+                  </div>
+                </div>
+                <div class="dropdown-option" [class.selected]="newOrder.status === 'cancelled'" (click)="selectOrderStatus('cancelled')">
+                  <lucide-icon name="ban" size="16"></lucide-icon>
+                  <div class="option-details">
+                    <span class="option-title">Cancelled</span>
+                    <span class="option-desc">Order cancelled</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <small class="stock-hint">
+            {{ getStatusDescription(newOrder.status) }}
+          </small>
+        </div>
+
+        <!-- Order Summary -->
+        @if (newOrder.item_id && newOrder.quantity > 0) {
+          <div class="order-summary">
+            <div class="summary-header">
+              <lucide-icon name="calculator" size="18"></lucide-icon>
+              <h3>Order Summary</h3>
+            </div>
+            <div class="summary-row">
+              <span>Unit Price:</span>
+              <span class="summary-value">${{ getSelectedProductPrice().toLocaleString() }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Quantity:</span>
+              <span class="summary-value">{{ newOrder.quantity }} units</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <span class="summary-value total-amount">${{ calculateOrderTotal().toLocaleString() }}</span>
+            </div>
+            @if (newOrder.status === 'processing' || newOrder.status === 'completed') {
+              <div class="stock-impact-note">
+                <lucide-icon name="info" size="14"></lucide-icon>
+                <span>Stock will be reduced by {{ newOrder.quantity }} units</span>
+              </div>
+            }
+          </div>
+        }
 
         <!-- Modal Footer -->
         <div class="modal-footer">

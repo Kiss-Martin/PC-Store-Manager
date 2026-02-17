@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -52,6 +52,10 @@ export class OrdersComponent implements OnInit {
   orderError = '';
   orderSuccess = '';
 
+  // Custom dropdown states
+  showStatusFilterDropdown = false;
+  showOrderStatusDropdown = false;
+
   products: any[] = [];
   customers: any[] = [];
 
@@ -59,6 +63,7 @@ export class OrdersComponent implements OnInit {
     item_id: '',
     customer_id: '',
     quantity: 1,
+    status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
   };
 
   newCustomer = {
@@ -82,6 +87,15 @@ export class OrdersComponent implements OnInit {
     public theme: ThemeService,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-dropdown')) {
+      this.showStatusFilterDropdown = false;
+      this.showOrderStatusDropdown = false;
+    }
+  }
 
   ngOnInit() {
     this.loadOrders();
@@ -110,7 +124,7 @@ export class OrdersComponent implements OnInit {
   loadProducts() {
     this.auth.getItems().subscribe({
       next: (res: any) => {
-        this.products = res.products || [];
+        this.products = res.items || [];
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -151,6 +165,7 @@ export class OrdersComponent implements OnInit {
       item_id: '',
       customer_id: '',
       quantity: 1,
+      status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
     };
     this.newCustomer = {
       name: '',
@@ -212,7 +227,9 @@ export class OrdersComponent implements OnInit {
     }
 
     const stock = this.getProductStock(this.newOrder.item_id);
-    if (this.newOrder.quantity > stock) {
+
+    // Only check stock for processing/completed orders (they reduce inventory)
+    if ((this.newOrder.status === 'processing' || this.newOrder.status === 'completed') && this.newOrder.quantity > stock) {
       this.orderError = `Only ${stock} units available`;
       return;
     }
@@ -222,7 +239,7 @@ export class OrdersComponent implements OnInit {
     this.auth.createOrder(this.newOrder).subscribe({
       next: () => {
         this.isSavingOrder = false;
-        this.orderSuccess = '✅ Order recorded successfully!';
+        this.orderSuccess = 'Order recorded successfully!';
         setTimeout(() => {
           this.closeAddOrderModal();
           this.loadOrders();
@@ -365,6 +382,46 @@ export class OrdersComponent implements OnInit {
     return icons[status] || 'clock';
   }
 
+  getStatusDescription(status: 'pending' | 'processing' | 'completed' | 'cancelled'): string {
+    const descriptions: { [key: string]: string } = {
+      pending: 'Order is awaiting processing',
+      processing: 'Order is being prepared for delivery',
+      completed: 'Order has been fulfilled successfully',
+      cancelled: 'Order has been cancelled',
+    };
+    return descriptions[status] || 'Order status';
+  }
+
+  toggleStatusFilterDropdown() {
+    this.showStatusFilterDropdown = !this.showStatusFilterDropdown;
+  }
+
+  selectStatusFilter(status: string) {
+    this.selectedStatus = status;
+    this.showStatusFilterDropdown = false;
+    this.onStatusFilterChange();
+  }
+
+  toggleOrderStatusDropdown() {
+    this.showOrderStatusDropdown = !this.showOrderStatusDropdown;
+  }
+
+  selectOrderStatus(status: 'pending' | 'processing' | 'completed' | 'cancelled') {
+    this.newOrder.status = status;
+    this.showOrderStatusDropdown = false;
+  }
+
+  getStatusFilterLabel(): string {
+    const labels: { [key: string]: string } = {
+      all: 'All Orders',
+      pending: 'Pending',
+      processing: 'Processing',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+    };
+    return labels[this.selectedStatus] || 'All Orders';
+  }
+
   exportOrders() {
     this.auth.exportOrders(this.selectedStatus).subscribe({
       next: (blob: Blob) => {
@@ -380,6 +437,34 @@ export class OrdersComponent implements OnInit {
         alert('Export failed. Please try again.');
       },
     });
+  }
+
+  onProductChange() {
+    // Reset quantity when product changes
+    const maxStock = this.getProductStock(this.newOrder.item_id);
+    if (this.newOrder.quantity > maxStock) {
+      this.newOrder.quantity = Math.max(1, maxStock);
+    }
+    this.orderError = '';
+  }
+
+  onQuantityChange() {
+    const maxStock = this.getProductStock(this.newOrder.item_id);
+    if (this.newOrder.quantity > maxStock) {
+      this.orderError = `Only ${maxStock} units available`;
+    } else {
+      this.orderError = '';
+    }
+  }
+
+  getSelectedProductPrice(): number {
+    if (!this.newOrder.item_id) return 0;
+    const product = this.products.find((p) => p.id === this.newOrder.item_id);
+    return product?.price || 0;
+  }
+
+  calculateOrderTotal(): number {
+    return this.getSelectedProductPrice() * this.newOrder.quantity;
   }
 
   formatDate(dateString: string): string {
