@@ -1,11 +1,17 @@
 {
-  "buildCommand": "ng build --configuration production",
-  "outputDirectory": "dist/frontend/browser",
+  "version": 2,
   "framework": "angular",
-  "rewrites": [
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "dist/frontend/browser",
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot|json))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
