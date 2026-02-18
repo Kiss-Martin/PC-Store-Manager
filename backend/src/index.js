@@ -1283,6 +1283,8 @@ app.get('/users/workers', authMiddleware, async (req, res) => {
   }
 })
 
+
+
 // Assign order to worker (admin only)
 app.patch('/orders/:id/assign', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin') {
@@ -1324,7 +1326,6 @@ app.get('/orders', authMiddleware, async (req, res) => {
       .eq('action', 'stock_out')
       .order('timestamp', { ascending: false })
 
-    // If user is not admin, only show their assigned orders
     if (req.user.role !== 'admin') {
       query = query.eq('assigned_to', req.user.id)
     }
@@ -1368,7 +1369,6 @@ app.get('/reports/business', authMiddleware, async (req, res) => {
   const { period = '7days' } = req.query
   
   try {
-    // Calculate date range
     let startDate = new Date()
     switch (period) {
       case 'today':
@@ -1388,19 +1388,17 @@ app.get('/reports/business', authMiddleware, async (req, res) => {
         break
     }
 
-    // Get orders
     const { data: orders } = await supabase
       .from('logs')
       .select(`
         id,
         details,
         timestamp,
-        items(name, price, category_id, categories(name))
+        items(name, price)
       `)
       .eq('action', 'stock_out')
       .gte('timestamp', startDate.toISOString())
 
-    // Build CSV
     let csv = 'Business Report\n'
     csv += `Period: ${period}\n`
     csv += `Generated: ${new Date().toLocaleString()}\n\n`
