@@ -5,7 +5,10 @@
       <h1>Dashboard</h1>
       <p class="subtitle">Overview of your store</p>
     </div>
-    <button class="btn-primary">Generate Report</button>
+    <button class="btn-primary" (click)="generateReport()">
+      <lucide-icon name="file-text" size="18"></lucide-icon>
+      Generate Report
+    </button>
   </div>
 
   <!-- Stats Grid -->
@@ -70,7 +73,7 @@
           <lucide-icon name="settings" class="action-icon" size="24"></lucide-icon>
           Settings
         </button>
-        <button class="action-btn" (click)="navigate('orders/new')">
+        <button class="action-btn" (click)="navigateToNewOrder()">
           <lucide-icon name="logs" class="action-icon" size="24"></lucide-icon>
           New Order
         </button>
@@ -78,65 +81,64 @@
     </div>
 
     <!-- Generate Report Modal -->
-@if (showReportModal) {
-  <div class="modal-overlay" (click)="closeReportModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>
-          <lucide-icon name="file-text" size="24"></lucide-icon>
-          Generate Business Report
-        </h2>
-        <button class="btn-close" (click)="closeReportModal()">
-          <lucide-icon name="x" size="24"></lucide-icon>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <p class="modal-description">
-          Generate a comprehensive business report including sales data, top products, and order statistics.
-        </p>
-
-        <div class="form-group">
-          <label for="reportPeriod">Report Period</label>
-          <select 
-            id="reportPeriod" 
-            [(ngModel)]="reportPeriod" 
-            class="form-select"
-          >
-            <option *ngFor="let period of reportPeriods" [value]="period.value">
-              {{ period.label }}
-            </option>
-          </select>
+  </div>
+  @if (showReportModal) {
+    <div class="modal-overlay" (click)="closeReportModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>
+            <lucide-icon name="file-text" size="24"></lucide-icon>
+            Generate Business Report
+          </h2>
+          <button class="btn-close" (click)="closeReportModal()">
+            <lucide-icon name="x" size="24"></lucide-icon>
+          </button>
         </div>
-
-        <div class="report-preview">
-          <h4>Report will include:</h4>
-          <ul>
-            <li><lucide-icon name="check" size="16"></lucide-icon> Revenue breakdown</li>
-            <li><lucide-icon name="check" size="16"></lucide-icon> Order statistics</li>
-            <li><lucide-icon name="check" size="16"></lucide-icon> Top selling products</li>
-            <li><lucide-icon name="check" size="16"></lucide-icon> Customer activity</li>
-          </ul>
+  
+        <div class="modal-body">
+          <p class="modal-description">
+            Generate a comprehensive business report including sales data, top products, and order statistics.
+          </p>
+  
+          <div class="form-group">
+            <label for="reportPeriod">Report Period</label>
+            <select 
+              id="reportPeriod" 
+              [(ngModel)]="reportPeriod" 
+              class="form-select"
+            >
+              <option *ngFor="let period of reportPeriods" [value]="period.value">
+                {{ period.label }}
+              </option>
+            </select>
+          </div>
+  
+          <div class="report-preview">
+            <h4>Report will include:</h4>
+            <ul>
+              <li><lucide-icon name="check" size="16"></lucide-icon> Revenue breakdown</li>
+              <li><lucide-icon name="check" size="16"></lucide-icon> Order statistics</li>
+              <li><lucide-icon name="check" size="16"></lucide-icon> Top selling products</li>
+              <li><lucide-icon name="check" size="16"></lucide-icon> Customer activity</li>
+            </ul>
+          </div>
         </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeReportModal()">
-          Cancel
-        </button>
-        <button type="button" class="btn-primary" (click)="downloadReport()" [disabled]="isGeneratingReport">
-          @if (isGeneratingReport) {
-            <span class="spinner-small"></span>
-            Generating...
-          } @else {
-            <lucide-icon name="download" size="18"></lucide-icon>
-            Download Report
-          }
-        </button>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeReportModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-primary" (click)="downloadReport()" [disabled]="isGeneratingReport">
+            @if (isGeneratingReport) {
+              <span class="spinner-small"></span>
+              Generating...
+            } @else {
+              <lucide-icon name="download" size="18"></lucide-icon>
+              Download Report
+            }
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-}
-
-  </div>
+  }
 </div>

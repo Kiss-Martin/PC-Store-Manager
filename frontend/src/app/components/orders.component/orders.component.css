@@ -1348,3 +1348,49 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
+
+/* Modal Overlay - NEM átlátszó! */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75); /* ✅ Sötétebb */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Modal Content - Solid background */
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(124, 58, 237, 0.1);
+  position: relative;
+}
+
+/* Light mode fix */
+[data-theme="light"] .modal-content {
+  background: #ffffff;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(124, 58, 237, 0.1);
+}
+
+/* Dark mode fix */
+[data-theme="dark"] .modal-content {
+  background: #1f2937;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(124, 58, 237, 0.2);
+}

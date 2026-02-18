@@ -10,3 +10,60 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: #fafbfc;
 }
+
+/* ========================================
+   CUSTOM SCROLLBAR - Modern Purple Theme
+   ======================================== */
+
+/* For Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(124, 58, 237, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed 0%, #a855f7 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #6d28d9 0%, #9333ea 100%);
+  border: 2px solid rgba(124, 58, 237, 0.2);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #5b21b6 0%, #7e22ce 100%);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7c3aed rgba(124, 58, 237, 0.05);
+}
+
+/* Thin scrollbar for modals */
+.modal-content {
+  scrollbar-width: thin;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7c3aed 0%, #a855f7 100%);
+  border-radius: 6px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

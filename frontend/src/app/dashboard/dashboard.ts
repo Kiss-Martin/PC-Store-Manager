@@ -54,12 +54,19 @@ export class DashboardComponent implements OnInit {
   }
 
   generateReport() {
+    console.log('🔵 Opening report modal...');
     this.showReportModal = true;
   }
 
   closeReportModal() {
     this.showReportModal = false;
   }
+
+  navigateToNewOrder() {
+  this.router.navigate(['/orders'], { 
+    queryParams: { action: 'new' } 
+  });
+}
 
   downloadReport() {
   this.isGeneratingReport = true;

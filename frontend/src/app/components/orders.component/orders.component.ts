@@ -5,6 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface Order {
   id: string;
@@ -89,6 +90,7 @@ export class OrdersComponent implements OnInit {
     public auth: AuthService,
     public theme: ThemeService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -107,8 +109,13 @@ export class OrdersComponent implements OnInit {
     if (this.auth.isAdmin()) {
       this.loadWorkers();
     }
-  }
 
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'new' && this.auth.isAdmin()) {
+        setTimeout(() => this.openAddOrderModal(), 200);
+      }
+    });
+  }
   loadWorkers() {
     this.auth.getWorkers().subscribe({
       next: (res: any) => {
