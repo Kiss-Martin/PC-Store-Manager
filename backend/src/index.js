@@ -1262,6 +1262,176 @@ app.post('/orders', authMiddleware, async (req, res) => {
   }
 })
 
+// Get workers (admin only)
+app.get('/users/workers', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, email, fullname')
+      .in('role', ['admin', 'worker'])
+      .order('username', { ascending: true })
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    res.json({ users: data || [] })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
+// Assign order to worker (admin only)
+app.patch('/orders/:id/assign', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
+  }
+
+  const { id } = req.params
+  const { assigned_to } = req.body
+
+  try {
+    const { error } = await supabase
+      .from('logs')
+      .update({ assigned_to })
+      .eq('id', id)
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
+// Update GET /orders to include assignment info and filtering
+app.get('/orders', authMiddleware, async (req, res) => {
+  try {
+    let query = supabase
+      .from('logs')
+      .select(`
+        id,
+        item_id,
+        customer_id,
+        details,
+        timestamp,
+        assigned_to,
+        items(name, price),
+        customers(name, email)
+      `)
+      .eq('action', 'stock_out')
+      .order('timestamp', { ascending: false })
+
+    // If user is not admin, only show their assigned orders
+    if (req.user.role !== 'admin') {
+      query = query.eq('assigned_to', req.user.id)
+    }
+
+    const { data, error } = await query
+
+    if (error) return res.status(500).json({ error: error.message })
+
+    const orders = (data || []).map((log) => {
+      const orderMatch = log.details.match(/Order #(\d+)/)
+      const quantityMatch = log.details.match(/Sold (\d+) unit/)
+      
+      return {
+        id: log.id,
+        orderNumber: orderMatch ? `#${orderMatch[1]}` : 'N/A',
+        product: log.items?.name || 'Unknown',
+        productId: log.item_id,
+        quantity: quantityMatch ? parseInt(quantityMatch[1]) : 0,
+        unitPrice: log.items?.price || 0,
+        totalAmount: (log.items?.price || 0) * (quantityMatch ? parseInt(quantityMatch[1]) : 0),
+        status: 'completed',
+        customer: log.customers?.name || 'Unknown',
+        date: new Date(log.timestamp).toLocaleDateString(),
+        timestamp: log.timestamp,
+        assigned_to: log.assigned_to
+      }
+    })
+
+    res.json({ orders })
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
+// Generate business report
+app.get('/reports/business', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' })
+  }
+
+  const { period = '7days' } = req.query
+  
+  try {
+    // Calculate date range
+    let startDate = new Date()
+    switch (period) {
+      case 'today':
+        startDate.setHours(0, 0, 0, 0)
+        break
+      case '7days':
+        startDate.setDate(startDate.getDate() - 7)
+        break
+      case '30days':
+        startDate.setDate(startDate.getDate() - 30)
+        break
+      case 'month':
+        startDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+        break
+      case 'year':
+        startDate = new Date(startDate.getFullYear(), 0, 1)
+        break
+    }
+
+    // Get orders
+    const { data: orders } = await supabase
+      .from('logs')
+      .select(`
+        id,
+        details,
+        timestamp,
+        items(name, price, category_id, categories(name))
+      `)
+      .eq('action', 'stock_out')
+      .gte('timestamp', startDate.toISOString())
+
+    // Build CSV
+    let csv = 'Business Report\n'
+    csv += `Period: ${period}\n`
+    csv += `Generated: ${new Date().toLocaleString()}\n\n`
+    
+    csv += 'Order Summary\n'
+    csv += 'Order Number,Product,Quantity,Unit Price,Total,Date\n'
+    
+    let totalRevenue = 0
+    
+    orders?.forEach(order => {
+      const orderMatch = order.details.match(/Order #(\d+)/)
+      const quantityMatch = order.details.match(/Sold (\d+) unit/)
+      const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 0
+      const price = order.items?.price || 0
+      const total = price * quantity
+      totalRevenue += total
+      
+      csv += `#${orderMatch?.[1] || 'N/A'},${order.items?.name || 'Unknown'},${quantity},${price},${total},${new Date(order.timestamp).toLocaleDateString()}\n`
+    })
+    
+    csv += `\nTotal Revenue: $${totalRevenue.toFixed(2)}\n`
+    csv += `Total Orders: ${orders?.length || 0}\n`
+
+    res.setHeader('Content-Type', 'text/csv')
+    res.setHeader('Content-Disposition', `attachment; filename=business-report-${period}.csv`)
+    res.send(csv)
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) })
+  }
+})
+
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`🚀 Backend running: http://localhost:${PORT}/health`)
