@@ -228,6 +228,32 @@ export class AuthService {
     );
   }
 
+  generateBusinessReport(period: string = '7days'): Observable<Blob> {
+  return this.http.get(
+    `${this.ApiUrl}/reports/business?period=${period}`,
+    { 
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    }
+  );
+}
+
+// Get workers for assignment
+getWorkers(): Observable<{ users: any[] }> {
+  return this.http.get<{ users: any[] }>(`${this.ApiUrl}/users/workers`, { 
+    headers: this.getHeaders() 
+  });
+}
+
+// Assign order to worker
+assignOrder(orderId: string, userId: string | null): Observable<{ success: boolean }> {
+  return this.http.patch<{ success: boolean }>(
+    `${this.ApiUrl}/orders/${orderId}/assign`,
+    { assigned_to: userId },
+    { headers: this.getHeaders() }
+  );
+}
+
   exportAnalytics(period: string = '7days'): Observable<Blob> {
     return this.http.get(
       `${this.ApiUrl}/analytics/export?period=${period}`,

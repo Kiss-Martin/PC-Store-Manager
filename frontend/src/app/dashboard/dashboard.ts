@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
 import { ThemeService } from '../theme.service';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 interface DashboardCard {
   title: string;
@@ -20,7 +22,7 @@ interface Activity {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, FormsModule, CommonModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -34,10 +36,54 @@ export class DashboardComponent implements OnInit {
   activities: Activity[] = [];
   isLoading = true;
 
+  showReportModal = false;
+  reportPeriod = '7days';
+  isGeneratingReport = false;
+
+  reportPeriods = [
+    { label: 'Today', value: 'Today' },
+    { label: 'Last 7 Days', value: 'Last 7 Days' },
+    { label: 'Last 30 Days', value: 'Last 30 Days' },
+    { label: 'This Month', value: 'This Month' },
+    { label: 'Last Month', value: 'Last Month' }
+  ];
+
   ngOnInit() {
     // Load dashboard data from backend
     this.loadDashboardData();
   }
+
+  generateReport() {
+    this.showReportModal = true;
+  }
+
+  closeReportModal() {
+    this.showReportModal = false;
+  }
+
+  downloadReport() {
+  this.isGeneratingReport = true;
+  
+  this.auth.generateBusinessReport(this.reportPeriod).subscribe({
+    next: (blob: Blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `business-report-${this.reportPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      this.isGeneratingReport = false;
+      this.closeReportModal();
+    },
+    error: (err: any) => {
+      console.error('Report generation failed:', err);
+      alert('Failed to generate report');
+      this.isGeneratingReport = false;
+    }
+  });
+}
 
   loadDashboardData() {
     // Fetch dashboard data from backend; fall back to mock data on error

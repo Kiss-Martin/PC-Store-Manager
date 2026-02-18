@@ -18,6 +18,7 @@ interface Order {
   customer: string;
   date: string;
   timestamp: string;
+  assignedTo?: string | null;
 }
 
 @Component({
@@ -29,6 +30,8 @@ interface Order {
 })
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];
+  workers: any[] = [];
+  assigningOrder: string | null = null;
   filteredOrders: Order[] = [];
   isLoading = true;
   searchTerm = '';
@@ -101,6 +104,40 @@ export class OrdersComponent implements OnInit {
     this.loadOrders();
     this.loadProducts();
     this.loadCustomers();
+    if (this.auth.isAdmin()) {
+      this.loadWorkers();
+    }
+  }
+
+  loadWorkers() {
+    this.auth.getWorkers().subscribe({
+      next: (res: any) => {
+        this.workers = res.users || [];
+      },
+      error: (err: any) => console.error('Failed to load workers:', err)
+    });
+  }
+
+  assignOrderToWorker(orderId: string, userId: string) {
+    this.assigningOrder = orderId;
+    
+    this.auth.assignOrder(orderId, userId || null).subscribe({
+      next: () => {
+        this.assigningOrder = null;
+        this.loadOrders();
+      },
+      error: (err: any) => {
+        console.error('Failed to assign order:', err);
+        alert('Failed to assign order');
+        this.assigningOrder = null;
+      }
+    });
+  }
+
+  getWorkerName(userId: string | null | undefined): string {
+    if (!userId) return 'Unassigned';
+    const worker = this.workers.find(w => w.id === userId);
+    return worker?.username || 'Unknown';
   }
 
   loadOrders() {
@@ -149,7 +186,6 @@ export class OrdersComponent implements OnInit {
     this.showAddOrderModal = true;
     this.showNewCustomerForm = false;
     this.resetOrderForm();
-
     this.loadProducts();
     this.loadCustomers();
   }

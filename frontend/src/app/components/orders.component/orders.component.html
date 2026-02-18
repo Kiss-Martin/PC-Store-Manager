@@ -130,55 +130,72 @@
     </div>
   }
 
-  <!-- Orders Table -->
-  @if (!isLoading && filteredOrders.length > 0) {
-    <div class="table-container">
-      <table class="orders-table">
-        <thead>
-          <tr>
-            <th>Order #</th>
-            <th>Product</th>
-            <th>Customer</th>
-            <th>Quantity</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of filteredOrders; track order.id) {
-            <tr (click)="openDetailsModal(order)" class="clickable-row">
-              <td class="order-number">{{ order.orderNumber }}</td>
-              <td class="product-name">{{ order.product }}</td>
-              <td>{{ order.customer }}</td>
-              <td>{{ order.quantity }}</td>
-              <td class="amount">${{ order.totalAmount.toLocaleString() }}</td>
-              <td>
-                <span class="status-badge" [ngClass]="getStatusClass(order.status)">
-                  <lucide-icon [name]="getStatusIcon(order.status)" size="14"></lucide-icon>
-                  {{ order.status }}
-                </span>
-              </td>
-              <td class="date">{{ formatDate(order.date) }}</td>
-              <td class="actions" (click)="$event.stopPropagation()">
-                @if (auth.isAdmin() && order.status !== 'cancelled' && order.status !== 'completed') {
-                  <button class="btn-icon btn-edit" (click)="openStatusModal(order)" title="Update Status">
-                    <lucide-icon name="pencil" size="16"></lucide-icon>
-                  </button>
-                }
-                @if (auth.isAdmin() && order.status === 'pending') {
-                  <button class="btn-icon btn-cancel" (click)="confirmCancelOrder(order)" title="Cancel Order">
-                    <lucide-icon color="red" name="x" size="16"></lucide-icon>
-                  </button>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
+<!-- Orders Table -->
+<div class="orders-table">
+  <table>
+    <thead>
+      <tr>
+        <th>Order #</th>
+        <th>Product</th>
+        <th>Customer</th>
+        <th>Quantity</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Assigned To</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- ✅ FONTOS: Ez a @for ciklus kell! -->
+      @for (order of filteredOrders; track order.id) {
+        <tr>
+          <td><strong>{{ order.orderNumber }}</strong></td>
+          <td>{{ order.product }}</td>
+          <td>{{ order.customer }}</td>
+          <td>{{ order.quantity }}</td>
+          <td>${{ order.totalAmount.toFixed(2) }}</td>
+          <td>{{ order.date }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="'status-' + order.status">
+              {{ order.status }}
+            </span>
+          </td>
+          <td>
+            @if (auth.isAdmin()) {
+              <select 
+                [value]="order.assignedTo || ''" 
+                (change)="assignOrderToWorker(order.id, $any($event.target).value)"
+                class="worker-select"
+                [disabled]="assigningOrder === order.id"
+              >
+                <option value="">Unassigned</option>
+                <option *ngFor="let worker of workers" [value]="worker.id">
+                  {{ worker.username }}
+                </option>
+              </select>
+            } @else {
+              <span class="worker-badge">{{ getWorkerName(order.assignedTo) }}</span>
+            }
+          </td>
+          <td>
+            <!-- Actions buttons if you have any -->
+          </td>
+        </tr>
+      }
+      
+      <!-- Empty state -->
+      @if (filteredOrders.length === 0) {
+        <tr>
+          <td colspan="9" class="empty-state">
+            <lucide-icon name="inbox" size="48"></lucide-icon>
+            <p>No orders found</p>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
 
   <!-- Empty State -->
 @if (!isLoading && filteredOrders.length === 0) {

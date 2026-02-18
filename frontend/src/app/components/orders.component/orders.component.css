@@ -1318,3 +1318,33 @@
     flex-direction: column;
   }
 }
+
+.worker-select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid rgba(124, 58, 237, 0.2);
+  border-radius: 0.5rem;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.worker-select:hover {
+  border-color: #7c3aed;
+}
+
+.worker-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.worker-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
