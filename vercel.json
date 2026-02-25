@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install --legacy-peer-deps && npm run build",
   "outputDirectory": "frontend/dist/frontend/browser",
   "installCommand": "npm install",
   "functions": {
@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/index.html"
+      "destination": "/api/index"
     },
     {
       "source": "/(.*)",
