@@ -1,11 +1,5 @@
 {
-  "name": "pc-store-manager",
-  "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "build": "cd frontend && npm run build",
-    "install-backend": "cd backend && npm install"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.34.0",
     "bcryptjs": "^2.4.3",
