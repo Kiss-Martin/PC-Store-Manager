@@ -2,8 +2,25 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import nodemailer from "nodemailer";
+import { createServer } from "http";
+import { Server as IO } from "socket.io";
 import supabase from "./db.js";
+import {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+  createItemSchema,
+  createOrderSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "./validators.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 const app = express();
 
@@ -12,10 +29,109 @@ app.use(
     origin: ["https://pc-store-manager.vercel.app", "http://localhost:4200"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept-Language"],
   }),
 );
 app.use(express.json());
+
+// Basic security headers
+app.use(helmet());
+
+// Basic rate limiter to mitigate brute-force and DoS
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// Simple request sanitizer to remove suspicious payloads
+app.use((req, res, next) => {
+  const sanitize = (obj) => {
+    if (!obj || typeof obj !== "object") return obj;
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === "string") {
+        // remove null-bytes and forbidden characters commonly used in injections
+        obj[k] = v.replace(/\0/g, "").replace(/[<>$;]/g, "");
+      } else if (typeof v === "object") sanitize(v);
+    }
+  };
+  if (req.body) sanitize(req.body);
+  next();
+});
+
+// Swagger/OpenAPI (minimal)
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: { title: "PC Store Manager API", version: "1.0.0" },
+  },
+  apis: [],
+};
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/docs.json", (req, res) => res.json(swaggerSpec));
+
+// Parse Accept-Language header into `req.lang`
+app.use((req, res, next) => {
+  const al = req.headers["accept-language"] || req.headers["Accept-Language"];
+  if (al && typeof al === "string") {
+    req.lang = al.split(",")[0].split("-")[0];
+  } else {
+    req.lang = "en";
+  }
+  next();
+});
+
+// Scrub sensitive fields from JSON responses (e.g., password_hash)
+app.use((req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = (payload) => {
+    const scrub = (obj) => {
+      if (!obj || typeof obj !== "object") return obj;
+      if (Array.isArray(obj)) return obj.map(scrub);
+      const out = {};
+      for (const k of Object.keys(obj)) {
+        if (k === "password_hash" || k === "password" || k === "supabaseKey") continue;
+        const v = obj[k];
+        out[k] = typeof v === "object" ? scrub(v) : v;
+      }
+      return out;
+    };
+
+    try {
+      const cleaned = scrub(payload);
+      return originalJson(cleaned);
+    } catch (e) {
+      return originalJson(payload);
+    }
+  };
+  next();
+});
+
+// Async wrapper helper
+const wrap = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Nodemailer transporter (fallback to log)
+let mailTransporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+  mailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
+
+// Make io available later
+let io = null;
 
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
 
@@ -79,13 +195,12 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.post("/auth/register", async (req, res) => {
-  const { email, username, password, fullname, role } = req.body;
+app.post("/auth/register", wrap(async (req, res) => {
+  const parse = registerSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
 
-  if (!email || !username || !password)
-    return res
-      .status(400)
-      .json({ error: "email, username and password required" });
+  const { email, username, password, fullname, role } = parse.data;
 
   try {
     const hashed = await bcrypt.hash(password, 10);
@@ -111,51 +226,108 @@ app.post("/auth/register", async (req, res) => {
 
     res.json({ user: data, token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    throw err;
   }
-});
+}));
 
-app.post("/auth/login", async (req, res) => {
-  const { email, username, password } = req.body;
+app.post("/auth/login", wrap(async (req, res) => {
+  const parse = loginSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
 
-  if ((!email && !username) || !password)
-    return res
-      .status(400)
-      .json({ error: "email/username and password required" });
+  const { email, username, password } = parse.data;
 
-  try {
-    let query = supabase.from("users").select("*");
+  let query = supabase.from("users").select("*");
 
-    if (email) query = query.eq("email", email);
-    else query = query.eq("username", username);
+  if (email) query = query.eq("email", email);
+  else query = query.eq("username", username);
 
-    const { data, error } = await query.single();
+  const { data, error } = await query.single();
 
-    if (error || !data)
-      return res.status(401).json({ error: "Invalid credentials" });
+  if (error || !data)
+    return res.status(401).json({ error: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, data.password_hash);
-    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+  const ok = await bcrypt.compare(password, data.password_hash);
+  if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
-    const token = generateToken({
+  const token = generateToken({
+    id: data.id,
+    role: data.role,
+  });
+
+  res.json({
+    user: {
       id: data.id,
+      email: data.email,
+      username: data.username,
+      fullname: data.fullname,
       role: data.role,
-    });
+    },
+    token,
+  });
+}));
 
-    res.json({
-      user: {
-        id: data.id,
-        email: data.email,
-        username: data.username,
-        fullname: data.fullname,
-        role: data.role,
-      },
-      token,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// Forgot password - sends token via email (or logs token if SMTP not configured)
+app.post("/auth/forgot-password", wrap(async (req, res) => {
+  const parse = forgotPasswordSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
+
+  const { email } = parse.data;
+
+  // Find user
+  const { data: user } = await supabase.from("users").select("id,email").eq("email", email).single();
+  if (!user) return res.status(200).json({ success: true }); // don't reveal existence
+
+  const token = crypto.randomBytes(24).toString("hex");
+  const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+  await supabase.from("password_resets").insert({ user_id: user.id, token, expires_at });
+
+  const resetLink = `${process.env.FRONTEND_URL || "http://localhost:4200"}/reset-password?token=${token}`;
+
+  if (mailTransporter) {
+    try {
+      await mailTransporter.sendMail({
+        to: email,
+        from: process.env.SMTP_FROM || "noreply@pcstore.local",
+        subject: "Password reset",
+        text: `Reset your password: ${resetLink}`,
+        html: `<p>Reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
+      });
+    } catch (e) {
+      console.warn("Failed to send reset email", e.message || e);
+    }
+  } else {
+    console.log("Password reset token for", email, token, "link:", resetLink);
   }
-});
+
+  res.json({ success: true });
+}));
+
+// Reset password
+app.post("/auth/reset-password", wrap(async (req, res) => {
+  const parse = resetPasswordSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
+
+  const { token, newPassword } = parse.data;
+
+  const { data: pr, error: prErr } = await supabase.from("password_resets").select("id,user_id,expires_at").eq("token", token).single();
+  if (prErr || !pr) return res.status(400).json({ error: "Invalid or expired token" });
+
+  if (new Date(pr.expires_at) < new Date()) {
+    return res.status(400).json({ error: "Token expired" });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  const { error: updErr } = await supabase.from("users").update({ password_hash: hashed }).eq("id", pr.user_id);
+  if (updErr) return res.status(500).json({ error: updErr.message });
+
+  await supabase.from("password_resets").delete().eq("id", pr.id);
+
+  res.json({ success: true });
+}));
 
 app.get("/me", authMiddleware, async (req, res) => {
   const { data, error } = await supabase
@@ -370,56 +542,7 @@ app.get("/dashboard", authMiddleware, async (req, res) => {
   }
 });
 
-// Update item (admin only)
-app.patch("/items/:id", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin")
-    return res.status(403).json({ error: "Admin only" });
-
-  const { id } = req.params;
-  const updates = {};
-  const allowed = [
-    "name",
-    "amount",
-    "model",
-    "specifications",
-    "warranty",
-    "brand_id",
-    "category_id",
-  ];
-
-  for (const k of allowed) {
-    if (k in req.body) updates[k] = req.body[k];
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return res.status(400).json({ error: "No valid fields to update" });
-  }
-
-  const { data, error } = await supabase
-    .from("items")
-    .update(updates)
-    .eq("id", id)
-    .select("*")
-    .single();
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  res.json({ item: data });
-});
-
-// Delete item (admin only)
-app.delete("/items/:id", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin")
-    return res.status(403).json({ error: "Admin only" });
-
-  const { id } = req.params;
-
-  const { error } = await supabase.from("items").delete().eq("id", id);
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  res.json({ success: true });
-});
+// Duplicate item update/delete handlers removed — consolidated later in file
 
 // Analytics endpoint (requires auth) - Uses REAL data from logs
 app.get("/analytics", authMiddleware, async (req, res) => {
@@ -748,69 +871,7 @@ app.get("/analytics/export", authMiddleware, async (req, res) => {
   }
 });
 
-// Get all orders (from logs with customer info)
-app.get("/orders", authMiddleware, async (req, res) => {
-  try {
-    // Get sales logs with item details, status, and customer info
-    const { data: salesLogs, error: logsErr } = await supabase
-      .from("logs")
-      .select(
-        `
-        id,
-        timestamp,
-        details,
-        action,
-        items(id, name, price),
-        orders_status(status, updated_at),
-        customers(name, email)
-      `,
-      )
-      .eq("action", "stock_out")
-      .order("timestamp", { ascending: false });
-
-    if (logsErr) return res.status(500).json({ error: logsErr.message });
-
-    // Transform logs into orders
-    const orders = salesLogs.map((log) => {
-      // Parse quantity from details
-      const quantityMatch = log.details?.match(/Sold (\d+) unit/);
-      const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
-
-      // Extract order number
-      const orderMatch = log.details?.match(/Order #(\d+)/);
-      const orderNumber = orderMatch
-        ? `#${orderMatch[1]}`
-        : `#${log.id.substring(0, 8)}`;
-
-      const unitPrice = log.items?.price || 0;
-      const totalAmount = unitPrice * quantity;
-
-      // Get status from orders_status table, or default to completed
-      const status = log.orders_status?.[0]?.status || "completed";
-
-      // ✅ Get real customer name
-      const customer = log.customers?.name || "Guest Customer";
-
-      return {
-        id: log.id,
-        orderNumber,
-        product: log.items?.name || "Unknown Product",
-        productId: log.items?.id || "",
-        quantity,
-        unitPrice,
-        totalAmount: Math.round(totalAmount * 100) / 100,
-        status,
-        customer, // ✅ Real customer name
-        date: log.timestamp,
-        timestamp: log.timestamp,
-      };
-    });
-
-    res.json({ orders });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
+// Orders endpoint consolidated later includes assignment filtering and admin view
 
 // Export orders as CSV (admin only) - Use actual status from DB
 app.get("/orders/export", authMiddleware, async (req, res) => {
@@ -1094,100 +1155,98 @@ app.post("/customers", authMiddleware, async (req, res) => {
 });
 
 // Create manual order (admin only)
-app.post("/orders", authMiddleware, async (req, res) => {
+app.post("/orders", authMiddleware, wrap(async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin only" });
   }
 
-  try {
-    const { item_id, customer_id, quantity, status = "pending" } = req.body;
+  const parse = createOrderSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
 
-    if (!item_id || !customer_id || !quantity || quantity < 1) {
-      return res
-        .status(400)
-        .json({ error: "Item, customer, and valid quantity are required" });
-    }
+  const { item_id, customer_id, quantity, status = "pending" } = parse.data;
 
-    if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    // Get item details and check stock
-    const { data: item, error: itemErr } = await supabase
-      .from("items")
-      .select("id, name, price, amount")
-      .eq("id", item_id)
-      .single();
-
-    if (itemErr || !item) {
-      return res.status(404).json({ error: "Item not found" });
-    }
-
-    if (item.amount < quantity) {
-      return res
-        .status(400)
-        .json({ error: `Insufficient stock. Only ${item.amount} available` });
-    }
-
-    // Generate order number
-    const orderNumber = Math.floor(1000 + Math.random() * 9000);
-
-    // Update item stock (only if status is completed or processing)
-    if (status === "completed" || status === "processing") {
-      const { error: updateErr } = await supabase
-        .from("items")
-        .update({ amount: item.amount - quantity })
-        .eq("id", item_id);
-
-      if (updateErr) {
-        return res.status(500).json({ error: updateErr.message });
-      }
-    }
-
-    // Create log entry
-    const { data: log, error: logErr } = await supabase
-      .from("logs")
-      .insert({
-        item_id: item_id,
-        customer_id: customer_id,
-        action: "stock_out",
-        details: `Sold ${quantity} unit${quantity > 1 ? "s" : ""} - Order #${orderNumber}`,
-        timestamp: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (logErr) {
-      return res.status(500).json({ error: logErr.message });
-    }
-
-    // Create order status record
-    const { error: statusErr } = await supabase.from("orders_status").insert({
-      log_id: log.id,
-      status: status,
-      updated_by: req.user.id,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (statusErr) {
-      return res.status(500).json({ error: statusErr.message });
-    }
-
-    res.json({
-      success: true,
-      order: {
-        id: log.id,
-        orderNumber: `#${orderNumber}`,
-        product: item.name,
-        quantity,
-        totalAmount: item.price * quantity,
-        status: status,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
+  if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status" });
   }
-});
+
+  // Get item details and check stock
+  const { data: item, error: itemErr } = await supabase
+    .from("items")
+    .select("id, name, price, amount")
+    .eq("id", item_id)
+    .single();
+
+  if (itemErr || !item) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+
+  if (item.amount < quantity) {
+    return res.status(400).json({ error: `Insufficient stock. Only ${item.amount} available` });
+  }
+
+  // Generate order number
+  const orderNumber = Math.floor(1000 + Math.random() * 9000);
+
+  // Update item stock (only if status is completed or processing)
+  if (status === "completed" || status === "processing") {
+    const { error: updateErr } = await supabase
+      .from("items")
+      .update({ amount: item.amount - quantity })
+      .eq("id", item_id);
+
+    if (updateErr) {
+      throw new Error(updateErr.message);
+    }
+  }
+
+  // Create log entry
+  const { data: log, error: logErr } = await supabase
+    .from("logs")
+    .insert({
+      item_id: item_id,
+      customer_id: customer_id,
+      action: "stock_out",
+      details: `Sold ${quantity} unit${quantity > 1 ? "s" : ""} - Order #${orderNumber}`,
+      timestamp: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (logErr) {
+    throw new Error(logErr.message);
+  }
+
+  // Create order status record
+  const { error: statusErr } = await supabase.from("orders_status").insert({
+    log_id: log.id,
+    status: status,
+    updated_by: req.user.id,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (statusErr) {
+    throw new Error(statusErr.message);
+  }
+
+  const responseOrder = {
+    id: log.id,
+    orderNumber: `#${orderNumber}`,
+    product: item.name,
+    quantity,
+    totalAmount: Math.round((item.price || 0) * quantity * 100) / 100,
+    status: status,
+  };
+
+  // Emit real-time event if socket available
+  try {
+    if (io) io.emit("order_created", responseOrder);
+  } catch (e) {
+    console.warn("Socket emit failed", e.message || e);
+  }
+
+  res.json({ success: true, order: responseOrder });
+}));
 
 // Get workers (admin only)
 app.get("/users/workers", authMiddleware, async (req, res) => {
@@ -1364,9 +1423,31 @@ app.get("/reports/business", authMiddleware, async (req, res) => {
   }
 });
 
+// Central error handler (consistent JSON responses)
+app.use((err, req, res, next) => {
+  console.error(err && err.stack ? err.stack : err);
+  const status = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ error: message });
+});
+
 export default app;
 
+// Create HTTP server and attach socket.io
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = createServer(app);
+io = new IO(server, {
+  cors: {
+    origin: ["https://pc-store-manager.vercel.app", "http://localhost:4200"],
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Websocket connected:", socket.id);
+  socket.on("disconnect", () => console.log("Socket disconnected", socket.id));
+});
+
+server.listen(PORT, () => {
   console.log(`🚀 Backend running: http://localhost:${PORT}/health`);
 });

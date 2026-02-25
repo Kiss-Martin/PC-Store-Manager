@@ -4,60 +4,142 @@
 @CATEGORY_ID =17107080-2320-4b5f-82bb-d7bac5f93b78
 @BRAND_ID =39e7f0dc-cbd6-46e6-958b-7e44263d304e
 
+@BASE_URL = http://localhost:3000
+@ADMIN_TOKEN =
+@USER_TOKEN =
+@CATEGORY_ID =
+@BRAND_ID =
+
+### Quick notes
+# - Use the Register/Login requests to obtain an access token and paste it into `@ADMIN_TOKEN`.
+# - Some endpoints require `Authorization: Bearer {{ADMIN_TOKEN}}` (admin only).
+
 ### 1) Health
 GET {{BASE_URL}}/health
 
-### 2) Register admin
+### 2) Docs (Swagger UI)
+GET {{BASE_URL}}/docs
+
+### 3) Register (invalid) - should return 400
 POST {{BASE_URL}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin2@test.com",
-  "username": "admin2",
-  "password": "TestPass1234!",
-  "fullname": "System Admin1",
+  "email": "not-an-email",
+  "username": "u",
+  "password": "123"
+}
+
+### 4) Register admin (valid)
+POST {{BASE_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin-test+rest@example.com",
+  "username": "admintest",
+  "password": "StrongPass123!",
+  "fullname": "Admin Test",
   "role": "admin"
 }
 
-### 3) Login admin
+# After successful registration, call Login and copy the `token` value into @ADMIN_TOKEN
+
+### 5) Login admin (get token)
 POST {{BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin2@test.com",
-  "password": "TestPass1234!"
+  "email": "admin-test+rest@example.com",
+  "password": "StrongPass123!"
 }
 
-### 4) /me with token
+### 6) Get current user (requires token)
 GET {{BASE_URL}}/me
 Authorization: Bearer {{ADMIN_TOKEN}}
 
-### 5) Create item (ADMIN ONLY)
+### 7) Create brand (admin) - optional (if API supports)
+POST {{BASE_URL}}/brands
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "TestBrand"
+}
+
+### 8) Create category (admin) - optional (if API supports)
+POST {{BASE_URL}}/categories
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Laptops"
+}
+
+# If your API doesn't have /brands or /categories creation endpoints, set @BRAND_ID and @CATEGORY_ID manually.
+
+### 9) Create item (admin)
 POST {{BASE_URL}}/items
 Authorization: Bearer {{ADMIN_TOKEN}}
 Content-Type: application/json
 
 {
   "name": "Laptop X",
+  "price": 1299.99,
   "amount": 5,
   "category_id": "{{CATEGORY_ID}}",
   "brand_id": "{{BRAND_ID}}",
   "model": "X1000",
-  "specifications": "16GB RAM",
+  "specs": "16GB RAM, 512GB SSD",
   "warranty": "2 years"
 }
 
-### 6) List items
+### 10) List items (admin)
 GET {{BASE_URL}}/items
+Authorization: Bearer {{ADMIN_TOKEN}}
 
-### 7) Negative test (no token)
-GET {{BASE_URL}}/me
-
-### 8) Wrong password
-POST {{BASE_URL}}/auth/login
+### 11) Create customer (admin)
+POST {{BASE_URL}}/customers
+Authorization: Bearer {{ADMIN_TOKEN}}
 Content-Type: application/json
 
 {
-  "email": "admin@test.com",
-  "password": "WrongPassword"
+  "name": "John Doe",
+  "email": "johndoe@example.com",
+  "phone": "+36701234567"
 }
+
+### 12) Create manual order (admin)
+POST {{BASE_URL}}/orders
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "item_id": "<REPLACE_WITH_ITEM_ID>",
+  "customer_id": "<REPLACE_WITH_CUSTOMER_ID>",
+  "quantity": 1,
+  "status": "completed"
+}
+
+### 13) Export orders CSV (admin)
+GET {{BASE_URL}}/orders/export?status=all
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### 14) Forgot password (initiates reset)
+POST {{BASE_URL}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "johndoe@example.com"
+}
+
+### 15) Reset password (use token from DB or logs)
+POST {{BASE_URL}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "<PASTE_RESET_TOKEN_HERE>",
+  "newPassword": "NewStrongPass123!"
+}
+
+### 16) Negative: access protected route without token (should return 401)
+GET {{BASE_URL}}/me

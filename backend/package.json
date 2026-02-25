@@ -17,6 +17,13 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.0"
+    "jsonwebtoken": "^9.0.0",
+    "helmet": "^7.0.0",
+    "express-rate-limit": "^7.0.0",
+    "zod": "^3.23.2",
+    "swagger-ui-express": "^4.6.3",
+    "swagger-jsdoc": "^6.2.8",
+    "nodemailer": "^6.9.5",
+    "socket.io": "^4.7.2"
   }
 }
