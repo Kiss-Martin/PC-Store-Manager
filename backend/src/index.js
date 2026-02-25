@@ -18,6 +18,10 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
+  (err, req, res, next) => {
+    console.error("CORS error:", err);
+    res.status(500).json({ error: "CORS error" });
+  }
 );
 app.use(express.json());
 
@@ -801,66 +805,6 @@ app.get("/orders", authMiddleware, async (req, res) => {
   }
 });
 
-// Update order status (admin only) - PROPERLY PERSIST TO DATABASE
-app.patch("/orders/:id/status", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin only" });
-  }
-
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
-    // Check if status record exists
-    const { data: existingStatus, error: checkErr } = await supabase
-      .from("orders_status")
-      .select("id")
-      .eq("log_id", id)
-      .single();
-
-    let result;
-
-    if (existingStatus) {
-      // Update existing status
-      const { data, error } = await supabase
-        .from("orders_status")
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-          updated_by: req.user.id,
-        })
-        .eq("log_id", id)
-        .select()
-        .single();
-
-      if (error) return res.status(500).json({ error: error.message });
-      result = data;
-    } else {
-      // Insert new status
-      const { data, error } = await supabase
-        .from("orders_status")
-        .insert({
-          log_id: id,
-          status,
-          updated_by: req.user.id,
-        })
-        .select()
-        .single();
-
-      if (error) return res.status(500).json({ error: error.message });
-      result = data;
-    }
-
-    res.json({ success: true, status: result });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
 // Export orders as CSV (admin only) - Use actual status from DB
 app.get("/orders/export", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
@@ -922,7 +866,7 @@ app.get("/orders/export", authMiddleware, async (req, res) => {
   }
 });
 
-// Update order status (admin only)
+// Update order status (admin only) - PROPERLY PERSIST TO DATABASE
 app.patch("/orders/:id/status", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin only" });
@@ -936,147 +880,47 @@ app.patch("/orders/:id/status", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    // Update the log details to reflect status change
-    const { data, error } = await supabase
-      .from("logs")
-      .update({
-        details: `Status updated to ${status} - ${new Date().toISOString()}`,
-      })
-      .eq("id", id)
-      .select()
+    // Check if status record exists
+    const { data: existingStatus, error: checkErr } = await supabase
+      .from("orders_status")
+      .select("id")
+      .eq("log_id", id)
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    let result;
 
-    res.json({ success: true, order: data });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
+    if (existingStatus) {
+      // Update existing status
+      const { data, error } = await supabase
+        .from("orders_status")
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+          updated_by: req.user.id,
+        })
+        .eq("log_id", id)
+        .select()
+        .single();
 
-// Export orders as CSV (admin only)
-app.get("/orders/export", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin only" });
-  }
+      if (error) return res.status(500).json({ error: error.message });
+      result = data;
+    } else {
+      // Insert new status
+      const { data, error } = await supabase
+        .from("orders_status")
+        .insert({
+          log_id: id,
+          status,
+          updated_by: req.user.id,
+        })
+        .select()
+        .single();
 
-  try {
-    const { status = "all" } = req.query;
+      if (error) return res.status(500).json({ error: error.message });
+      result = data;
+    }
 
-    // Get sales logs
-    let query = supabase
-      .from("logs")
-      .select(
-        `
-        id,
-        timestamp,
-        details,
-        items(name, price)
-      `,
-      )
-      .eq("action", "stock_out")
-      .order("timestamp", { ascending: false });
-
-    const { data: salesLogs, error: logsErr } = await query;
-
-    if (logsErr) return res.status(500).json({ error: logsErr.message });
-
-    // Generate CSV
-    let csv =
-      "Order Number,Date,Product,Quantity,Unit Price,Total Amount,Status\n";
-
-    salesLogs.forEach((log) => {
-      const orderMatch = log.details?.match(/Order #(\d+)/);
-      const orderNumber = orderMatch ? orderMatch[1] : log.id.substring(0, 8);
-
-      const date = new Date(log.timestamp).toISOString().split("T")[0];
-      const product = (log.items?.name || "Unknown").replace(/,/g, ";");
-
-      const quantityMatch = log.details?.match(/Sold (\d+) unit/);
-      const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
-
-      const unitPrice = log.items?.price || 0;
-      const total = unitPrice * quantity;
-
-      const daysAgo = Math.floor(
-        (Date.now() - new Date(log.timestamp).getTime()) /
-          (1000 * 60 * 60 * 24),
-      );
-      let orderStatus = "completed";
-      if (daysAgo < 1) orderStatus = "processing";
-      else if (daysAgo < 2) orderStatus = "pending";
-
-      if (status === "all" || orderStatus === status) {
-        csv += `${orderNumber},${date},${product},${quantity},${unitPrice},${total},${orderStatus}\n`;
-      }
-    });
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=orders-${status}-${new Date().toISOString().split("T")[0]}.csv`,
-    );
-    res.send(csv);
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-app.get("/categories", authMiddleware, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json({ categories: data || [] });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-// Get brands
-app.get("/brands", authMiddleware, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("brands")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json({ brands: data || [] });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-// Get all items with category and brand names
-app.get("/items", authMiddleware, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("items")
-      .select(
-        `
-        *,
-        categories(name),
-        brands(name)
-      `,
-      )
-      .order("name", { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    // Flatten the response
-    const items = (data || []).map((item) => ({
-      ...item,
-      category: item.categories?.name,
-      brand: item.brands?.name,
-    }));
-
-    res.json({ items });
+    res.json({ success: true, status: result });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }
@@ -1178,21 +1022,6 @@ app.delete("/items/:id", authMiddleware, async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message || String(err) });
-  }
-});
-
-app.get("/categories", authMiddleware, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name")
-      .order("name", { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json({ categories: data || [] });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }
