@@ -74,20 +74,18 @@ app.get("/health", async (req, res) => {
 
 app.get("/", (req, res) => {
   res.json({
-    status: "ok",
     message: "PC Store Manager API",
+    status: "online",
     version: "1.0.0",
-    endpoints: {
-      health: "/api/health",
-      auth: {
-        register: "POST /api/auth/register",
-        login: "POST /api/auth/login"
-      },
-      items: "GET /api/items",
-      dashboard: "GET /api/dashboard",
-      orders: "GET /api/orders",
-      analytics: "GET /api/analytics"
-    }
+    endpoints: [
+      "GET  /api/health",
+      "POST /api/auth/login",
+      "POST /api/auth/register",
+      "GET  /api/items",
+      "GET  /api/dashboard",
+      "GET  /api/orders",
+      "GET  /api/analytics"
+    ]
   });
 });
 
