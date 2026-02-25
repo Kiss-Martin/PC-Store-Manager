@@ -46,6 +46,21 @@ function authMiddleware(req, res, next) {
   }
 }
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "PC Store Manager API",
+    status: "online",
+    version: "1.0.0",
+    endpoints: {
+      health: "GET /api/health",
+      auth: "POST /api/auth/login, POST /api/auth/register",
+      items: "GET /api/items",
+      dashboard: "GET /api/dashboard",
+      orders: "GET /api/orders"
+    }
+  });
+});
+
 app.get("/health", async (req, res) => {
   try {
     const { data, error } = await supabase.from("users").select("id").limit(1);
@@ -72,22 +87,6 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.json({
-    message: "PC Store Manager API",
-    status: "online",
-    version: "1.0.0",
-    endpoints: [
-      "GET  /api/health",
-      "POST /api/auth/login",
-      "POST /api/auth/register",
-      "GET  /api/items",
-      "GET  /api/dashboard",
-      "GET  /api/orders",
-      "GET  /api/analytics"
-    ]
-  });
-});
 
 app.post("/auth/register", async (req, res) => {
   const { email, username, password, fullname, role } = req.body;
