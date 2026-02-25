@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 interface User {
   id: string;
@@ -23,8 +24,8 @@ interface AuthResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private ApiUrl = 'https://pc-store-manager.onrender.com';
-  
+  private ApiUrl = environment.apiUrl;
+
   user = signal<User | null>(null);
   token = signal<string | null>(null);
 
@@ -96,16 +97,16 @@ export class AuthService {
 
   // Profile endpoints
   getMe(): Observable<{ user: User }> {
-    return this.http.get<{ user: User }>(`${this.ApiUrl}/me`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ user: User }>(`${this.ApiUrl}/me`, {
+      headers: this.getHeaders()
     }).pipe(
       tap((res) => this.user.set(res.user))
     );
   }
 
   updateMe(data: { email?: string; username?: string; fullname?: string }): Observable<{ user: User }> {
-    return this.http.patch<{ user: User }>(`${this.ApiUrl}/me`, data, { 
-      headers: this.getHeaders() 
+    return this.http.patch<{ user: User }>(`${this.ApiUrl}/me`, data, {
+      headers: this.getHeaders()
     }).pipe(
       tap((res) => {
         this.user.set(res.user);
@@ -124,8 +125,8 @@ export class AuthService {
 
   // Items/Products endpoints
   getItems(): Observable<{ items: any[] }> {
-    return this.http.get<{ items: any[] }>(`${this.ApiUrl}/items`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ items: any[] }>(`${this.ApiUrl}/items`, {
+      headers: this.getHeaders()
     });
   }
 
@@ -154,22 +155,22 @@ export class AuthService {
 
   // Categories endpoints
   getCategories(): Observable<{ categories: any[] }> {
-    return this.http.get<{ categories: any[] }>(`${this.ApiUrl}/categories`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ categories: any[] }>(`${this.ApiUrl}/categories`, {
+      headers: this.getHeaders()
     });
   }
 
   // Brands endpoints
   getBrands(): Observable<{ brands: any[] }> {
-    return this.http.get<{ brands: any[] }>(`${this.ApiUrl}/brands`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ brands: any[] }>(`${this.ApiUrl}/brands`, {
+      headers: this.getHeaders()
     });
   }
 
   // Orders endpoints
   getOrders(): Observable<{ orders: any[] }> {
-    return this.http.get<{ orders: any[] }>(`${this.ApiUrl}/orders`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ orders: any[] }>(`${this.ApiUrl}/orders`, {
+      headers: this.getHeaders()
     });
   }
 
@@ -184,7 +185,7 @@ export class AuthService {
   exportOrders(status: string = 'all'): Observable<Blob> {
     return this.http.get(
       `${this.ApiUrl}/orders/export?status=${status}`,
-      { 
+      {
         headers: this.getHeaders(),
         responseType: 'blob'
       }
@@ -193,21 +194,21 @@ export class AuthService {
 
   // Dashboard endpoint
   getDashboard(): Observable<any> {
-    return this.http.get(`${this.ApiUrl}/dashboard`, { 
-      headers: this.getHeaders() 
+    return this.http.get(`${this.ApiUrl}/dashboard`, {
+      headers: this.getHeaders()
     });
   }
 
   // Analytics endpoint
   getAnalytics(period: string = '7days'): Observable<any> {
-    return this.http.get(`${this.ApiUrl}/analytics?period=${period}`, { 
-      headers: this.getHeaders() 
+    return this.http.get(`${this.ApiUrl}/analytics?period=${period}`, {
+      headers: this.getHeaders()
     });
   }
 
   getCustomers(): Observable<{ customers: any[] }> {
-    return this.http.get<{ customers: any[] }>(`${this.ApiUrl}/customers`, { 
-      headers: this.getHeaders() 
+    return this.http.get<{ customers: any[] }>(`${this.ApiUrl}/customers`, {
+      headers: this.getHeaders()
     });
   }
 
@@ -231,7 +232,7 @@ export class AuthService {
   generateBusinessReport(period: string = '7days'): Observable<Blob> {
   return this.http.get(
     `${this.ApiUrl}/reports/business?period=${period}`,
-    { 
+    {
       headers: this.getHeaders(),
       responseType: 'blob'
     }
@@ -240,8 +241,8 @@ export class AuthService {
 
 // Get workers for assignment
 getWorkers(): Observable<{ users: any[] }> {
-  return this.http.get<{ users: any[] }>(`${this.ApiUrl}/users/workers`, { 
-    headers: this.getHeaders() 
+  return this.http.get<{ users: any[] }>(`${this.ApiUrl}/users/workers`, {
+    headers: this.getHeaders()
   });
 }
 
@@ -257,7 +258,7 @@ assignOrder(orderId: string, userId: string | null): Observable<{ success: boole
   exportAnalytics(period: string = '7days'): Observable<Blob> {
     return this.http.get(
       `${this.ApiUrl}/analytics/export?period=${period}`,
-      { 
+      {
         headers: this.getHeaders(),
         responseType: 'blob'
       }
