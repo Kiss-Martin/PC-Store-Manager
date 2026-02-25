@@ -11,7 +11,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:4200",
-      "https://pc-store-manager-80iz98a54-kiss-martins-projects.vercel.app",
+      "https://pc-store-manager-b84yjm1u9-kiss-martins-projects.vercel.app",
       "https://pc-store-manager.vercel.app",
     ],
     credentials: true,
