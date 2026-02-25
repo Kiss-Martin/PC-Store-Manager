@@ -11,17 +11,13 @@ app.use(
   cors({
     origin: [
       "http://localhost:4200",
-      "https://pc-store-manager-b84yjm1u9-kiss-martins-projects.vercel.app",
+      "https://pc-store-manager-*.vercel.app",
       "https://pc-store-manager.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
-  (err, req, res, next) => {
-    console.error("CORS error:", err);
-    res.status(500).json({ error: "CORS error" });
-  }
 );
 app.use(express.json());
 
