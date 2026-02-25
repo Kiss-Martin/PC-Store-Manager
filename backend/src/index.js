@@ -9,10 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "https://pc-store-manager.vercel.app",
-      "http://localhost:3000",
-    ],
+    origin: ["https://pc-store-manager.vercel.app", "http://localhost:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -51,8 +48,8 @@ app.get("/", (req, res) => {
       auth: "POST /api/auth/login, POST /api/auth/register",
       items: "GET /api/items",
       dashboard: "GET /api/dashboard",
-      orders: "GET /api/orders"
-    }
+      orders: "GET /api/orders",
+    },
   });
 });
 
@@ -81,7 +78,6 @@ app.get("/health", async (req, res) => {
       .json({ status: "error", error: err.message || String(err) });
   }
 });
-
 
 app.post("/auth/register", async (req, res) => {
   const { email, username, password, fullname, role } = req.body;
@@ -1370,9 +1366,7 @@ app.get("/reports/business", authMiddleware, async (req, res) => {
 
 export default app;
 
-if (process.env.VERCEL !== "1") {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Backend running: http://localhost:${PORT}/health`);
-  });
-}
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running: http://localhost:${PORT}/health`);
+});
