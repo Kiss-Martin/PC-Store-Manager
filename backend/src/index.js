@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["https://pc-store-manager.vercel.app", "http://localhost:3000"],
+    origin: ["https://pc-store-manager.vercel.app", "http://localhost:4200"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
