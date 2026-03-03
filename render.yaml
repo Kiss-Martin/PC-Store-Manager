@@ -1,11 +1,15 @@
-services:
-  - type: web
-    name: pc-store-manager-frontend
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist/frontend/browser
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+# Exported from Render on 2026-03-03T07:53:34Z
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: PC-Store-Manager-Frontend
+      runtime: static
+      repo: https://github.com/Kiss-Martin/PC-Store-Manager
+      buildCommand: npm install && npm run build
+      staticPublishPath: dist/frontend/browser
+      autoDeployTrigger: commit
+      rootDir: frontend
