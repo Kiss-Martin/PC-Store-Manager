@@ -104,10 +104,20 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => console.log('Socket disconnected', socket.id));
 });
 
+// Start server
+server.listen(PORT, () => {
+const reset = "\x1b[0m";
+const bold = "\x1b[1m";
+const cyan = "\x1b[36m";
+const green = "\x1b[32m";
+const yellow = "\x1b[33m";
 
-
-
-
-// Dashboard summary endpoint
-
-
+console.log("\n" + cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + reset);
+console.log(`${bold}${green}   BACKEND SZERVER ELINDÍTVA ${reset}`);
+console.log(cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + reset);
+console.log(`   Port:        ${bold}${yellow}${PORT}${reset}`);
+console.log(
+  `   Environment: ${bold}${yellow}${process.env.NODE_ENV || "development"}${reset}`,
+);
+console.log(cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" + reset);
+});

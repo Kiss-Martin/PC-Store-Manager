@@ -6,6 +6,17 @@ projects:
   - name: Production
     services:
     - type: web
+      name: PC-Store-Manager-Backend
+      runtime: node
+      repo: https://github.com/Kiss-Martin/PC-Store-Manager
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: commit
+      rootDir: backend
+      envVars:
+      - key: NODE_ENV
+        value: production
+    - type: web
       name: PC-Store-Manager-Frontend
       runtime: static
       repo: https://github.com/Kiss-Martin/PC-Store-Manager
