@@ -24,11 +24,14 @@ const app = express();
 
 app.use(
   cors({
-    origin: ['https://pc-store-manager.vercel.app', 'http://localhost:4200'],
+    origin: [
+      "https://pc-store-manager-frontend.onrender.com",
+      "http://localhost:4200",
+    ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
-  })
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept-Language"],
+  }),
 );
 app.use(express.json());
 app.use(helmet());
@@ -91,8 +94,8 @@ const PORT = process.env.PORT || 3000;
 const server = createServer(app);
 let io = new IO(server, {
   cors: {
-    origin: ['https://pc-store-manager.vercel.app', 'http://localhost:4200'],
-    methods: ['GET', 'POST'],
+    origin: ["https://pc-store-manager-frontend.onrender.com", "http://localhost:4200"],
+    methods: ["GET", "POST"],
   },
 });
 
