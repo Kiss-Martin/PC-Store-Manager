@@ -1,220 +1,158 @@
-## Backend dokumentáció (aktuális állapot)
 
-Ez a fájl a projekt jelenlegi backendjének működését és végpontjait írja le. A backend egy Express.js alkalmazás, amely a `@supabase/supabase-js` klienst használja Postgres adatbázishoz. Főbb funkciók: JWT alapú hitelesítés, zod validáció, jelszó-visszaállítás tokennel, valós idejű értesítések Socket.IO-val, Swagger dokumentáció és néhány admin CSV export.
+# Backend Documentation (Current State)
 
-**Tartalom**
-- Áttekintés
-- Követelmények
-- Környezeti változók
-- Telepítés és indítás
-- Főbb végpontok
-- Adatbázis (ajánlás)
-- Biztonság és egyéb megjegyzések
+This document describes the backend of the PC Store Manager project. The backend is an Express.js application using Supabase (Postgres) for data storage, JWT for authentication, Zod for validation, and Socket.IO for real-time notifications. All business logic is organized into controllers and routes, and the API is documented with Swagger UI.
 
-## Áttekintés
+## Table of Contents
+- Overview
+- Requirements
+- Environment Variables
+- Installation & Running
+- Main Endpoints
+- Database Structure (Recommended)
+- Security Notes
 
-Főbb komponensek és minták:
+## Overview
+
+**Key technologies:**
 - Express.js (ESM)
-- Supabase (Postgres) a `backend/src/db.js`-en keresztül
-- JWT (`JWT_SECRET`) + `bcryptjs` jelszóhash-elés
-- Input-validáció: `zod` sémák (`backend/src/validators.js`)
-- Biztonsági köztesrétegek: `helmet`, `express-rate-limit`, egyszerű kérés-sanitization és válasz-scrubbing
-- Realtime: `socket.io` (kliens esemény: `order_created`)
-- API dokumentáció: Swagger UI a `/docs` útvonalon
-- E-mail (jelszó-visszaállításhoz): `nodemailer` (ha nincs SMTP, token a logba kerül)
+- Supabase (Postgres) via `backend/src/db.js`
+- JWT authentication (`JWT_SECRET`), password hashing with `bcryptjs`
+- Input validation with Zod (`backend/src/validators.js`)
+- Security: `helmet`, `express-rate-limit`, request sanitization, response scrubbing
+- Real-time: Socket.IO (`order_created` event)
+- API docs: Swagger UI at `/docs`
+- Email (for password reset): `nodemailer` (if SMTP not set, token is logged)
 
-## Követelmények
+## Requirements
 
-- Node.js 18+ (ESM támogatás)
+- Node.js 18+
 - npm
-- Supabase projekt és kulcs (`SUPABASE_KEY`)
+- Supabase project and key (`SUPABASE_KEY`)
 
-## Környezeti változók
+## Environment Variables
 
-- `SUPABASE_KEY` — Supabase service/anon kulcs
-- `JWT_SECRET` — JWT aláírási titok
-- `PORT` — szerver port (alap: 3000)
-- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM` — (opcionális) ha e-maileket szeretnél küldeni
-- `FRONTEND_URL` — jelszóvisszaállító link generálásához
+- `SUPABASE_KEY` — Supabase service/anon key
+- `JWT_SECRET` — JWT signing secret
+- `PORT` — server port (default: 3000)
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM` — (optional) for sending emails
+- `FRONTEND_URL` — for generating password reset links
 
-## Telepítés és futtatás
-
-1) Lépj a backend mappába:
+## Installation & Running
 
 ```bash
 cd backend
-```
-
-2) Telepítsd a függőségeket:
-
-```bash
 npm install
-```
-
-3) Készítsd el a `.env` fájlt a szükséges változókkal.
-
-4) Fejlesztés indítása:
-
-```bash
+# Create a .env file with the required variables
 npm run dev
 ```
 
-A health végpont: `GET /health` (pl. http://localhost:3000/health)
 
-## Főbb végpontok (összefoglaló)
+## Main Endpoints
 
-Általános: minden privát végpont `Authorization: Bearer <token>` fejlécet vár.
+All private endpoints require `Authorization: Bearer <token>`.
 
-- `GET /health` — szolgáltatás és Supabase elérhetőség
-- `GET /` — rövid API meta információk
+### General
+- `GET /health` — Service and Supabase health check
+- `GET /` — API meta info
 
-Auth:
-- `POST /auth/register` — regisztráció; body: `{ email, password, username?, fullname?, role? }`
-- `POST /auth/login` — login; body: `{ email? | username?, password }`
-- `POST /auth/forgot-password` — jelszó-visszaállító token létrehozása (email alapú)
-- `POST /auth/reset-password` — jelszó visszaállítása tokennel; body: `{ token, newPassword }`
+### Auth
+- `POST /auth/register` — Register; `{ email, password, username?, fullname?, role? }`
+- `POST /auth/login` — Login; `{ email or username, password }`
+- `POST /auth/forgot-password` — Request password reset token (email)
+- `POST /auth/reset-password` — Reset password with token; `{ token, newPassword }`
 
-Felhasználó:
-- `GET /me` — saját profil lekérése (auth required)
-- `PATCH /me` — profil frissítése
-- `PATCH /me/password` — jelszó módosítása (current + new)
+### Users
+- `GET /users/me` — Get own profile (auth required)
+- `PATCH /users/me` — Update profile
+- `PATCH /users/me/password` — Change password
+- `GET /users/workers` — List workers (admin only)
 
-Termékek / készlet:
-- `GET /items` — elemek listázása (auth required)
-- `POST /items` — új tétel létrehozása (admin only)
-- `PATCH /items/:id` — tétel frissítése (admin only)
-- `DELETE /items/:id` — tétel törlése (admin only)
-- `GET /brands`, `GET /customers`, `POST /customers` — kapcsolódó segédvégpontok
+### Items / Inventory
+- `GET /items` — List items (auth required)
+- `POST /items` — Create item (admin only)
+- `PATCH /items/:id` — Update item (admin only)
+- `DELETE /items/:id` — Delete item (admin only)
 
-Rendelések / logok:
-- `POST /orders` — manuális rendelés létrehozása (admin only). Létrehozáskor napló (`logs`) jön létre, és az `order_created` esemény emitálódik Socket.IO-val.
-- `GET /orders` — rendelések lekérdezése (adminok minden rendelést látják; dolgozók csak a hozzájuk rendelteket)
-- `PATCH /orders/:id/status` — státusz frissítése (admin only)
-- `PATCH /orders/:id/assign` — rendelés hozzárendelése dolgozóhoz (admin only)
+### Customers
+- `GET /customers` — List customers (auth required)
+- `POST /customers` — Create customer (admin only)
 
-Exportok / riportok (CSV):
-- `GET /analytics/export` — értékesítési CSV (admin)
-- `GET /orders/export` — rendelések CSV (admin)
-- `GET /reports/business` — üzleti riport CSV (admin)
+### Orders
+- `POST /orders` — Create manual order (admin only, emits `order_created` via Socket.IO)
+- `GET /orders` — List orders (admins see all, workers see assigned)
+- `PATCH /orders/:id/status` — Update order status (admin only)
+- `PATCH /orders/:id/assign` — Assign order to worker (admin only)
+- `GET /orders/export` — Export orders as CSV (admin only)
 
-## Realtime
+### Analytics & Reports
+- `GET /analytics` — Get analytics summary (auth required)
+- `GET /analytics/export` — Export analytics as CSV (admin only)
+- `GET /reports/business` — Business report CSV (admin only)
 
-Socket.IO van csatolva a szerverhez; amikor új rendelés jön létre, a backend `order_created` eseményt küld az összes kapcsolódó kliensnek payloadként a rendelés összefoglalójával.
+## Real-time
 
-## Validáció és hibakezelés
+Socket.IO is attached to the server. When a new order is created, the backend emits an `order_created` event to all connected clients with the order summary.
 
-- A bejövő payloadok ellenőrzése `zod` sémák segítségével történik (`backend/src/validators.js`). Hibás kérések `400`-as választ kapnak a séma hibáival.
-- Központi hiba-middleware biztosít egységes JSON hibaformátumot.
-- Aszinkron route-ok `wrap()` segédfüggvénnyel vannak csomagolva, hogy a hibák központilag legyenek kezelve.
+## Validation & Error Handling
 
-## E-mail / jelszó visszaállítás
+- All payloads are validated with Zod schemas (`backend/src/validators.js`). Invalid requests return 400 with schema errors.
+- Central error middleware ensures consistent JSON error format.
+- Async routes are wrapped for centralized error handling.
 
-- A `/auth/forgot-password` létrehoz egy véletlen tokent a `password_resets` táblába (lejárati idővel), és megpróbál emailt küldeni a konfigurált SMTP-on keresztül; ha nincs SMTP, a token és a link a szerver logba kerül.
-- A `/auth/reset-password` ellenőrzi a tokent és frissíti a felhasználó jelszavát.
+## Email / Password Reset
 
-Ajánlott `password_resets` tábla (példa SQL):
+- `/auth/forgot-password` creates a token in the `password_resets` table (with expiry) and attempts to send an email. If SMTP is not configured, the token and link are logged.
+- `/auth/reset-password` checks the token and updates the user's password.
 
+**Recommended `password_resets` table:**
 ```sql
 CREATE TABLE password_resets (
-  id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  token TEXT NOT NULL UNIQUE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-## Adatbázis (ajánlott táblák röviden)
+## Database Structure (Recommended)
 
 - `users` (id, email, username, password_hash, fullname, role, created_at)
 - `items` (id, name, price, amount, category_id, brand_id, date_added, ...)
-- `brands`, `categories` segédtáblák
+- `brands`, `categories` (lookup tables, managed outside API)
 - `customers` (id, name, email, phone)
-- `logs` — tranzakciós napló, amelyet a rendelés létrehozásakor töltenek
-- `orders_status` — rendelés státuszai és státusz-változások
-- `password_resets` — jelszó-visszaállító tokenek
+- `logs` (transaction log, created on order)
+- `orders_status` (order statuses and changes)
+- `password_resets` (password reset tokens)
 
-## Biztonsági megjegyzések
+## Security Notes
 
-- Használj erős `JWT_SECRET`-et és korlátozd a `SUPABASE_KEY` jogosultságait éles környezetben.
-- Ellenőrizd az SMTP konfigurációt, hogy ne loggolódjanak érzékeny tokenek éles rendszeren.
-- A rate limiter és `helmet` csökkenti az alapvető támadási felületet, de ne hagyd ki a további biztonsági rétegeket (TLS, WAF, stb.) éles üzemnél.
+- Use a strong `JWT_SECRET` and restrict `SUPABASE_KEY` permissions in production.
+- Check SMTP config to avoid logging sensitive tokens in production.
+- `helmet` and rate limiting reduce attack surface, but always use additional security layers (TLS, WAF, etc.) in production.
 
-## Dokumentáció, tesztek és CI
+## Documentation, Testing, and CI
 
-- Swagger UI elérhető: `GET /docs` és `GET /docs.json` (minimal OpenAPI spec generálódik a kódból)
-- Kézi API tesztek: a repo `backend/test.http` fájlban HTTP-sorozat található (REST Client használatra)
-- CI: van egy GitHub Actions workflow a `/.github/workflows` alatt, amely telepítést és alap ellenőrzéseket tud futtatni.
+- Swagger UI: `GET /docs` and `GET /docs.json` (minimal OpenAPI spec)
+- Manual API tests: see `backend/test.http` (for REST Client)
+- CI: GitHub Actions workflow in `/.github/workflows` for install and basic checks
 
-## Gyakori műveletek / parancsok
+## Common Commands
 
-```powershell
+```bash
 cd backend
 npm install
 npm run dev
 ```
 
-## Következő lépések / javaslatok
+---
 
-- Futtass gyors statikus ellenőrzéseket (`npm run lint`, `npm test`) és teszteld lokálisan a `npm run dev` parancsot.
-- Migráció: készítsd el a `password_resets` és egyéb hiányzó táblákat a Supabase konzolon vagy migrációs szkripttel.
-- Ha szeretnéd, frissítem a részletes OpenAPI leírást és/vagy készítek automatikus migrációs SQL fájlokat.
+**Key files:**
+- `backend/src/index.js` — main server entry point
+- `backend/src/validators.js` — Zod schemas
+- `backend/test.http` — manual test suite
 
 ---
 
-Fájlok, amiket hasznos megnézni:
-- `backend/src/index.js` — a szerver fő belépési pontja
-- `backend/src/validators.js` — `zod` sémák
-- `backend/test.http` — kézi tesztsorozat
-
-Ha akarod, most futtassam a gyors statikus ellenőrzést és indítsam a szervert, vagy finomítsam az OpenAPI leírást.
--- products
-CREATE TABLE products (
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    price NUMERIC(10,2) NOT NULL DEFAULT 0,
-    stock INTEGER DEFAULT 0,
-    metadata JSONB,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- orders
-CREATE TABLE orders (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-    total NUMERIC(10,2) NOT NULL DEFAULT 0,
-    status TEXT DEFAULT 'pending',
-    items JSONB,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-Ha Supabase-t használsz, ezt az SQL-t a Supabase SQL szerkesztőjében futtathatod vagy migrációként alkalmazhatod.
-
-**Seed adatok**
-
-Használd a fenti SQL-t, majd illessz be mintarekordokat. Példa beszúrások:
-
-```sql
-INSERT INTO users (email, username, password_hash, full_name, role)
-VALUES
-    ('admin@example.com', 'admin', crypt('AdminPass123!', gen_salt('bf')), 'Admin User', 'admin'),
-    ('alice@example.com', 'alice', crypt('password123', gen_salt('bf')), 'Alice Johnson', 'user');
-
-INSERT INTO products (name, description, price, stock, metadata)
-VALUES ('Gaming PC - GTX', 'High performance gaming PC', 1299.99, 5, '{"category":"gaming"}');
-
-INSERT INTO orders (user_id, total, status, items)
-VALUES ( (SELECT id FROM users WHERE email='alice@example.com'), 1299.99, 'completed', '[{"product_id":1,"qty":1,"price":1299.99}]' );
-```
-
-Megjegyzések:
-- A `pgcrypto` kiterjesztés hasznos lehet a `crypt()` jelszóhash-eléshez, ha közvetlenül Postgres-ben seed-elsz. A backend `bcryptjs`-t használ és az alkalmazás kezeli a hash-elést.
-
-**Biztonsági megjegyzések**
-
-- Használj legalacsonyabb jogosultságú `SUPABASE_KEY`-t a backendhez éles környezetben. Adminisztratív műveletekhez szükség lehet service role kulcsra — tárold biztonságosan és ne commit-olj titkokat.
-- Változtasd meg a `JWT_SECRET`-et egy erős, véletlenszerű értékre, és rendszeresen forgasd a kulcsokat.
-- Érdemes integrálni a Supabase Auth-ot éles hitelesítési folyamatokhoz (email ellenőrzés, jelszó visszaállítás) a saját JWT-megoldás helyett.
-- Ellenőrizd és sanitize-oljad a felhasználói bemenetet mielőtt adatbázisba írnád. A jelenlegi kód demonstratív és szándékosan minimális.
+**Note:** Brands and categories are managed outside the API (directly in the database). Set their IDs manually when creating items.
