@@ -30,8 +30,10 @@ export const forgotPassword = async (req, res) => {
   const parse = forgotPasswordSchema.safeParse(req.body);
   if (!parse.success)
     return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
-  await AuthService.forgotPassword(parse.data.email);
-  res.json({ success: true });
+  const result = await AuthService.forgotPassword(parse.data.email);
+  // result may be undefined (user not found) or an object with send status
+  if (!result) return res.json({ success: true });
+  return res.json({ success: true, sent: !!result.sent, message: result.message });
 };
 
 // Reset password

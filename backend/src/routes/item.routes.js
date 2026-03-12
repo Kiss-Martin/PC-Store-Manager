@@ -8,6 +8,8 @@ import * as ItemController from '../controllers/item.controller.js';
 const router = Router();
 
 router.get('/', authMiddleware, asyncWrap(ItemController.getItems));
+router.get('/categories', authMiddleware, asyncWrap(ItemController.getCategories));
+router.get('/brands', authMiddleware, asyncWrap(ItemController.getBrands));
 router.post('/', authMiddleware, requireRole('admin'), asyncWrap(ItemController.createItem));
 router.patch('/:id', authMiddleware, requireRole('admin'), asyncWrap(ItemController.updateItem));
 router.delete('/:id', authMiddleware, requireRole('admin'), asyncWrap(ItemController.deleteItem));

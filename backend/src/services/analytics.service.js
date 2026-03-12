@@ -1,6 +1,7 @@
 // AnalyticsService: handles business logic for analytics
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
+import { generateCsvFromObjects } from '../utils/csv.util.js';
 
 const AnalyticsService = {
 
@@ -219,22 +220,33 @@ const AnalyticsService = {
           .gte('timestamp', startDate.toISOString())
           .order('timestamp', { ascending: false })
       );
-      // Generate CSV
-      let csv = 'Date,Product,Brand,Category,Quantity,Unit Price,Total,Order ID\n';
-      salesLogs.forEach((log) => {
+      // Generate CSV using shared CSV util
+      const columns = [
+        { key: 'date', label: 'Date' },
+        { key: 'product', label: 'Product' },
+        { key: 'brand', label: 'Brand' },
+        { key: 'category', label: 'Category' },
+        { key: 'quantity', label: 'Quantity' },
+        { key: 'unitPrice', label: 'Unit Price' },
+        { key: 'total', label: 'Total' },
+        { key: 'orderId', label: 'Order ID' },
+      ];
+
+      const rows = (salesLogs || []).map((log) => {
         const date = new Date(log.timestamp).toISOString().split('T')[0];
-        const product = (log.items?.name || 'Unknown').replace(/,/g, ';');
-        const brand = (log.items?.brands?.name || 'N/A').replace(/,/g, ';');
-        const category = (log.items?.categories?.name || 'N/A').replace(/,/g, ';');
+        const product = log.items?.name || 'Unknown';
+        const brand = log.items?.brands?.name || 'N/A';
+        const category = log.items?.categories?.name || 'N/A';
         const quantityMatch = log.details?.match(/Sold (\d+) unit/);
         const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
         const unitPrice = log.items?.price || 0;
         const total = unitPrice * quantity;
         const orderMatch = log.details?.match(/Order #(\d+)/);
         const orderId = orderMatch ? orderMatch[1] : 'N/A';
-        csv += `${date},${product},${brand},${category},${quantity},${unitPrice},${total},${orderId}\n`;
+        return { date, product, brand, category, quantity, unitPrice, total, orderId };
       });
 
+      const csv = generateCsvFromObjects(columns, rows);
       const filename = `sales-report-${period}-${new Date().toISOString().split('T')[0]}.csv`;
       return { csv, filename };
     }

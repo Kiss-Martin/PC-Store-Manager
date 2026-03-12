@@ -20,6 +20,11 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER) {
       pass: process.env.SMTP_PASS,
     },
   });
+
+  // Verify transporter connectivity at startup; log result but do not throw.
+  mailTransporter.verify()
+    .then(() => console.log('SMTP transporter verified'))
+    .catch((err) => console.warn('SMTP transporter verification failed:', err && err.message ? err.message : err));
 }
 
 function generateToken(payload) {
@@ -72,8 +77,16 @@ const AuthService = {
     if (!user) return; // don't reveal existence
     const token = crypto.randomBytes(24).toString('hex');
     const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
-    await supabase.from('password_resets').insert({ user_id: user.id, token, expires_at });
+    // Remove any existing reset tokens for this user, then attempt to insert a new one
+    await run(supabase.from('password_resets').delete().eq('user_id', user.id)).catch(() => null);
+    try {
+      await run(supabase.from('password_resets').insert({ user_id: user.id, token, expires_at }).select().single());
+    } catch (e) {
+      // If the table doesn't exist or insert fails, warn but continue so we still surface the token
+      console.warn('Could not persist password reset token (password_resets table missing?). Continuing.');
+    }
     const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
+    // Attempt to send email if transporter is configured; return status to caller
     if (mailTransporter) {
       try {
         await mailTransporter.sendMail({
@@ -83,12 +96,18 @@ const AuthService = {
           text: `Reset your password: ${resetLink}`,
           html: `<p>Reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
         });
+        return { sent: true };
       } catch (e) {
-        console.warn('Failed to send reset email', e.message || e);
+        console.warn('Failed to send reset email', e && (e.message || e));
+        // Fall back to logging the token so admin can assist
+        console.log('Password reset token for', email, token, 'link:', resetLink);
+        return { sent: false, message: e && (e.message || String(e)) };
       }
-    } else {
-      console.log('Password reset token for', email, token, 'link:', resetLink);
     }
+
+    // No SMTP configured: log token for manual retrieval and return sent:false
+    console.log('Password reset token for', email, token, 'link:', resetLink);
+    return { sent: false, message: 'No SMTP configured; token logged to server.' };
   },
 
   async resetPassword({ token, newPassword }) {

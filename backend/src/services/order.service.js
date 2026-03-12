@@ -1,6 +1,7 @@
 // OrderService: handles business logic for orders
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
+import { ORDER_STATUSES } from '../utils/constants.js';
 
 const OrderService = {
   async getOrders(user) {
@@ -34,7 +35,7 @@ const OrderService = {
   },
 
   async createOrder(user, { item_id, customer_id, quantity, status = 'pending' }) {
-    if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+    if (!ORDER_STATUSES.includes(status)) {
       throw new Error('Invalid status');
     }
     const item = await run(supabase.from('items').select('id, name, price, amount').eq('id', item_id).single()).catch(() => null);
@@ -72,7 +73,7 @@ const OrderService = {
   },
 
   async updateOrderStatus(id, status, userId) {
-    if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
+    if (!ORDER_STATUSES.includes(status)) {
       throw new Error('Invalid status');
     }
     const existingStatus = await run(supabase.from('orders_status').select('id').eq('log_id', id).single()).catch(() => null);

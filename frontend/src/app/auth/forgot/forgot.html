@@ -1,0 +1,16 @@
+<div class="forgot-container">
+  <h2>Reset password</h2>
+  <p>Enter the email associated with your account and we'll send a link to reset your password.</p>
+
+  <form (ngSubmit)="sendReset()">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" [(ngModel)]="email" required />
+    <button type="submit" [disabled]="isLoading || sent">{{ isLoading ? 'Sending...' : (sent ? 'Sent' : 'Send reset link') }}</button>
+  </form>
+
+  <p *ngIf="message" class="message">{{ message }}</p>
+
+  <div class="actions">
+    <button (click)="goToLogin()">Back to login</button>
+  </div>
+</div>

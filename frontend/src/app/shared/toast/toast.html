@@ -1,0 +1,6 @@
+<div class="toast-area" aria-live="polite">
+  <div class="toast" *ngFor="let t of toasts$ | async" [class]="'toast-' + (t.type || 'info')">
+    <div class="toast-message">{{ t.message }}</div>
+    <button class="toast-close" (click)="dismiss(t.id)">×</button>
+  </div>
+</div>

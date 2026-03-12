@@ -3,13 +3,14 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 
 import { filter } from 'rxjs/operators';
 import { LucideAngularModule, Monitor } from "lucide-angular";
+import { ToastComponent } from './shared/toast/toast';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './theme.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LucideAngularModule],
+  imports: [RouterOutlet, LucideAngularModule, ToastComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })

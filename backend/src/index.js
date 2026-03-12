@@ -19,6 +19,7 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import customerRoutes from './routes/customer.routes.js';
 import userRoutes from './routes/user.routes.js';
 import healthRoutes from './routes/health.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/analytics', analyticsRoutes);
 app.use('/orders', orderRoutes);
 app.use('/items', itemRoutes);
 app.use('/auth', authRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

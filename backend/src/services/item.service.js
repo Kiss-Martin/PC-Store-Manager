@@ -46,6 +46,16 @@ const ItemService = {
   async deleteItem(id) {
     await run(supabase.from('items').delete().eq('id', id));
   },
+
+  async getCategories() {
+    const data = await run(supabase.from('categories').select('id,name').order('name', { ascending: true }));
+    return data || [];
+  },
+
+  async getBrands() {
+    const data = await run(supabase.from('brands').select('id,name').order('name', { ascending: true }));
+    return data || [];
+  },
 };
 
 export default ItemService;

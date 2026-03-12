@@ -8,6 +8,7 @@ import * as OrderController from '../controllers/order.controller.js';
 const router = Router();
 
 router.get('/', authMiddleware, asyncWrap(OrderController.getOrders));
+router.get('/export', authMiddleware, requireRole('admin'), asyncWrap(OrderController.exportOrders));
 router.post('/', authMiddleware, requireRole('admin'), asyncWrap(OrderController.createOrder));
 router.patch('/:id/status', authMiddleware, requireRole('admin'), asyncWrap(OrderController.updateOrderStatus));
 router.patch('/:id/assign', authMiddleware, requireRole('admin'), asyncWrap(OrderController.assignOrder));

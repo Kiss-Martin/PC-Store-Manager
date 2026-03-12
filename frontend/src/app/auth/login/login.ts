@@ -45,6 +45,10 @@ export class LoginComponent {
     this.router.navigate(['/register']);
   }
 
+  goToForgot() {
+    this.router.navigate(['/forgot']);
+  }
+
   toggleTheme() {
     this.theme.toggle();
   }

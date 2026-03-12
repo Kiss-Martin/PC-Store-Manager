@@ -81,7 +81,7 @@ export class AuthService {
 
   // Profile endpoints
   getMe(): Observable<{ user: User }> {
-    return this.api.get<{ user: User }>('/me').pipe(tap((res) => this.user.set(res.user)));
+    return this.api.get<{ user: User }>('/users/me').pipe(tap((res) => this.user.set(res.user)));
   }
 
   updateMe(data: {
@@ -89,7 +89,7 @@ export class AuthService {
     username?: string;
     fullname?: string;
   }): Observable<{ user: User }> {
-    return this.api.patch<{ user: User }>('/me', data).pipe(
+    return this.api.patch<{ user: User }>('/users/me', data).pipe(
       tap((res) => {
         this.user.set(res.user);
         localStorage.setItem('user', JSON.stringify(res.user));
@@ -101,7 +101,7 @@ export class AuthService {
     currentPassword: string,
     newPassword: string,
   ): Observable<{ success: boolean; message: string }> {
-    return this.api.patch<{ success: boolean; message: string }>('/me/password', {
+    return this.api.patch<{ success: boolean; message: string }>('/users/me/password', {
       currentPassword,
       newPassword,
     });
@@ -179,7 +179,8 @@ export class AuthService {
   }
 
   generateBusinessReport(period: string = '7days'): Observable<Blob> {
-    return this.api.getBlob(`/reports/business?period=${period}`);
+    // Use analytics export as the business report
+    return this.api.getBlob(`/analytics/export?period=${period}`);
   }
 
   // Get workers for assignment
@@ -194,5 +195,10 @@ export class AuthService {
 
   exportAnalytics(period: string = '7days'): Observable<Blob> {
     return this.api.getBlob(`/analytics/export?period=${period}`);
+  }
+
+  // Password reset initiation
+  forgotPassword(email: string): Observable<{ success?: boolean; sent?: boolean; message?: string }> {
+    return this.api.post<{ success?: boolean; sent?: boolean; message?: string }>('/auth/forgot-password', { email });
   }
 }

@@ -24,3 +24,13 @@ export const deleteItem = async (req, res) => {
   await ItemService.deleteItem(req.params.id);
   res.json({ success: true });
 };
+
+export const getCategories = async (req, res) => {
+  const categories = await ItemService.getCategories();
+  res.json({ categories });
+};
+
+export const getBrands = async (req, res) => {
+  const brands = await ItemService.getBrands();
+  res.json({ brands });
+};

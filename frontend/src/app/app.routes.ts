@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard';
 import { LoginComponent } from './auth/login/login';
 import { RegisterComponent } from './auth/register/register';
+import { ForgotComponent } from './auth/forgot/forgot';
 import { AuthGuard } from './auth/auth.guard';
 import { OrdersComponent } from './components/orders.component/orders.component';
 import { AnalyticsComponent } from './components/analytics.component/analytics.component';
@@ -21,6 +22,10 @@ export const routes: Routes = [
   {
     path: 'register',
     component: RegisterComponent
+  },
+  {
+    path: 'forgot',
+    component: ForgotComponent
   },
   {
     path: 'dashboard',
