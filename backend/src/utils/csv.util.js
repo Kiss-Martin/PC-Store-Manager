@@ -14,5 +14,5 @@ export function generateCsvFromObjects(columns, rows) {
   const lines = rows.map((row) =>
     columns.map((c) => escapeCsvValue(row[c.key])).join(',')
   );
-  return header + lines.join('\n');
+  return '\uFEFF' + header + lines.join('\n');
 }

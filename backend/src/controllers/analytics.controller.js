@@ -7,8 +7,8 @@ export const getAnalytics = async (req, res) => {
 };
 
 export const exportAnalytics = async (req, res) => {
-  const { csv, filename } = await AnalyticsService.exportAnalytics(req.query);
-  res.setHeader('Content-Type', 'text/csv');
+  const { content, contentType, filename } = await AnalyticsService.exportAnalytics(req.query);
+  res.setHeader('Content-Type', contentType);
   res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-  res.send(csv);
+  res.send(content);
 };

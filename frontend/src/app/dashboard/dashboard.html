@@ -125,6 +125,18 @@
             </select>
           </div>
 
+          <div class="form-group">
+            <label for="reportFormat">Export Format</label>
+            <select
+              id="reportFormat"
+              [(ngModel)]="reportFormat"
+              class="form-select"
+            >
+              <option value="csv">CSV</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+
           <div class="report-preview">
             <h4>Report will include:</h4>
             <ul>

@@ -11,10 +11,16 @@
           <lucide-icon name="circle-plus" size="20"></lucide-icon>
           Record Order
         </button>
-        <button class="btn-primary" (click)="exportOrders()">
-          <lucide-icon name="download" size="18"></lucide-icon>
-          Export Orders
-        </button>
+        <div class="export-controls">
+          <select [(ngModel)]="exportFormat" class="export-format-select" aria-label="Orders export format">
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+          <button class="btn-primary" (click)="exportOrders()">
+            <lucide-icon name="download" size="18"></lucide-icon>
+            Export Orders
+          </button>
+        </div>
       }
     </div>
   </div>

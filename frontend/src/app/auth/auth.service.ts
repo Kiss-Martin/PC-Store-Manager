@@ -5,6 +5,8 @@ import { tap } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
 import { User, AuthResponse } from '../models/api.models';
 
+export type ExportFormat = 'csv' | 'pdf';
+
 // Use shared models from `api.models`
 
 @Injectable({
@@ -157,8 +159,8 @@ export class AuthService {
     return this.api.delete<{ success: boolean }>(`/orders/${id}`);
   }
 
-  exportOrders(status: string = 'all'): Observable<Blob> {
-    return this.api.getBlob(`/orders/export?status=${status}`);
+  exportOrders(status: string = 'all', format: ExportFormat = 'csv'): Observable<Blob> {
+    return this.api.getBlob('/orders/export', { status, format });
   }
 
   // Dashboard endpoint
@@ -192,9 +194,8 @@ export class AuthService {
     return this.api.post<{ success: boolean; order: any }>('/orders', order);
   }
 
-  generateBusinessReport(period: string = '7days'): Observable<Blob> {
-    // Use analytics export as the business report
-    return this.api.getBlob(`/analytics/export?period=${period}`);
+  generateBusinessReport(period: string = '7days', format: ExportFormat = 'csv'): Observable<Blob> {
+    return this.api.getBlob('/analytics/export', { period, format });
   }
 
   // Get workers for assignment
@@ -207,8 +208,8 @@ export class AuthService {
     return this.api.patch<{ success: boolean }>(`/orders/${orderId}/assign`, { assigned_to: userId });
   }
 
-  exportAnalytics(period: string = '7days'): Observable<Blob> {
-    return this.api.getBlob(`/analytics/export?period=${period}`);
+  exportAnalytics(period: string = '7days', format: ExportFormat = 'csv'): Observable<Blob> {
+    return this.api.getBlob('/analytics/export', { period, format });
   }
 
   // Password reset initiation

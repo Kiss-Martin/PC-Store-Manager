@@ -2,6 +2,13 @@
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { generateCsvFromObjects } from '../utils/csv.util.js';
+import { generatePdfReport } from '../utils/pdf.util.js';
+
+function getDaysFromPeriod(period) {
+  if (period === '30days') return 30;
+  if (period === '90days') return 90;
+  return 7;
+}
 
 const AnalyticsService = {
 
@@ -208,10 +215,9 @@ const AnalyticsService = {
      * @param {object} query - Query params (period)
      * @returns {object} - { csv, filename }
      */
-    async exportAnalytics({ period = '7days' }) {
-      let daysAgo = 7;
-      if (period === '30days') daysAgo = 30;
-      else if (period === '90days') daysAgo = 90;
+    async exportAnalytics({ period = '7days', format = 'csv' }) {
+      const exportFormat = format === 'pdf' ? 'pdf' : 'csv';
+      const daysAgo = getDaysFromPeriod(period);
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
       // Get sales logs with item details
@@ -249,9 +255,44 @@ const AnalyticsService = {
         return { date, product, brand, category, quantity, unitPrice, total, orderId };
       });
 
-      const csv = generateCsvFromObjects(columns, rows);
-      const filename = `sales-report-${period}-${new Date().toISOString().split('T')[0]}.csv`;
-      return { csv, filename };
+      const dateStamp = new Date().toISOString().split('T')[0];
+
+      if (exportFormat === 'pdf') {
+        const totalRevenue = rows.reduce((sum, row) => sum + Number(row.total || 0), 0);
+        const totalOrders = rows.length;
+        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        const topProduct = rows.reduce((best, row) => {
+          if (!best || Number(row.total || 0) > Number(best.total || 0)) {
+            return row;
+          }
+          return best;
+        }, null);
+
+        const content = await generatePdfReport({
+          title: 'Sales Report',
+          subtitle: `Period: ${period} | Generated on ${dateStamp}`,
+          summary: [
+            { label: 'Transactions Exported', value: totalOrders },
+            { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}` },
+            { label: 'Average Order Value', value: `$${averageOrderValue.toFixed(2)}` },
+            { label: 'Top Product', value: topProduct?.product || 'N/A' },
+          ],
+          columns,
+          rows,
+        });
+
+        return {
+          content,
+          contentType: 'application/pdf',
+          filename: `sales-report-${period}-${dateStamp}.pdf`,
+        };
+      }
+
+      return {
+        content: generateCsvFromObjects(columns, rows),
+        contentType: 'text/csv; charset=utf-8',
+        filename: `sales-report-${period}-${dateStamp}.csv`,
+      };
     }
 };
 

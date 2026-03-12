@@ -1,7 +1,7 @@
 import { Component, NgModule, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthService } from '../auth/auth.service';
+import { AuthService, ExportFormat } from '../auth/auth.service';
 import { ThemeService } from '../theme.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -40,6 +40,7 @@ export class DashboardComponent implements OnInit {
 
   showReportModal = false;
   reportPeriod = '7days';
+  reportFormat: ExportFormat = 'csv';
   isGeneratingReport = false;
 
   reportPeriods = [
@@ -71,12 +72,12 @@ export class DashboardComponent implements OnInit {
   downloadReport() {
   this.isGeneratingReport = true;
 
-  this.auth.generateBusinessReport(this.reportPeriod).subscribe({
+  this.auth.generateBusinessReport(this.reportPeriod, this.reportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `business-report-${this.reportPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `business-report-${this.reportPeriod}-${new Date().toISOString().split('T')[0]}.${this.reportFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

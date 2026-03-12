@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService, ExportFormat } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 
 Chart.register(...registerables);
@@ -46,6 +46,7 @@ export class AnalyticsComponent implements OnInit {
 
   isLoading = true;
   selectedPeriod = '7days';
+  exportFormat: ExportFormat = 'csv';
 
   summary: AnalyticsSummary = {
     totalRevenue: 0,
@@ -273,12 +274,12 @@ export class AnalyticsComponent implements OnInit {
   }
 
   exportReport() {
-  this.auth.exportAnalytics(this.selectedPeriod).subscribe({
+  this.auth.exportAnalytics(this.selectedPeriod, this.exportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sales-report-${this.selectedPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `sales-report-${this.selectedPeriod}-${new Date().toISOString().split('T')[0]}.${this.exportFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

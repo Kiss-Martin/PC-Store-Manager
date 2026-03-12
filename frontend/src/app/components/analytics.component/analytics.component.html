@@ -29,10 +29,16 @@
       </div>
 
       @if (auth.isAdmin()) {
-        <button class="btn-primary" (click)="exportReport()">
-          <lucide-icon name="download" size="18"></lucide-icon>
-          Export Report
-        </button>
+        <div class="export-controls">
+          <select [(ngModel)]="exportFormat" class="export-format-select" aria-label="Analytics export format">
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+          <button class="btn-primary" (click)="exportReport()">
+            <lucide-icon name="download" size="18"></lucide-icon>
+            Export Report
+          </button>
+        </div>
       }
     </div>
   </div>

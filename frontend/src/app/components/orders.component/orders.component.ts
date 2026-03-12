@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService, ExportFormat } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { ActivatedRoute } from '@angular/router';
@@ -37,6 +37,7 @@ export class OrdersComponent implements OnInit {
   isLoading = true;
   searchTerm = '';
   selectedStatus: string = 'all';
+  exportFormat: ExportFormat = 'csv';
   selectedOrder: Order | null = null;
   showDetailsModal = false;
 
@@ -489,13 +490,15 @@ export class OrdersComponent implements OnInit {
   }
 
   exportOrders() {
-    this.auth.exportOrders(this.selectedStatus).subscribe({
+    this.auth.exportOrders(this.selectedStatus, this.exportFormat).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `orders-${this.selectedStatus}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `orders-${this.selectedStatus}-${new Date().toISOString().split('T')[0]}.${this.exportFormat}`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
