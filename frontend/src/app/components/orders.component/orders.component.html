@@ -131,8 +131,8 @@
   }
 
 <!-- Orders Table -->
-<div class="orders-table">
-  <table>
+<div class="table-container">
+  <table class="orders-table">
     <thead>
       <tr>
         <th>Order #</th>
@@ -143,19 +143,20 @@
         <th>Date</th>
         <th>Status</th>
         <th>Assigned To</th>
-        <th>Actions</th>
+        @if (auth.isAdmin()) {
+          <th>Actions</th>
+        }
       </tr>
     </thead>
     <tbody>
-      <!-- ✅ FONTOS: Ez a @for ciklus kell! -->
       @for (order of filteredOrders; track order.id) {
         <tr>
-          <td><strong>{{ order.orderNumber }}</strong></td>
-          <td>{{ order.product }}</td>
+          <td class="order-number">{{ order.orderNumber }}</td>
+          <td class="product-name">{{ order.product }}</td>
           <td>{{ order.customer }}</td>
           <td>{{ order.quantity }}</td>
-          <td>${{ order.totalAmount.toFixed(2) }}</td>
-          <td>{{ order.date }}</td>
+          <td class="amount">${{ order.totalAmount.toFixed(2) }}</td>
+          <td class="date">{{ order.date }}</td>
           <td>
             <span class="status-badge" [ngClass]="'status-' + order.status">
               {{ order.status }}
@@ -163,8 +164,8 @@
           </td>
           <td>
             @if (auth.isAdmin()) {
-              <select 
-                [value]="order.assignedTo || ''" 
+              <select
+                [value]="order.assignedTo || ''"
                 (change)="assignOrderToWorker(order.id, $any($event.target).value)"
                 class="worker-select"
                 [disabled]="assigningOrder === order.id"
@@ -178,16 +179,23 @@
               <span class="worker-badge">{{ getWorkerName(order.assignedTo) }}</span>
             }
           </td>
-          <td>
-            <!-- Actions buttons if you have any -->
-          </td>
+          @if (auth.isAdmin()) {
+            <td class="actions">
+              <button class="btn-icon btn-edit" (click)="openStatusModal(order)" title="Modify order">
+                <lucide-icon name="pencil" size="16"></lucide-icon>
+              </button>
+              <button class="btn-icon btn-delete" (click)="confirmDeleteOrder(order)" title="Delete order">
+                <lucide-icon name="trash-2" size="16"></lucide-icon>
+              </button>
+            </td>
+          }
         </tr>
       }
-      
+
       <!-- Empty state -->
       @if (filteredOrders.length === 0) {
         <tr>
-          <td colspan="9" class="empty-state">
+          <td [attr.colspan]="auth.isAdmin() ? 9 : 8" class="empty-state">
             <lucide-icon name="inbox" size="48"></lucide-icon>
             <p>No orders found</p>
           </td>
@@ -335,13 +343,13 @@
   <!-- Cancel Confirmation Modal -->
   <app-confirmation-modal
     [show]="showCancelConfirm"
-    [title]="'Cancel Order'"
-    [message]="'Are you sure you want to cancel order ' + (orderToCancel?.orderNumber || '') + '? This action cannot be undone.'"
-    [confirmText]="'Cancel Order'"
-    [cancelText]="'Keep Order'"
+    [title]="'Delete Order'"
+    [message]="'Are you sure you want to delete order ' + (orderToCancel?.orderNumber || '') + '? This action cannot be undone.'"
+    [confirmText]="'Delete'"
+    [cancelText]="'Cancel'"
     [confirmColor]="'danger'"
-    [icon]="'ban'"
-    (confirm)="cancelOrder()"
+    [icon]="'trash-2'"
+    (confirm)="deleteOrder()"
     (cancel)="closeCancelConfirm()">
   </app-confirmation-modal>
   <!-- Add Order Modal -->

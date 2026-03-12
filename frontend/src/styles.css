@@ -63,6 +63,25 @@ body {
   border-radius: 6px;
 }
 
+/* Global popup treatment.
+   Apply the same 0.8 overlay opacity and solid popup surface to every modal. */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.modal-content,
+.confirmation-modal {
+  opacity: 1 !important;
+  background: var(--card-bg, #ffffff) !important;
+}
+
+.dark-theme .modal-content,
+.dark-theme .confirmation-modal {
+  background: var(--card-bg, #0f1724) !important;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;

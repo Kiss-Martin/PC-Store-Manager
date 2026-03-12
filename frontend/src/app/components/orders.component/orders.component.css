@@ -534,6 +534,15 @@
   gap: 0.5rem;
 }
 
+.btn-delete {
+  color: #ef4444;
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
 /* Status Badges */
 .status-badge {
   display: inline-flex;
@@ -1373,7 +1382,7 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(124, 58, 237, 0.1);
   position: relative;
@@ -1382,7 +1391,7 @@
 /* Light mode fix */
 [data-theme="light"] .modal-content {
   background: #ffffff;
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(124, 58, 237, 0.1);
 }
@@ -1390,7 +1399,47 @@
 /* Dark mode fix */
 [data-theme="dark"] .modal-content {
   background: #1f2937;
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(124, 58, 237, 0.2);
+}
+
+/* Final popup background overrides for the orders page.
+   Keep these last so they win over the duplicated modal blocks above. */
+.orders-container .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.orders-container .modal-content,
+.orders-container .dropdown-options,
+.orders-container .dropdown-selected,
+.orders-container .form-input,
+.orders-container .form-select,
+.orders-container .worker-select,
+.orders-container .new-customer-form,
+.orders-container .order-summary,
+.orders-container .status-option .option-content {
+  background-color: #ffffff;
+}
+
+.dark-theme .orders-container .modal-content,
+.dark-theme .orders-container .dropdown-options,
+.dark-theme .orders-container .dropdown-selected,
+.dark-theme .orders-container .form-input,
+.dark-theme .orders-container .form-select,
+.dark-theme .orders-container .worker-select,
+.dark-theme .orders-container .new-customer-form,
+.dark-theme .orders-container .order-summary,
+.dark-theme .orders-container .status-option .option-content {
+  background-color: #0f1724;
+}
+
+.orders-container .modal-content {
+  background: var(--card-bg, #ffffff);
+  opacity: 1;
+}
+
+.dark-theme .orders-container .modal-content {
+  background: var(--card-bg, #0f1724);
 }
