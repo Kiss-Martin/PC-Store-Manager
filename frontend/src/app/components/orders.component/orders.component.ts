@@ -27,7 +27,7 @@ interface Order {
   standalone: true,
   imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent],
   templateUrl: './orders.component.html',
-  styleUrl: './orders.component.css',
+  styleUrls: ['./orders.component.css'],
 })
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];

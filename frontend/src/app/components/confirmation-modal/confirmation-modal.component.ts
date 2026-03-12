@@ -7,7 +7,7 @@ import { LucideAngularModule } from 'lucide-angular';
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './confirmation-modal.component.html',
-  styleUrl: './confirmation-modal.component.css',
+  styleUrls: ['./confirmation-modal.component.css'],
 })
 export class ConfirmationModalComponent {
   @Input() show = false;

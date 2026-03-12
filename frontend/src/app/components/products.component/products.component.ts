@@ -26,7 +26,7 @@ interface Product {
   standalone: true,
   imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent],
   templateUrl: './products.component.html',
-  styleUrl: './products.component.css',
+  styleUrls: ['./products.component.css'],
 })
 export class ProductsComponent implements OnInit {
   products: Product[] = [];

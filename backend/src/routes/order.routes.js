@@ -1,13 +1,15 @@
 // Orders routes: connects endpoints to controller
 import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { requireRole } from '../middlewares/auth.middleware.js';
+import { asyncWrap } from '../utils/async.util.js';
 import * as OrderController from '../controllers/order.controller.js';
 
 const router = Router();
 
-router.get('/', authMiddleware, OrderController.getOrders);
-router.post('/', authMiddleware, OrderController.createOrder);
-router.patch('/:id/status', authMiddleware, OrderController.updateOrderStatus);
-router.patch('/:id/assign', authMiddleware, OrderController.assignOrder);
+router.get('/', authMiddleware, asyncWrap(OrderController.getOrders));
+router.post('/', authMiddleware, requireRole('admin'), asyncWrap(OrderController.createOrder));
+router.patch('/:id/status', authMiddleware, requireRole('admin'), asyncWrap(OrderController.updateOrderStatus));
+router.patch('/:id/assign', authMiddleware, requireRole('admin'), asyncWrap(OrderController.assignOrder));
 
 export default router;

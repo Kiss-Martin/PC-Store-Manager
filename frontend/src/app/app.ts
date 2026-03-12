@@ -8,9 +8,10 @@ import { ThemeService } from './theme.service';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterOutlet, LucideAngularModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
 export class App {
   protected readonly title = signal('PC Store Manager');

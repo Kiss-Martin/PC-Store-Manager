@@ -1,13 +1,10 @@
 // ItemService: handles business logic for items
 import supabase from '../db.js';
+import { run } from '../utils/supabase.util.js';
 
 const ItemService = {
   async getItems() {
-    const { data, error } = await supabase
-      .from('items')
-      .select(`*,categories(name),brands(name)`)
-      .order('name', { ascending: true });
-    if (error) throw new Error(error.message);
+    const data = await run(supabase.from('items').select(`*,categories(name),brands(name)`).order('name', { ascending: true }));
     return (data || []).map((item) => ({
       ...item,
       category: item.categories?.name,
@@ -16,9 +13,8 @@ const ItemService = {
   },
 
   async createItem({ name, model, specs, price, amount, warranty, category_id, brand_id }) {
-    const { data, error } = await supabase
-      .from('items')
-      .insert({
+    const data = await run(
+      supabase.from('items').insert({
         name,
         model,
         specs,
@@ -28,33 +24,27 @@ const ItemService = {
         category_id,
         brand_id,
         date_added: new Date().toISOString().split('T')[0],
+      }).select().single()
+    );
+    // log stock in (fire-and-forget; run will throw if log insert fails)
+    await run(
+      supabase.from('logs').insert({
+        item_id: data.id,
+        action: 'stock_in',
+        details: `Added new item: ${name}`,
+        timestamp: new Date().toISOString(),
       })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    await supabase.from('logs').insert({
-      item_id: data.id,
-      action: 'stock_in',
-      details: `Added new item: ${name}`,
-      timestamp: new Date().toISOString(),
-    });
+    );
     return data;
   },
 
   async updateItem(id, updates) {
-    const { data, error } = await supabase
-      .from('items')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
+    const data = await run(supabase.from('items').update(updates).eq('id', id).select().single());
     return data;
   },
 
   async deleteItem(id) {
-    const { error } = await supabase.from('items').delete().eq('id', id);
-    if (error) throw new Error(error.message);
+    await run(supabase.from('items').delete().eq('id', id));
   },
 };
 

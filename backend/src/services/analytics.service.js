@@ -1,5 +1,6 @@
 // AnalyticsService: handles business logic for analytics
 import supabase from '../db.js';
+import { run } from '../utils/supabase.util.js';
 
 const AnalyticsService = {
 
@@ -22,18 +23,17 @@ const AnalyticsService = {
       startDate.setDate(startDate.getDate() - daysAgo);
 
       // Get all items with stock and price info
-      const { data: allItems, error: itemsErr } = await supabase.from('items')
-        .select('id, name, amount, price, categories(name), brands(name)');
-      if (itemsErr) throw new Error(itemsErr.message);
+      const allItems = await run(supabase.from('items').select('id, name, amount, price, categories(name), brands(name)'));
 
       // Get sales logs (stock_out actions) for the period
-      const { data: salesLogs, error: logsErr } = await supabase
-        .from('logs')
-        .select('id, item_id, action, timestamp, details, items(name, price)')
-        .eq('action', 'stock_out')
-        .gte('timestamp', startDate.toISOString())
-        .order('timestamp', { ascending: false });
-      if (logsErr) throw new Error(logsErr.message);
+      const salesLogs = await run(
+        supabase
+          .from('logs')
+          .select('id, item_id, action, timestamp, details, items(name,price)')
+          .eq('action', 'stock_out')
+          .gte('timestamp', startDate.toISOString())
+          .order('timestamp', { ascending: false })
+      );
 
       // --- Revenue, Orders, Sales by Product/Day ---
       let totalRevenue = 0;
@@ -129,12 +129,14 @@ const AnalyticsService = {
       // --- Recent Transactions (admin only) ---
       let recentTransactions = [];
       if (user.role === 'admin') {
-        const { data: recentSalesLogs } = await supabase
-          .from('logs')
-          .select('id, timestamp, details, items(name, price), customers(name)')
-          .eq('action', 'stock_out')
-          .order('timestamp', { ascending: false })
-          .limit(5);
+        const recentSalesLogs = await run(
+          supabase
+            .from('logs')
+            .select('id, timestamp, details, items(name, price), customers(name)')
+            .eq('action', 'stock_out')
+            .order('timestamp', { ascending: false })
+            .limit(5)
+        );
         recentTransactions = (recentSalesLogs || []).map((log) => {
           const quantityMatch = log.details?.match(/Sold (\d+) unit/);
           const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
@@ -158,12 +160,14 @@ const AnalyticsService = {
       // --- Revenue Growth (compare to previous period) ---
       const previousStartDate = new Date(startDate);
       previousStartDate.setDate(previousStartDate.getDate() - daysAgo);
-      const { data: previousSalesLogs } = await supabase
-        .from('logs')
-        .select('id, details, items(price)')
-        .eq('action', 'stock_out')
-        .gte('timestamp', previousStartDate.toISOString())
-        .lt('timestamp', startDate.toISOString());
+      const previousSalesLogs = await run(
+        supabase
+          .from('logs')
+          .select('id, details, items(price)')
+          .eq('action', 'stock_out')
+          .gte('timestamp', previousStartDate.toISOString())
+          .lt('timestamp', startDate.toISOString())
+      );
       let previousRevenue = 0;
       if (previousSalesLogs) {
         previousSalesLogs.forEach((log) => {
@@ -207,13 +211,14 @@ const AnalyticsService = {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
       // Get sales logs with item details
-      const { data: salesLogs, error: logsErr } = await supabase
-        .from('logs')
-        .select('id, timestamp, details, items(name, price, brands(name), categories(name))')
-        .eq('action', 'stock_out')
-        .gte('timestamp', startDate.toISOString())
-        .order('timestamp', { ascending: false });
-      if (logsErr) throw new Error(logsErr.message);
+      const salesLogs = await run(
+        supabase
+          .from('logs')
+          .select('id, timestamp, details, items(name, price, brands(name), categories(name))')
+          .eq('action', 'stock_out')
+          .gte('timestamp', startDate.toISOString())
+          .order('timestamp', { ascending: false })
+      );
       // Generate CSV
       let csv = 'Date,Product,Brand,Category,Quantity,Unit Price,Total,Order ID\n';
       salesLogs.forEach((log) => {

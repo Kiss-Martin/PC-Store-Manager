@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import supabase from '../db.js';
+import { run } from '../utils/supabase.util.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
@@ -28,18 +29,15 @@ function generateToken(payload) {
 const AuthService = {
   async register({ email, username, password, fullname, role }) {
     const hashed = await bcrypt.hash(password, 10);
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
+    const data = await run(
+      supabase.from('users').insert({
         email,
         username,
         fullname: fullname || null,
         password_hash: hashed,
         role: role || 'worker',
-      })
-      .select('id,email,username,fullname,role')
-      .single();
-    if (error) throw new Error(error.message);
+      }).select('id,email,username,fullname,role').single()
+    );
     const token = generateToken({ id: data.id, role: data.role });
     return { user: data, token };
   },
@@ -48,8 +46,12 @@ const AuthService = {
     let query = supabase.from('users').select('*');
     if (email) query = query.eq('email', email);
     else query = query.eq('username', username);
-    const { data, error } = await query.single();
-    if (error || !data) throw new Error('Invalid credentials');
+    let data;
+    try {
+      data = await run(query.single());
+    } catch (e) {
+      throw new Error('Invalid credentials');
+    }
     const ok = await bcrypt.compare(password, data.password_hash);
     if (!ok) throw new Error('Invalid credentials');
     const token = generateToken({ id: data.id, role: data.role });
@@ -66,7 +68,7 @@ const AuthService = {
   },
 
   async forgotPassword(email) {
-    const { data: user } = await supabase.from('users').select('id,email').eq('email', email).single();
+    const user = await run(supabase.from('users').select('id,email').eq('email', email).single()).catch(() => null);
     if (!user) return; // don't reveal existence
     const token = crypto.randomBytes(24).toString('hex');
     const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
@@ -90,13 +92,12 @@ const AuthService = {
   },
 
   async resetPassword({ token, newPassword }) {
-    const { data: pr, error: prErr } = await supabase.from('password_resets').select('id,user_id,expires_at').eq('token', token).single();
-    if (prErr || !pr) throw new Error('Invalid or expired token');
+    const pr = await run(supabase.from('password_resets').select('id,user_id,expires_at').eq('token', token).single()).catch(() => null);
+    if (!pr) throw new Error('Invalid or expired token');
     if (new Date(pr.expires_at) < new Date()) throw new Error('Token expired');
     const hashed = await bcrypt.hash(newPassword, 10);
-    const { error: updErr } = await supabase.from('users').update({ password_hash: hashed }).eq('id', pr.user_id);
-    if (updErr) throw new Error(updErr.message);
-    await supabase.from('password_resets').delete().eq('id', pr.id);
+    await run(supabase.from('users').update({ password_hash: hashed }).eq('id', pr.user_id));
+    await run(supabase.from('password_resets').delete().eq('id', pr.id));
   },
 };
 

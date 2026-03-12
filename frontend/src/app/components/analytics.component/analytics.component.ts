@@ -39,7 +39,7 @@ interface Transaction {
   standalone: true,
   imports: [CommonModule, FormsModule, LucideAngularModule, BaseChartDirective],
   templateUrl: './analytics.component.html',
-  styleUrl: './analytics.component.css',
+  styleUrls: ['./analytics.component.css'],
 })
 export class AnalyticsComponent implements OnInit {
   @ViewChildren(BaseChartDirective) charts?: QueryList<BaseChartDirective>;

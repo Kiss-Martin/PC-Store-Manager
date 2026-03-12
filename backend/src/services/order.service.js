@@ -1,5 +1,6 @@
 // OrderService: handles business logic for orders
 import supabase from '../db.js';
+import { run } from '../utils/supabase.util.js';
 
 const OrderService = {
   async getOrders(user) {
@@ -11,8 +12,7 @@ const OrderService = {
     if (user.role !== 'admin') {
       query = query.eq('assigned_to', user.id);
     }
-    const { data, error } = await query;
-    if (error) throw new Error(error.message);
+    const data = await run(query);
     return (data || []).map((log) => {
       const orderMatch = log.details.match(/Order #(\d+)/);
       const quantityMatch = log.details.match(/Sold (\d+) unit/);
@@ -37,40 +37,30 @@ const OrderService = {
     if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
       throw new Error('Invalid status');
     }
-    const { data: item, error: itemErr } = await supabase
-      .from('items')
-      .select('id, name, price, amount')
-      .eq('id', item_id)
-      .single();
-    if (itemErr || !item) throw new Error('Item not found');
+    const item = await run(supabase.from('items').select('id, name, price, amount').eq('id', item_id).single()).catch(() => null);
+    if (!item) throw new Error('Item not found');
     if (item.amount < quantity) throw new Error(`Insufficient stock. Only ${item.amount} available`);
     const orderNumber = Math.floor(1000 + Math.random() * 9000);
     if (status === 'completed' || status === 'processing') {
-      const { error: updateErr } = await supabase
-        .from('items')
-        .update({ amount: item.amount - quantity })
-        .eq('id', item_id);
-      if (updateErr) throw new Error(updateErr.message);
+      await run(supabase.from('items').update({ amount: item.amount - quantity }).eq('id', item_id));
     }
-    const { data: log, error: logErr } = await supabase
-      .from('logs')
-      .insert({
+    const log = await run(
+      supabase.from('logs').insert({
         item_id,
         customer_id,
         action: 'stock_out',
         details: `Sold ${quantity} unit${quantity > 1 ? 's' : ''} - Order #${orderNumber}`,
         timestamp: new Date().toISOString(),
+      }).select().single()
+    );
+    await run(
+      supabase.from('orders_status').insert({
+        log_id: log.id,
+        status,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
       })
-      .select()
-      .single();
-    if (logErr) throw new Error(logErr.message);
-    const { error: statusErr } = await supabase.from('orders_status').insert({
-      log_id: log.id,
-      status,
-      updated_by: user.id,
-      updated_at: new Date().toISOString(),
-    });
-    if (statusErr) throw new Error(statusErr.message);
+    );
     return {
       id: log.id,
       orderNumber: `#${orderNumber}`,
@@ -85,47 +75,22 @@ const OrderService = {
     if (!['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
       throw new Error('Invalid status');
     }
-    const { data: existingStatus } = await supabase
-      .from('orders_status')
-      .select('id')
-      .eq('log_id', id)
-      .single();
+    const existingStatus = await run(supabase.from('orders_status').select('id').eq('log_id', id).single()).catch(() => null);
     let result;
     if (existingStatus) {
-      const { data, error } = await supabase
-        .from('orders_status')
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-          updated_by: userId,
-        })
-        .eq('log_id', id)
-        .select()
-        .single();
-      if (error) throw new Error(error.message);
-      result = data;
+      result = await run(
+        supabase.from('orders_status').update({ status, updated_at: new Date().toISOString(), updated_by: userId }).eq('log_id', id).select().single()
+      );
     } else {
-      const { data, error } = await supabase
-        .from('orders_status')
-        .insert({
-          log_id: id,
-          status,
-          updated_by: userId,
-        })
-        .select()
-        .single();
-      if (error) throw new Error(error.message);
-      result = data;
+      result = await run(
+        supabase.from('orders_status').insert({ log_id: id, status, updated_by: userId }).select().single()
+      );
     }
     return result;
   },
 
   async assignOrder(id, assigned_to) {
-    const { error } = await supabase
-      .from('logs')
-      .update({ assigned_to })
-      .eq('id', id);
-    if (error) throw new Error(error.message);
+    await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
   },
 };
 

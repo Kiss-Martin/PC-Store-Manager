@@ -10,7 +10,7 @@ import { ThemeService } from '../../theme.service';
   selector: 'app-login',
   imports: [FormsModule, LucideAngularModule],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrls: ['./login.css'],
 })
 export class LoginComponent {
   email = '';

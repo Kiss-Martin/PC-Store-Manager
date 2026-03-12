@@ -19,7 +19,7 @@ interface RegistrationData {
   selector: 'app-register',
   imports: [FormsModule, LucideAngularModule],
   templateUrl: './register.html',
-  styleUrl: './register.css'
+  styleUrls: ['./register.css'],
 })
 export class RegisterComponent {
   currentStep = 1;

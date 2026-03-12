@@ -1,56 +1,36 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { ApiService } from '../services/api.service';
+import { User, AuthResponse } from '../models/api.models';
 
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  fullname?: string;
-  role: string;
-}
-
-interface AuthResponse {
-  user: User;
-  token: string;
-  accessToken?: string;
-  access_token?: string;
-}
+// Use shared models from `api.models`
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private ApiUrl = 'https://pc-store-manager.onrender.com';
+  // ApiService handles base URL normalization
 
   user = signal<User | null>(null);
   token = signal<string | null>(null);
 
   constructor(
-    private http: HttpClient,
+    private api: ApiService,
     private router: Router,
   ) {
     this.loadFromStorage();
   }
 
   private loadFromStorage(): void {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('pc_token') || localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
 
     if (token && userStr) {
       this.token.set(token);
       this.user.set(JSON.parse(userStr));
     }
-  }
-
-  private getHeaders(): HttpHeaders {
-    const token = this.token();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
-    });
   }
 
   isAuthenticated(): boolean {
@@ -73,21 +53,18 @@ export class AuthService {
     fullname?: string;
     role?: string;
   }): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.ApiUrl}/auth/register`, data)
-      .pipe(tap((res) => this.handleAuthSuccess(res)));
+    return this.api.post<AuthResponse>('/auth/register', data).pipe(tap((res) => this.handleAuthSuccess(res)));
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.ApiUrl}/auth/login`, { email, password })
-      .pipe(tap((res) => this.handleAuthSuccess(res)));
+    return this.api.post<AuthResponse>('/auth/login', { email, password }).pipe(tap((res) => this.handleAuthSuccess(res)));
   }
 
   logout(): void {
     this.token.set(null);
     this.user.set(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('pc_token');
     localStorage.removeItem('user');
     this.router.navigate(['/login']);
   }
@@ -96,17 +73,15 @@ export class AuthService {
     const token = res.token || res.accessToken || res.access_token || '';
     this.token.set(token);
     this.user.set(res.user);
+    // store token under both keys for compatibility with interceptor
     localStorage.setItem('token', token);
+    localStorage.setItem('pc_token', token);
     localStorage.setItem('user', JSON.stringify(res.user));
   }
 
   // Profile endpoints
   getMe(): Observable<{ user: User }> {
-    return this.http
-      .get<{ user: User }>(`${this.ApiUrl}/me`, {
-        headers: this.getHeaders(),
-      })
-      .pipe(tap((res) => this.user.set(res.user)));
+    return this.api.get<{ user: User }>('/me').pipe(tap((res) => this.user.set(res.user)));
   }
 
   updateMe(data: {
@@ -114,108 +89,76 @@ export class AuthService {
     username?: string;
     fullname?: string;
   }): Observable<{ user: User }> {
-    return this.http
-      .patch<{ user: User }>(`${this.ApiUrl}/me`, data, {
-        headers: this.getHeaders(),
-      })
-      .pipe(
-        tap((res) => {
-          this.user.set(res.user);
-          localStorage.setItem('user', JSON.stringify(res.user));
-        }),
-      );
+    return this.api.patch<{ user: User }>('/me', data).pipe(
+      tap((res) => {
+        this.user.set(res.user);
+        localStorage.setItem('user', JSON.stringify(res.user));
+      }),
+    );
   }
 
   changePassword(
     currentPassword: string,
     newPassword: string,
   ): Observable<{ success: boolean; message: string }> {
-    return this.http.patch<{ success: boolean; message: string }>(
-      `${this.ApiUrl}/me/password`,
-      { currentPassword, newPassword },
-      { headers: this.getHeaders() },
-    );
+    return this.api.patch<{ success: boolean; message: string }>('/me/password', {
+      currentPassword,
+      newPassword,
+    });
   }
 
   // Items/Products endpoints
   getItems(): Observable<{ items: any[] }> {
-    return this.http.get<{ items: any[] }>(`${this.ApiUrl}/items`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ items: any[] }>('/items');
   }
 
   createItem(item: any): Observable<{ success: boolean; item: any }> {
-    return this.http.post<{ success: boolean; item: any }>(`${this.ApiUrl}/items`, item, {
-      headers: this.getHeaders(),
-    });
+    return this.api.post<{ success: boolean; item: any }>('/items', item);
   }
 
   updateItem(id: string, item: any): Observable<{ item: any }> {
-    return this.http.patch<{ item: any }>(`${this.ApiUrl}/items/${id}`, item, {
-      headers: this.getHeaders(),
-    });
+    return this.api.patch<{ item: any }>(`/items/${id}`, item);
   }
 
   deleteItem(id: string): Observable<{ success: boolean }> {
-    return this.http.delete<{ success: boolean }>(`${this.ApiUrl}/items/${id}`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.delete<{ success: boolean }>(`/items/${id}`);
   }
 
   // Categories endpoints
   getCategories(): Observable<{ categories: any[] }> {
-    return this.http.get<{ categories: any[] }>(`${this.ApiUrl}/categories`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ categories: any[] }>('/categories');
   }
 
   // Brands endpoints
   getBrands(): Observable<{ brands: any[] }> {
-    return this.http.get<{ brands: any[] }>(`${this.ApiUrl}/brands`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ brands: any[] }>('/brands');
   }
 
   // Orders endpoints
   getOrders(): Observable<{ orders: any[] }> {
-    return this.http.get<{ orders: any[] }>(`${this.ApiUrl}/orders`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ orders: any[] }>('/orders');
   }
 
   updateOrderStatus(id: string, status: string): Observable<{ success: boolean }> {
-    return this.http.patch<{ success: boolean }>(
-      `${this.ApiUrl}/orders/${id}/status`,
-      { status },
-      { headers: this.getHeaders() },
-    );
+    return this.api.patch<{ success: boolean }>(`/orders/${id}/status`, { status });
   }
 
   exportOrders(status: string = 'all'): Observable<Blob> {
-    return this.http.get(`${this.ApiUrl}/orders/export?status=${status}`, {
-      headers: this.getHeaders(),
-      responseType: 'blob',
-    });
+    return this.api.getBlob(`/orders/export?status=${status}`);
   }
 
   // Dashboard endpoint
   getDashboard(): Observable<any> {
-    return this.http.get(`${this.ApiUrl}/dashboard`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get('/dashboard');
   }
 
   // Analytics endpoint
   getAnalytics(period: string = '7days'): Observable<any> {
-    return this.http.get(`${this.ApiUrl}/analytics?period=${period}`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get(`/analytics?period=${period}`);
   }
 
   getCustomers(): Observable<{ customers: any[] }> {
-    return this.http.get<{ customers: any[] }>(`${this.ApiUrl}/customers`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ customers: any[] }>('/customers');
   }
 
   createCustomer(customer: {
@@ -223,11 +166,7 @@ export class AuthService {
     email?: string;
     phone?: string;
   }): Observable<{ success: boolean; customer: any }> {
-    return this.http.post<{ success: boolean; customer: any }>(
-      `${this.ApiUrl}/customers`,
-      customer,
-      { headers: this.getHeaders() },
-    );
+    return this.api.post<{ success: boolean; customer: any }>('/customers', customer);
   }
 
   // Create manual order
@@ -236,38 +175,24 @@ export class AuthService {
     customer_id: string;
     quantity: number;
   }): Observable<{ success: boolean; order: any }> {
-    return this.http.post<{ success: boolean; order: any }>(`${this.ApiUrl}/orders`, order, {
-      headers: this.getHeaders(),
-    });
+    return this.api.post<{ success: boolean; order: any }>('/orders', order);
   }
 
   generateBusinessReport(period: string = '7days'): Observable<Blob> {
-    return this.http.get(`${this.ApiUrl}/reports/business?period=${period}`, {
-      headers: this.getHeaders(),
-      responseType: 'blob',
-    });
+    return this.api.getBlob(`/reports/business?period=${period}`);
   }
 
   // Get workers for assignment
   getWorkers(): Observable<{ users: any[] }> {
-    return this.http.get<{ users: any[] }>(`${this.ApiUrl}/users/workers`, {
-      headers: this.getHeaders(),
-    });
+    return this.api.get<{ users: any[] }>('/users/workers');
   }
 
   // Assign order to worker
   assignOrder(orderId: string, userId: string | null): Observable<{ success: boolean }> {
-    return this.http.patch<{ success: boolean }>(
-      `${this.ApiUrl}/orders/${orderId}/assign`,
-      { assigned_to: userId },
-      { headers: this.getHeaders() },
-    );
+    return this.api.patch<{ success: boolean }>(`/orders/${orderId}/assign`, { assigned_to: userId });
   }
 
   exportAnalytics(period: string = '7days'): Observable<Blob> {
-    return this.http.get(`${this.ApiUrl}/analytics/export?period=${period}`, {
-      headers: this.getHeaders(),
-      responseType: 'blob',
-    });
+    return this.api.getBlob(`/analytics/export?period=${period}`);
   }
 }

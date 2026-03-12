@@ -22,9 +22,10 @@ interface Activity {
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
   imports: [LucideAngularModule, FormsModule, CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit {
   constructor(
