@@ -2,13 +2,15 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth.service';
 import { ToastService } from '../../shared/toast.service';
+import { ThemeService } from '../../theme.service';
 
 @Component({
   selector: 'app-forgot',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, LucideAngularModule],
   templateUrl: './forgot.html',
   styleUrls: ['./forgot.css'],
 })
@@ -19,7 +21,12 @@ export class ForgotComponent {
   sent = false;
 
 
-  constructor(private auth: AuthService, private router: Router, private toast: ToastService) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private toast: ToastService,
+    public theme: ThemeService,
+  ) {}
 
   sendReset(): void {
     if (!this.email) {
@@ -53,5 +60,9 @@ export class ForgotComponent {
 
   goToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  toggleTheme() {
+    this.theme.toggle();
   }
 }

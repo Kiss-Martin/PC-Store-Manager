@@ -35,7 +35,7 @@ This document describes the backend of the PC Store Manager project. The backend
 - `SUPABASE_KEY` — Supabase service/anon key
 - `JWT_SECRET` — JWT signing secret
 - `PORT` — server port (default: 3000)
-- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM` — (optional) for sending emails
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` — for sending emails; `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASS` must all be set together
 - `FRONTEND_URL` — for generating password reset links
 
 ## Installation & Running
@@ -102,8 +102,26 @@ Socket.IO is attached to the server. When a new order is created, the backend em
 
 ## Email / Password Reset
 
-- `/auth/forgot-password` creates a token in the `password_resets` table (with expiry) and attempts to send an email. If SMTP is not configured, the token and link are logged.
+- `/auth/forgot-password` creates a token in the `password_resets` table (with expiry) and attempts to send an email. If SMTP is missing or incomplete, the token and link are logged.
 - `/auth/reset-password` checks the token and updates the user's password.
+
+Recommended production values:
+
+- `FRONTEND_URL=https://pc-store-manager-frontend.onrender.com`
+- `SMTP_SECURE=false` with `SMTP_PORT=587` for STARTTLS providers, or `SMTP_SECURE=true` with `SMTP_PORT=465` for SMTPS providers
+
+Render production environment variables to set on the backend service:
+
+- `SUPABASE_URL=<your-supabase-project-url>`
+- `SUPABASE_KEY=<your-supabase-service-key>`
+- `JWT_SECRET=<strong-random-secret>`
+- `FRONTEND_URL=https://pc-store-manager-frontend.onrender.com`
+- `SMTP_HOST=smtp.gmail.com`
+- `SMTP_PORT=465`
+- `SMTP_SECURE=true`
+- `SMTP_USER=<your-sender-email>`
+- `SMTP_PASS=<your-app-password>`
+- `SMTP_FROM=PC Store Manager <your-sender-email>`
 
 **Recommended `password_resets` table:**
 ```sql

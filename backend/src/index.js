@@ -12,6 +12,7 @@ import { sanitizeMiddleware } from './middlewares/sanitize.middleware.js';
 import { languageMiddleware } from './middlewares/language.middleware.js';
 import { scrubResponseMiddleware } from './utils/scrub.util.js';
 import { errorHandler } from './middlewares/error.middleware.js';
+import { getSmtpRuntimeStatus } from './services/auth.service.js';
 import authRoutes from './routes/auth.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import orderRoutes from './routes/order.routes.js';
@@ -113,6 +114,13 @@ const bold = "\x1b[1m";
 const cyan = "\x1b[36m";
 const green = "\x1b[32m";
 const yellow = "\x1b[33m";
+const red = "\x1b[31m";
+const smtpStatus = getSmtpRuntimeStatus();
+const smtpSummary = smtpStatus.configured
+  ? `${bold}${green}configured${reset} (${smtpStatus.host}:${smtpStatus.port}, secure=${smtpStatus.secure})`
+  : smtpStatus.partiallyConfigured
+    ? `${bold}${yellow}incomplete${reset} (missing: ${smtpStatus.missingFields.join(', ')})`
+    : `${bold}${red}disabled${reset} (reset links will be logged)`;
 
 console.log("\n" + cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + reset);
 console.log(`${bold}${green}   BACKEND SZERVER ELINDÍTVA ${reset}`);
@@ -121,5 +129,6 @@ console.log(`   Port:        ${bold}${yellow}${PORT}${reset}`);
 console.log(
   `   Environment: ${bold}${yellow}${process.env.NODE_ENV || "development"}${reset}`,
 );
+console.log(`   SMTP:        ${smtpSummary}`);
 console.log(cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" + reset);
 });

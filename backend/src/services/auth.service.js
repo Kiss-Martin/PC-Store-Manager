@@ -9,15 +9,41 @@ import { run } from '../utils/supabase.util.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 
+const smtpConfig = {
+  host: process.env.SMTP_HOST?.trim(),
+  port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+  secure: process.env.SMTP_SECURE === 'true',
+  user: process.env.SMTP_USER?.trim(),
+  pass: process.env.SMTP_PASS,
+  from: process.env.SMTP_FROM?.trim() || 'noreply@pcstore.local',
+};
+
+const requiredSmtpFields = ['host', 'user', 'pass'];
+const missingSmtpFields = requiredSmtpFields.filter((field) => !smtpConfig[field]);
+const hasAnySmtpConfig = requiredSmtpFields.some((field) => Boolean(smtpConfig[field]));
+const hasCompleteSmtpConfig = missingSmtpFields.length === 0;
+
+export function getSmtpRuntimeStatus() {
+  return {
+    configured: hasCompleteSmtpConfig,
+    partiallyConfigured: hasAnySmtpConfig && !hasCompleteSmtpConfig,
+    missingFields: missingSmtpFields,
+    host: smtpConfig.host || null,
+    port: smtpConfig.port,
+    secure: smtpConfig.secure,
+    from: smtpConfig.from,
+  };
+}
+
 let mailTransporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+if (hasCompleteSmtpConfig) {
   mailTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-    secure: process.env.SMTP_SECURE === 'true',
+    host: smtpConfig.host,
+    port: smtpConfig.port,
+    secure: smtpConfig.secure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpConfig.user,
+      pass: smtpConfig.pass,
     },
   });
 
@@ -25,6 +51,8 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER) {
   mailTransporter.verify()
     .then(() => console.log('SMTP transporter verified'))
     .catch((err) => console.warn('SMTP transporter verification failed:', err && err.message ? err.message : err));
+} else if (hasAnySmtpConfig) {
+  console.warn(`SMTP configuration is incomplete. Missing: ${missingSmtpFields.join(', ')}. Password reset emails will be logged instead of sent.`);
 }
 
 function generateToken(payload) {
@@ -91,7 +119,7 @@ const AuthService = {
       try {
         await mailTransporter.sendMail({
           to: email,
-          from: process.env.SMTP_FROM || 'noreply@pcstore.local',
+          from: smtpConfig.from,
           subject: 'Password reset',
           text: `Reset your password: ${resetLink}`,
           html: `<p>Reset your password: <a href="${resetLink}">${resetLink}</a></p>`,

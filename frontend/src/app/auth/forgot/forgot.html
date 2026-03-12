@@ -1,16 +1,59 @@
 <div class="forgot-container">
-  <h2>Reset password</h2>
-  <p>Enter the email associated with your account and we'll send a link to reset your password.</p>
+  <div class="forgot-wrapper">
+    <div class="forgot-header">
+      <div class="logo-section">
+        <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
+        <span class="brand">PC Store</span>
+        <button type="button" class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+          <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
+          <span class="ml-8">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+        </button>
+      </div>
+      <h1 class="forgot-title">Reset Password</h1>
+      <p class="forgot-subtitle">Enter the email associated with your account and we'll send a reset link.</p>
+    </div>
 
-  <form (ngSubmit)="sendReset()">
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" [(ngModel)]="email" required />
-    <button type="submit" [disabled]="isLoading || sent">{{ isLoading ? 'Sending...' : (sent ? 'Sent' : 'Send reset link') }}</button>
-  </form>
+    <div class="forgot-card">
+      @if (message) {
+        <div class="status-message" [class.success-message]="sent" [class.error-message]="!sent">
+          <p class="status-text">{{ message }}</p>
+        </div>
+      }
 
-  <p *ngIf="message" class="message">{{ message }}</p>
+      <form (ngSubmit)="sendReset()" class="form">
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            required
+            placeholder="Enter your email"
+            class="form-input"
+          />
+        </div>
 
-  <div class="actions">
-    <button (click)="goToLogin()">Back to login</button>
+        <button type="submit" [disabled]="isLoading || sent" class="submit-button">
+          {{ isLoading ? 'Sending...' : (sent ? 'Sent' : 'Send Reset Link') }}
+        </button>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">OR</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <button type="button" (click)="goToLogin()" class="secondary-button">
+        Back To Login
+      </button>
+    </div>
+
+    <div class="footer">
+      <p class="footer-text">
+        Remembered your password? <button type="button" (click)="goToLogin()" class="footer-link">Sign in</button>
+      </p>
+    </div>
   </div>
 </div>
