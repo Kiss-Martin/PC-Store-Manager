@@ -2,8 +2,8 @@
   <!-- Header -->
   <div class="analytics-header">
     <div>
-      <h1>Analytics</h1>
-      <p class="subtitle">Track your store performance</p>
+      <h1>{{ 'analytics.title' | t }}</h1>
+      <p class="subtitle">{{ 'analytics.subtitle' | t }}</p>
     </div>
     <div class="header-actions">
       <!-- Period Selector -->
@@ -12,31 +12,31 @@
           class="period-btn"
           [class.active]="selectedPeriod === '7days'"
           (click)="changePeriod('7days')">
-          7 Days
+          {{ 'analytics.period.7days' | t }}
         </button>
         <button
           class="period-btn"
           [class.active]="selectedPeriod === '30days'"
           (click)="changePeriod('30days')">
-          30 Days
+          {{ 'analytics.period.30days' | t }}
         </button>
         <button
           class="period-btn"
           [class.active]="selectedPeriod === '90days'"
           (click)="changePeriod('90days')">
-          90 Days
+          {{ 'analytics.period.90days' | t }}
         </button>
       </div>
 
       @if (auth.isAdmin()) {
         <div class="export-controls">
-          <select [(ngModel)]="exportFormat" class="export-format-select" aria-label="Analytics export format">
-            <option value="csv">CSV</option>
-            <option value="pdf">PDF</option>
+          <select [(ngModel)]="exportFormat" class="export-format-select" [attr.aria-label]="'analytics.exportFormat' | t">
+            <option value="csv">{{ 'common.csv' | t }}</option>
+            <option value="pdf">{{ 'common.pdf' | t }}</option>
           </select>
           <button class="btn-primary" (click)="exportReport()">
             <lucide-icon name="download" size="18"></lucide-icon>
-            Export Report
+            {{ 'analytics.exportReport' | t }}
           </button>
         </div>
       }
@@ -47,7 +47,7 @@
   @if (isLoading) {
     <div class="loading">
       <lucide-icon name="loader-circle" size="32" class="spin"></lucide-icon>
-      <p>Loading analytics...</p>
+      <p>{{ 'analytics.loading' | t }}</p>
     </div>
   }
 
@@ -59,11 +59,11 @@
           <lucide-icon name="dollar-sign" size="24"></lucide-icon>
         </div>
         <div class="summary-content">
-          <p class="summary-label">Total Revenue</p>
-          <h3 class="summary-value">${{ summary.totalRevenue.toLocaleString() }}</h3>
+          <p class="summary-label">{{ 'analytics.summary.totalRevenue' | t }}</p>
+          <h3 class="summary-value">${{ formatCurrency(summary.totalRevenue) }}</h3>
           <span class="summary-trend positive">
             <lucide-icon name="trending-up" size="14"></lucide-icon>
-            +{{ summary.revenueGrowth }}% vs last period
+            +{{ summary.revenueGrowth }}% {{ 'analytics.summary.vsLastPeriod' | t }}
           </span>
         </div>
       </div>
@@ -73,11 +73,11 @@
           <lucide-icon name="shopping-cart" size="24"></lucide-icon>
         </div>
         <div class="summary-content">
-          <p class="summary-label">Total Orders</p>
+          <p class="summary-label">{{ 'analytics.summary.totalOrders' | t }}</p>
           <h3 class="summary-value">{{ summary.totalOrders }}</h3>
           <span class="summary-trend positive">
             <lucide-icon name="shopping-cart" size="14"></lucide-icon>
-            For selected period
+            {{ 'analytics.summary.selectedPeriod' | t }}
           </span>
         </div>
       </div>
@@ -87,11 +87,11 @@
           <lucide-icon name="chart-line" size="24"></lucide-icon>
         </div>
         <div class="summary-content">
-          <p class="summary-label">Avg Order Value</p>
-          <h3 class="summary-value">${{ summary.averageOrderValue.toFixed(2) }}</h3>
+          <p class="summary-label">{{ 'analytics.summary.avgOrderValue' | t }}</p>
+          <h3 class="summary-value">${{ formatCurrency(summary.averageOrderValue) }}</h3>
           <span class="summary-trend positive">
             <lucide-icon name="chart-line" size="14"></lucide-icon>
-            Based on current orders
+            {{ 'analytics.summary.currentOrders' | t }}
           </span>
         </div>
       </div>
@@ -101,11 +101,11 @@
           <lucide-icon name="triangle-alert" size="24"></lucide-icon>
         </div>
         <div class="summary-content">
-          <p class="summary-label">Low Stock Items</p>
+          <p class="summary-label">{{ 'analytics.summary.lowStockItems' | t }}</p>
           <h3 class="summary-value">{{ summary.lowStockItems }}</h3>
           <span class="summary-trend negative">
             <lucide-icon name="circle-alert" size="14"></lucide-icon>
-            Needs attention
+            {{ 'analytics.summary.needsAttention' | t }}
           </span>
         </div>
       </div>
@@ -117,8 +117,8 @@
       <div class="chart-card large">
         <div class="chart-header">
           <div>
-            <h2>Revenue Overview</h2>
-            <p class="chart-subtitle">Daily revenue for selected period</p>
+            <h2>{{ 'analytics.charts.revenueOverview' | t }}</h2>
+            <p class="chart-subtitle">{{ 'analytics.charts.dailyRevenue' | t }}</p>
           </div>
           <lucide-icon name="trending-up-down" size="20" class="chart-icon"></lucide-icon>
         </div>
@@ -136,8 +136,8 @@
       <div class="chart-card">
         <div class="chart-header">
           <div>
-            <h2>Sales by Category</h2>
-            <p class="chart-subtitle">Distribution of sales</p>
+            <h2>{{ 'analytics.charts.salesByCategory' | t }}</h2>
+            <p class="chart-subtitle">{{ 'analytics.charts.distribution' | t }}</p>
           </div>
           <lucide-icon name="chart-pie" size="20" class="chart-icon"></lucide-icon>
         </div>
@@ -157,7 +157,7 @@
       <!-- Top Products -->
       <div class="data-card">
         <div class="data-header">
-          <h2>Top Selling Products</h2>
+          <h2>{{ 'analytics.topProducts' | t }}</h2>
           <lucide-icon name="star" size="20"></lucide-icon>
         </div>
         <div class="data-body">
@@ -171,10 +171,10 @@
                 </lucide-icon>
                 <div>
                   <p class="product-name">{{ product.name }}</p>
-                  <p class="product-sales">{{ product.sales }} units sold</p>
+                  <p class="product-sales">{{ 'analytics.unitsSold' | t:{ count: product.sales } }}</p>
                 </div>
               </div>
-              <p class="product-revenue">${{ product.revenue.toLocaleString() }}</p>
+              <p class="product-revenue">${{ formatCurrency(product.revenue) }}</p>
             </div>
           }
         </div>
@@ -184,7 +184,7 @@
 @if (auth.isAdmin()) {
   <div class="data-card">
     <div class="data-header">
-      <h2>Recent Transactions</h2>
+      <h2>{{ 'analytics.recentTransactions' | t }}</h2>
       <lucide-icon name="receipt" size="20"></lucide-icon>
     </div>
     <div class="data-body">
@@ -197,9 +197,9 @@
             <p class="transaction-date">{{ transaction.date }}</p>
           </div>
           <div class="transaction-right">
-            <p class="transaction-amount">${{ transaction.amount }}</p>
+            <p class="transaction-amount">${{ formatCurrency(transaction.amount) }}</p>
             <span class="transaction-status" [ngClass]="getStatusClass(transaction.status)">
-              {{ transaction.status }}
+              {{ ('status.' + transaction.status) | t }}
             </span>
           </div>
         </div>

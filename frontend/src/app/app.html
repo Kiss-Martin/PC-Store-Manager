@@ -15,18 +15,23 @@
           }
         </button>
         <ul class="nav-menu" [class.active]="isNavOpen">
-          <li><a (click)="navigate('dashboard')" class="nav-link">Dashboard</a></li>
-          <li><a (click)="navigate('products')" class="nav-link">Products</a></li>
-          <li><a (click)="navigate('orders')" class="nav-link">Orders</a></li>
-          <li><a (click)="navigate('analytics')" class="nav-link">Analytics</a></li>
+          <li><a (click)="navigate('dashboard')" class="nav-link">{{ 'app.nav.dashboard' | t }}</a></li>
+          <li><a (click)="navigate('products')" class="nav-link">{{ 'app.nav.products' | t }}</a></li>
+          <li><a (click)="navigate('orders')" class="nav-link">{{ 'app.nav.orders' | t }}</a></li>
+          <li><a (click)="navigate('analytics')" class="nav-link">{{ 'app.nav.analytics' | t }}</a></li>
           <li class="nav-extra">
-            <button type="button" class="btn theme-toggle" (click)="toggleTheme()">
-              <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-                <span class="ml-8">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+            <button type="button" class="btn language-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+              {{ 'app.lang.toggle' | t }}
             </button>
           </li>
           <li class="nav-extra">
-            <a (click)="openProfile()" class="nav-link">Profile</a>
+            <button type="button" class="btn theme-toggle" (click)="toggleTheme()">
+              <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
+                <span class="ml-8">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
+            </button>
+          </li>
+          <li class="nav-extra">
+            <a (click)="openProfile()" class="nav-link">{{ 'app.nav.profile' | t }}</a>
           </li>
         </ul>
       </div>

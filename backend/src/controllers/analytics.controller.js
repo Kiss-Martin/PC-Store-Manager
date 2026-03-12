@@ -7,7 +7,7 @@ export const getAnalytics = async (req, res) => {
 };
 
 export const exportAnalytics = async (req, res) => {
-  const { content, contentType, filename } = await AnalyticsService.exportAnalytics(req.query);
+  const { content, contentType, filename } = await AnalyticsService.exportAnalytics({ ...req.query, lang: req.lang });
   res.setHeader('Content-Type', contentType);
   res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
   res.send(content);

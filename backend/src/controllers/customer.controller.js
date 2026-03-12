@@ -7,6 +7,6 @@ export const getCustomers = async (req, res) => {
 };
 
 export const createCustomer = async (req, res) => {
-  const customer = await CustomerService.createCustomer(req.body);
+  const customer = await CustomerService.createCustomer(req.body, req.lang);
   res.json({ success: true, customer });
 };

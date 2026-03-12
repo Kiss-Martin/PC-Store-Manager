@@ -6,6 +6,8 @@ import { AuthService, ExportFormat } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { ActivatedRoute } from '@angular/router';
+import { I18nService } from '../../i18n.service';
+import { TranslatePipe } from '../../translate.pipe';
 
 interface Order {
   id: string;
@@ -25,7 +27,7 @@ interface Order {
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.css'],
 })
@@ -90,6 +92,7 @@ export class OrdersComponent implements OnInit {
   constructor(
     public auth: AuthService,
     public theme: ThemeService,
+    public i18n: I18nService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute
   ) {}
@@ -136,16 +139,16 @@ export class OrdersComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Failed to assign order:', err);
-        alert('Failed to assign order');
+        alert(this.i18n.t('orders.error.assign'));
         this.assigningOrder = null;
       }
     });
   }
 
   getWorkerName(userId: string | null | undefined): string {
-    if (!userId) return 'Unassigned';
+    if (!userId) return this.i18n.t('orders.unassigned');
     const worker = this.workers.find(w => w.id === userId);
-    return worker?.username || 'Unknown';
+    return worker?.username || this.i18n.t('products.na');
   }
 
   loadOrders() {
@@ -233,7 +236,7 @@ export class OrdersComponent implements OnInit {
 
   createCustomer() {
     if (!this.newCustomer.name) {
-      this.orderError = 'Customer name is required';
+      this.orderError = this.i18n.t('orders.error.customerNameRequired');
       return;
     }
 
@@ -246,12 +249,12 @@ export class OrdersComponent implements OnInit {
         this.newOrder.customer_id = res.customer.id;
         this.showNewCustomerForm = false;
         this.isSavingCustomer = false;
-        this.orderSuccess = 'Customer created!';
+        this.orderSuccess = this.i18n.t('orders.success.customerCreated');
         setTimeout(() => (this.orderSuccess = ''), 2000);
       },
       error: (err: any) => {
         this.isSavingCustomer = false;
-        this.orderError = err.error?.error || 'Failed to create customer';
+        this.orderError = err.error?.error || this.i18n.t('orders.error.createCustomer');
       },
     });
   }
@@ -261,12 +264,12 @@ export class OrdersComponent implements OnInit {
     this.orderSuccess = '';
 
     if (!this.newOrder.item_id || !this.newOrder.customer_id || !this.newOrder.quantity) {
-      this.orderError = 'Please fill in all required fields';
+      this.orderError = this.i18n.t('orders.error.requiredFields');
       return;
     }
 
     if (this.newOrder.quantity < 1) {
-      this.orderError = 'Quantity must be at least 1';
+      this.orderError = this.i18n.t('orders.error.quantityMinimum');
       return;
     }
 
@@ -274,7 +277,7 @@ export class OrdersComponent implements OnInit {
 
     // Only check stock for processing/completed orders (they reduce inventory)
     if ((this.newOrder.status === 'processing' || this.newOrder.status === 'completed') && this.newOrder.quantity > stock) {
-      this.orderError = `Only ${stock} units available`;
+      this.orderError = this.i18n.t('orders.error.onlyUnitsAvailable', { count: stock });
       return;
     }
 
@@ -283,7 +286,7 @@ export class OrdersComponent implements OnInit {
     this.auth.createOrder(this.newOrder).subscribe({
       next: () => {
         this.isSavingOrder = false;
-        this.orderSuccess = 'Order recorded successfully!';
+        this.orderSuccess = this.i18n.t('orders.success.recorded');
         setTimeout(() => {
           this.closeAddOrderModal();
           this.loadOrders();
@@ -291,7 +294,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err: any) => {
         this.isSavingOrder = false;
-        this.orderError = err.error?.error || 'Failed to create order';
+        this.orderError = err.error?.error || this.i18n.t('orders.error.createOrder');
       },
     });
   }
@@ -375,7 +378,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to update order status:', err);
-        alert('Failed to update order status');
+        alert(this.i18n.t('orders.error.updateStatus'));
       },
     });
   }
@@ -450,13 +453,7 @@ export class OrdersComponent implements OnInit {
   }
 
   getStatusDescription(status: 'pending' | 'processing' | 'completed' | 'cancelled'): string {
-    const descriptions: { [key: string]: string } = {
-      pending: 'Order is awaiting processing',
-      processing: 'Order is being prepared for delivery',
-      completed: 'Order has been fulfilled successfully',
-      cancelled: 'Order has been cancelled',
-    };
-    return descriptions[status] || 'Order status';
+    return this.i18n.t(`orders.statusDescription.${status}`);
   }
 
   toggleStatusFilterDropdown() {
@@ -479,14 +476,15 @@ export class OrdersComponent implements OnInit {
   }
 
   getStatusFilterLabel(): string {
-    const labels: { [key: string]: string } = {
-      all: 'All Orders',
-      pending: 'Pending',
-      processing: 'Processing',
-      completed: 'Completed',
-      cancelled: 'Cancelled',
-    };
-    return labels[this.selectedStatus] || 'All Orders';
+    if (this.selectedStatus === 'all') {
+      return this.i18n.t('orders.filter.all');
+    }
+
+    return this.getStatusLabel(this.selectedStatus);
+  }
+
+  getStatusLabel(status: string): string {
+    return this.i18n.t(`status.${status}`);
   }
 
   exportOrders() {
@@ -503,7 +501,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to export orders:', err);
-        alert('Export failed. Please try again.');
+        alert(this.i18n.t('orders.error.export'));
       },
     });
   }
@@ -520,10 +518,17 @@ export class OrdersComponent implements OnInit {
   onQuantityChange() {
     const maxStock = this.getProductStock(this.newOrder.item_id);
     if (this.newOrder.quantity > maxStock) {
-      this.orderError = `Only ${maxStock} units available`;
+      this.orderError = this.i18n.t('orders.error.onlyUnitsAvailable', { count: maxStock });
     } else {
       this.orderError = '';
     }
+  }
+
+  formatCurrency(value: number): string {
+    return value.toLocaleString(this.i18n.locale(), {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
   }
 
   getSelectedProductPrice(): number {
@@ -537,7 +542,7 @@ export class OrdersComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(this.i18n.locale(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

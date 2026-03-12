@@ -83,7 +83,7 @@ function drawTable(doc, columns, rows, startY) {
   });
 }
 
-export function generatePdfReport({ title, subtitle, summary = [], columns = [], rows = [] }) {
+export function generatePdfReport({ title, subtitle, summary = [], columns = [], rows = [], summaryTitle = 'Summary' }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -108,7 +108,7 @@ export function generatePdfReport({ title, subtitle, summary = [], columns = [],
 
     if (summary.length > 0) {
       doc.moveDown(1);
-      doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text('Summary');
+      doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text(summaryTitle);
       doc.moveDown(0.3);
       doc.font('Helvetica').fontSize(10).fillColor('#374151');
       summary.forEach((item) => {

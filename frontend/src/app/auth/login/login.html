@@ -5,13 +5,16 @@
       <div class="logo-section">
         <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
         <span class="brand">PC Store</span>
-        <button type="button" class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+        <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-          <span class="ml-8">{{ theme.isDark() ? 'Light' : 'Dark' }}</span>
+          <span class="ml-8">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
+        </button>
+        <button type="button" class="theme-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+          {{ 'app.lang.toggle' | t }}
         </button>
       </div>
-      <h1 class="login-title">Welcome Back</h1>
-      <p class="login-subtitle">Sign in to your account</p>
+      <h1 class="login-title">{{ 'login.title' | t }}</h1>
+      <p class="login-subtitle">{{ 'login.subtitle' | t }}</p>
     </div>
 
     <!-- Login Card -->
@@ -27,30 +30,30 @@
       <form (ngSubmit)="login()" class="form">
         <!-- Email -->
         <div class="form-group">
-          <label class="form-label">Email</label>
+          <label class="form-label">{{ 'login.email' | t }}</label>
           <input
             type="text"
             [(ngModel)]="email"
             name="email"
-            placeholder="Enter your email"
+            [placeholder]="'login.emailPlaceholder' | t"
             class="form-input"
             />
           </div>
 
           <!-- Password -->
           <div class="form-group">
-            <label class="form-label">Password</label>
+            <label class="form-label">{{ 'login.password' | t }}</label>
             <input
               type="password"
               [(ngModel)]="password"
               name="password"
-              placeholder="Enter your password"
+              [placeholder]="'login.passwordPlaceholder' | t"
               class="form-input"
               />
             </div>
 
             <div class="form-row">
-              <button type="button" (click)="goToForgot()" class="forgot-button">Forgot password?</button>
+              <button type="button" (click)="goToForgot()" class="forgot-button">{{ 'login.forgotPassword' | t }}</button>
             </div>
 
             <!-- Login Button -->
@@ -59,14 +62,14 @@
               [disabled]="isLoading"
               class="login-button"
               >
-              {{ isLoading ? 'Signing in...' : 'Sign In' }}
+              {{ isLoading ? ('login.signingIn' | t) : ('login.signIn' | t) }}
             </button>
           </form>
 
           <!-- Divider -->
           <div class="divider">
             <div class="divider-line"></div>
-            <span class="divider-text">OR</span>
+            <span class="divider-text">{{ 'login.or' | t }}</span>
             <div class="divider-line"></div>
           </div>
 
@@ -75,14 +78,14 @@
             (click)="goToRegister()"
             class="register-button"
             >
-            Create New Account
+            {{ 'login.createAccount' | t }}
           </button>
         </div>
 
         <!-- Footer -->
         <div class="footer">
           <p class="footer-text">
-            Need help? <a href="#" class="footer-link">Contact support</a>
+            {{ 'login.needHelp' | t }} <a href="#" class="footer-link">{{ 'login.contactSupport' | t }}</a>
           </p>
         </div>
       </div>

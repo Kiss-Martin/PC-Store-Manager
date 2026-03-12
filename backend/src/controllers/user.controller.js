@@ -12,11 +12,11 @@ export const getProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const user = await UserService.updateProfile(req.user.id, req.body);
+  const user = await UserService.updateProfile(req.user.id, req.body, req.lang);
   res.json({ user });
 };
 
 export const changePassword = async (req, res) => {
-  const result = await UserService.changePassword(req.user.id, req.body);
+  const result = await UserService.changePassword(req.user.id, req.body, req.lang);
   res.json(result);
 };

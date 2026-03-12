@@ -2,9 +2,10 @@
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { ORDER_STATUSES } from '../utils/constants.js';
+import { t } from '../utils/i18n.util.js';
 
 const OrderService = {
-  async getOrders(user) {
+  async getOrders(user, lang = 'en') {
     let query = supabase
       .from('logs')
       .select(`id,item_id,customer_id,details,timestamp,assigned_to,items(name,price),customers(name,email)`)
@@ -37,28 +38,28 @@ const OrderService = {
       const quantityMatch = log.details.match(/Sold (\d+) unit/);
       return {
         id: log.id,
-        orderNumber: orderMatch ? `#${orderMatch[1]}` : 'N/A',
-        product: log.items?.name || 'Unknown',
+        orderNumber: orderMatch ? `#${orderMatch[1]}` : t(lang, 'common.na'),
+        product: log.items?.name || t(lang, 'common.unknown'),
         productId: log.item_id,
         quantity: quantityMatch ? parseInt(quantityMatch[1]) : 0,
         unitPrice: log.items?.price || 0,
         totalAmount: (log.items?.price || 0) * (quantityMatch ? parseInt(quantityMatch[1]) : 0),
         status: statusByLogId.get(log.id) || 'completed',
-        customer: log.customers?.name || 'Unknown',
-        date: new Date(log.timestamp).toLocaleDateString(),
+        customer: log.customers?.name || t(lang, 'common.unknown'),
+        date: new Date(log.timestamp).toLocaleDateString(lang === 'hu' ? 'hu-HU' : 'en-US'),
         timestamp: log.timestamp,
         assignedTo: log.assigned_to,
       };
     });
   },
 
-  async createOrder(user, { item_id, customer_id, quantity, status = 'pending' }) {
+  async createOrder(user, { item_id, customer_id, quantity, status = 'pending' }, lang = 'en') {
     if (!ORDER_STATUSES.includes(status)) {
-      throw new Error('Invalid status');
+      throw new Error(t(lang, 'order.invalidStatus'));
     }
     const item = await run(supabase.from('items').select('id, name, price, amount').eq('id', item_id).single()).catch(() => null);
-    if (!item) throw new Error('Item not found');
-    if (item.amount < quantity) throw new Error(`Insufficient stock. Only ${item.amount} available`);
+    if (!item) throw new Error(t(lang, 'order.itemNotFound'));
+    if (item.amount < quantity) throw new Error(t(lang, 'order.insufficientStock', { count: item.amount }));
     const orderNumber = Math.floor(1000 + Math.random() * 9000);
     if (status === 'completed' || status === 'processing') {
       await run(supabase.from('items').update({ amount: item.amount - quantity }).eq('id', item_id));
@@ -90,9 +91,9 @@ const OrderService = {
     };
   },
 
-  async updateOrderStatus(id, status, userId) {
+  async updateOrderStatus(id, status, userId, lang = 'en') {
     if (!ORDER_STATUSES.includes(status)) {
-      throw new Error('Invalid status');
+      throw new Error(t(lang, 'order.invalidStatus'));
     }
     const existingStatus = await run(supabase.from('orders_status').select('id').eq('log_id', id).single()).catch(() => null);
     let result;
@@ -112,7 +113,7 @@ const OrderService = {
     await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
   },
 
-  async deleteOrder(id) {
+  async deleteOrder(id, lang = 'en') {
     const log = await run(
       supabase
         .from('logs')
@@ -123,7 +124,7 @@ const OrderService = {
     ).catch(() => null);
 
     if (!log) {
-      throw new Error('Order not found');
+      throw new Error(t(lang, 'order.notFound'));
     }
 
     const statusRow = await run(

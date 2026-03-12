@@ -2,16 +2,16 @@
   <div class="profile-header">
     <h1>
       <lucide-icon name="user" [size]="32"></lucide-icon>
-      My Profile
+      {{ 'profile.title' | t }}
     </h1>
-    <p>Manage your account settings and preferences</p>
+    <p>{{ 'profile.subtitle' | t }}</p>
   </div>
 
   <!-- Loading State -->
   @if (isLoading) {
     <div class="loading-container">
       <div class="spinner"></div>
-      <p>Loading profile...</p>
+      <p>{{ 'profile.loading' | t }}</p>
     </div>
   }
 
@@ -29,7 +29,7 @@
             <p class="username">@{{ user.username }}</p>
             <span class="role-badge" [class.admin]="user.role === 'admin'">
               <lucide-icon name="shield" [size]="14"></lucide-icon>
-              {{ user.role || 'User' }}
+              {{ getRoleLabel(user.role) }}
             </span>
           </div>
         </div>
@@ -37,11 +37,11 @@
         <div class="profile-quick-actions">
           <button class="btn-secondary" (click)="toggleEditMode()">
             <lucide-icon [name]="isEditingProfile ? 'X' : 'pen'" [size]="18"></lucide-icon>
-            {{ isEditingProfile ? 'Cancel' : 'Edit Profile' }}
+            {{ isEditingProfile ? ('profile.cancel' | t) : ('profile.editProfile' | t) }}
           </button>
           <button class="btn-secondary" (click)="openPasswordModal()">
             <lucide-icon name="key" [size]="18"></lucide-icon>
-            Change Password
+            {{ 'profile.changePassword' | t }}
           </button>
         </div>
       </div>
@@ -51,7 +51,7 @@
         <div class="card-header">
           <h3>
             <lucide-icon name="user" [size]="20"></lucide-icon>
-            Profile Information
+            {{ 'profile.profileInformation' | t }}
           </h3>
         </div>
 
@@ -61,7 +61,7 @@
             <div class="detail-item">
               <lucide-icon name="mail" [size]="20"></lucide-icon>
               <div>
-                <label>Email Address</label>
+                <label>{{ 'profile.emailAddress' | t }}</label>
                 <p>{{ user.email }}</p>
               </div>
             </div>
@@ -69,7 +69,7 @@
             <div class="detail-item">
               <lucide-icon name="user" [size]="20"></lucide-icon>
               <div>
-                <label>Username</label>
+                <label>{{ 'register.username' | t }}</label>
                 <p>{{ user.username }}</p>
               </div>
             </div>
@@ -77,8 +77,8 @@
             <div class="detail-item">
               <lucide-icon name="file-text" [size]="20"></lucide-icon>
               <div>
-                <label>Full Name</label>
-                <p>{{ user.fullname || 'Not set' }}</p>
+                <label>{{ 'profile.fullName' | t }}</label>
+                <p>{{ user.fullname || ('profile.notSet' | t) }}</p>
               </div>
             </div>
           </div>
@@ -88,7 +88,7 @@
             <div class="form-group">
               <label for="email">
                 <lucide-icon name="mail" [size]="16"></lucide-icon>
-                Email Address *
+                {{ 'profile.emailAddress' | t }} *
               </label>
               <input
                 type="email"
@@ -96,7 +96,7 @@
                 [(ngModel)]="profileForm.email"
                 name="email"
                 class="form-input"
-                placeholder="Enter your email"
+                [placeholder]="'profile.enterEmail' | t"
                 required
               />
             </div>
@@ -104,7 +104,7 @@
             <div class="form-group">
               <label for="username">
                 <lucide-icon name="user" [size]="16"></lucide-icon>
-                Username *
+                {{ 'register.username' | t }} *
               </label>
               <input
                 type="text"
@@ -112,7 +112,7 @@
                 [(ngModel)]="profileForm.username"
                 name="username"
                 class="form-input"
-                placeholder="Enter your username"
+                [placeholder]="'profile.enterUsername' | t"
                 required
               />
             </div>
@@ -120,7 +120,7 @@
             <div class="form-group">
               <label for="fullname">
                 <lucide-icon name="file-text" [size]="16"></lucide-icon>
-                Full Name
+                {{ 'profile.fullName' | t }}
               </label>
               <input
                 type="text"
@@ -128,21 +128,21 @@
                 [(ngModel)]="profileForm.fullname"
                 name="fullname"
                 class="form-input"
-                placeholder="Enter your full name"
+                [placeholder]="'profile.enterFullName' | t"
               />
             </div>
 
             <div class="form-actions">
               <button type="button" class="btn-secondary" (click)="toggleEditMode()">
-                Cancel
+                {{ 'profile.cancel' | t }}
               </button>
               <button type="submit" class="btn-primary" [disabled]="isSaving">
                 @if (isSaving) {
                   <span class="spinner-small"></span>
-                  Saving...
+                  {{ 'profile.saving' | t }}
                 } @else {
                   <lucide-icon name="save" [size]="18"></lucide-icon>
-                  Save Changes
+                  {{ 'profile.saveChanges' | t }}
                 }
               </button>
             </div>
@@ -157,7 +157,7 @@
           <div class="card-header">
             <h3>
               <lucide-icon name="Lock" [size]="20"></lucide-icon>
-              Security
+              {{ 'profile.security' | t }}
             </h3>
           </div>
 
@@ -167,12 +167,12 @@
                 <lucide-icon name="Key" [size]="24"></lucide-icon>
               </div>
               <div class="security-info">
-                <h4>Password</h4>
-                <p>Keep your account secure</p>
+                <h4>{{ 'profile.password' | t }}</h4>
+                <p>{{ 'profile.securityDescription' | t }}</p>
               </div>
             </div>
             <button class="btn-outline" (click)="openPasswordModal()">
-              Change
+              {{ 'profile.change' | t }}
             </button>
           </div>
         </div>
@@ -182,7 +182,7 @@
           <div class="card-header">
             <h3>
               <lucide-icon name="Palette" [size]="20"></lucide-icon>
-              Appearance
+              {{ 'profile.appearance' | t }}
             </h3>
           </div>
 
@@ -196,12 +196,12 @@
                 }
               </div>
               <div class="appearance-info">
-                <h4>Theme</h4>
-                <p>{{ theme.isDark() ? 'Dark' : 'Light' }} mode</p>
+                <h4>{{ 'profile.theme' | t }}</h4>
+                <p>{{ 'profile.mode' | t:{ mode: (theme.isDark() ? ('app.theme.dark' | t) : ('app.theme.light' | t)) } }}</p>
               </div>
             </div>
             <button class="btn-outline" (click)="toggleTheme()">
-              Switch
+              {{ 'profile.switch' | t }}
             </button>
           </div>
         </div>
@@ -212,15 +212,15 @@
         <div class="card-header">
           <h3>
             <lucide-icon name="triangle-alert" [size]="20"></lucide-icon>
-            Account Actions
+            {{ 'profile.accountActions' | t }}
           </h3>
         </div>
 
         <div class="danger-content">
-          <p>Once you logout, you'll need to sign in again to access your account.</p>
+          <p>{{ 'profile.logoutInfo' | t }}</p>
           <button class="btn-danger" (click)="logout()">
             <lucide-icon name="LogOut" [size]="18"></lucide-icon>
-            Logout
+            {{ 'profile.logout' | t }}
           </button>
         </div>
       </div>
@@ -235,7 +235,7 @@
       <div class="modal-header">
         <h2>
           <lucide-icon name="Key" [size]="24"></lucide-icon>
-          Change Password
+          {{ 'profile.changePassword' | t }}
         </h2>
         <button class="btn-close" (click)="closePasswordModal()">
           <lucide-icon name="X" [size]="24"></lucide-icon>
@@ -258,55 +258,55 @@
         }
 
         <div class="form-group">
-          <label for="currentPassword">Current Password *</label>
+          <label for="currentPassword">{{ 'profile.currentPassword' | t }}</label>
           <input
             type="password"
             id="currentPassword"
             [(ngModel)]="passwordForm.currentPassword"
             name="currentPassword"
             class="form-input"
-            placeholder="Enter current password"
+            [placeholder]="'profile.currentPasswordPlaceholder' | t"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="newPassword">New Password *</label>
+          <label for="newPassword">{{ 'profile.newPassword' | t }}</label>
           <input
             type="password"
             id="newPassword"
             [(ngModel)]="passwordForm.newPassword"
             name="newPassword"
             class="form-input"
-            placeholder="Enter new password (min 6 characters)"
+            [placeholder]="'profile.newPasswordPlaceholder' | t"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="confirmPassword">Confirm New Password *</label>
+          <label for="confirmPassword">{{ 'profile.confirmNewPassword' | t }}</label>
           <input
             type="password"
             id="confirmPassword"
             [(ngModel)]="passwordForm.confirmPassword"
             name="confirmPassword"
             class="form-input"
-            placeholder="Confirm new password"
+            [placeholder]="'profile.confirmNewPasswordPlaceholder' | t"
             required
           />
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn-secondary" (click)="closePasswordModal()">
-            Cancel
+            {{ 'profile.cancel' | t }}
           </button>
           <button type="submit" class="btn-primary" [disabled]="isSaving">
             @if (isSaving) {
               <span class="spinner-small"></span>
-              Changing...
+              {{ 'profile.changing' | t }}
             } @else {
               <lucide-icon name="Check" [size]="18"></lucide-icon>
-              Change Password
+              {{ 'profile.changePassword' | t }}
             }
           </button>
         </div>

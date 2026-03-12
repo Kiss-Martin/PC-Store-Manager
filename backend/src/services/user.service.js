@@ -2,6 +2,7 @@
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import bcrypt from 'bcryptjs';
+import { t } from '../utils/i18n.util.js';
 
 const UserService = {
   async getWorkers() {
@@ -16,29 +17,29 @@ const UserService = {
     return data;
   },
 
-  async updateProfile(userId, updates) {
+  async updateProfile(userId, updates, lang = 'en') {
     const allowed = ['email', 'username', 'fullname'];
     const filtered = {};
     for (const k of allowed) {
       if (k in updates) filtered[k] = updates[k];
     }
-    if (Object.keys(filtered).length === 0) throw new Error('No valid fields to update');
+    if (Object.keys(filtered).length === 0) throw new Error(t(lang, 'user.noValidFields'));
     const data = await run(
       supabase.from('users').update(filtered).eq('id', userId).select('id,email,username,fullname,role').single()
     );
     return data;
   },
 
-  async changePassword(userId, { currentPassword, newPassword }) {
-    if (!currentPassword || !newPassword) throw new Error('Current password and new password required');
-    if (newPassword.length < 6) throw new Error('New password must be at least 6 characters');
+  async changePassword(userId, { currentPassword, newPassword }, lang = 'en') {
+    if (!currentPassword || !newPassword) throw new Error(t(lang, 'user.passwordRequired'));
+    if (newPassword.length < 6) throw new Error(t(lang, 'user.passwordMinLength'));
     const user = await run(supabase.from('users').select('password_hash').eq('id', userId).single());
-    if (!user) throw new Error('Failed to fetch user');
+    if (!user) throw new Error(t(lang, 'user.fetchFailed'));
     const isValid = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!isValid) throw new Error('Current password is incorrect');
+    if (!isValid) throw new Error(t(lang, 'user.currentPasswordIncorrect'));
     const hashed = await bcrypt.hash(newPassword, 10);
     await run(supabase.from('users').update({ password_hash: hashed }).eq('id', userId));
-    return { success: true, message: 'Password updated successfully' };
+    return { success: true, message: t(lang, 'user.passwordUpdated') };
   },
 };
 

@@ -112,6 +112,22 @@ body {
   color: #d6b7ff;
 }
 
+.language-toggle,
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.language-toggle {
+  min-width: 56px;
+  justify-content: center;
+}
+
 /* Main Content */
 .main-content {
   flex: 1;

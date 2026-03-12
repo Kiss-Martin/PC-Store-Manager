@@ -6,6 +6,8 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import { AuthService, ExportFormat } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
+import { I18nService } from '../../i18n.service';
+import { TranslatePipe } from '../../translate.pipe';
 
 Chart.register(...registerables);
 
@@ -37,7 +39,7 @@ interface Transaction {
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, LucideAngularModule, BaseChartDirective, TranslatePipe],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
 })
@@ -62,7 +64,7 @@ export class AnalyticsComponent implements OnInit {
     labels: [],
     datasets: [
       {
-        label: 'Revenue',
+        label: '',
         data: [],
         borderColor: '#7c3aed',
         backgroundColor: 'rgba(124, 58, 237, 0.1)',
@@ -98,7 +100,9 @@ export class AnalyticsComponent implements OnInit {
         callbacks: {
           label: (context) => {
             const value = context.parsed?.y ?? 0;
-            return `Revenue: $${value.toLocaleString()}`;
+            return this.i18n.t('analytics.chart.revenueTooltip', {
+              value: value.toLocaleString(this.i18n.locale()),
+            });
           },
         },
       },
@@ -169,11 +173,14 @@ export class AnalyticsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     public theme: ThemeService,
+    public i18n: I18nService,
     private cdr: ChangeDetectorRef,
   ) {
     // Watch for theme changes
     effect(() => {
       this.theme.isDark();
+      this.i18n.language();
+      this.revenueChartData.datasets[0].label = this.i18n.t('analytics.chart.revenueLabel');
       setTimeout(() => {
         this.updateChartTheme();
         this.cdr.detectChanges();
@@ -287,10 +294,17 @@ export class AnalyticsComponent implements OnInit {
     },
     error: (err: any) => {
       console.error('Export failed:', err);
-      alert('Failed to export data');
+      alert(this.i18n.t('analytics.error.export'));
     }
   });
 }
+
+  formatCurrency(value: number): string {
+    return value.toLocaleString(this.i18n.locale(), {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }
 
   getStatusClass(status: string): string {
     return status === 'completed' ? 'status-completed' : 'status-pending';

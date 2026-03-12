@@ -6,11 +6,13 @@ import { LucideAngularModule, Monitor } from "lucide-angular";
 import { ToastComponent } from './shared/toast/toast';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './theme.service';
+import { I18nService } from './i18n.service';
+import { TranslatePipe } from './translate.pipe';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, LucideAngularModule, ToastComponent],
+  imports: [RouterOutlet, LucideAngularModule, ToastComponent, TranslatePipe],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
@@ -19,7 +21,7 @@ export class App {
   isNavOpen = false;
   showNavbar = false;
 
-  constructor(public router: Router, public auth: AuthService, public theme: ThemeService) {
+  constructor(public router: Router, public auth: AuthService, public theme: ThemeService, public i18n: I18nService) {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -43,6 +45,10 @@ export class App {
 
   toggleTheme() {
     this.theme.toggle();
+  }
+
+  toggleLanguage() {
+    this.i18n.toggleLanguage();
   }
 
   openProfile() {

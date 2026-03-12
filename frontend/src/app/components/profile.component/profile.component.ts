@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
+import { I18nService } from '../../i18n.service';
+import { TranslatePipe } from '../../translate.pipe';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css'],
 })
@@ -36,7 +38,8 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
-    public theme: ThemeService
+    public theme: ThemeService,
+    public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
@@ -58,7 +61,7 @@ export class ProfileComponent implements OnInit {
       error: (err: any) => {
         console.error('Failed to load profile:', err);
         this.isLoading = false;
-        this.showError('Failed to load profile');
+        this.showError(err.error?.error || this.i18n.t('profile.error.load'));
       }
     });
   }
@@ -84,12 +87,12 @@ export class ProfileComponent implements OnInit {
         this.user = res.user;
         this.isSaving = false;
         this.isEditingProfile = false;
-        this.showSuccess('Profile updated successfully!');
+        this.showSuccess(this.i18n.t('profile.success.updated'));
       },
       error: (err: any) => {
         console.error('Failed to update profile:', err);
         this.isSaving = false;
-        this.showError(err.error?.error || 'Failed to update profile');
+        this.showError(err.error?.error || this.i18n.t('profile.error.update'));
       }
     });
   }
@@ -118,17 +121,17 @@ export class ProfileComponent implements OnInit {
     this.clearMessages();
 
     if (!this.passwordForm.currentPassword || !this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
-      this.showError('All password fields are required');
+      this.showError(this.i18n.t('profile.error.allPasswordFields'));
       return;
     }
 
     if (this.passwordForm.newPassword.length < 6) {
-      this.showError('New password must be at least 6 characters');
+      this.showError(this.i18n.t('profile.error.newPasswordLength'));
       return;
     }
 
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      this.showError('New passwords do not match');
+      this.showError(this.i18n.t('profile.error.newPasswordMismatch'));
       return;
     }
 
@@ -137,13 +140,13 @@ export class ProfileComponent implements OnInit {
     this.auth.changePassword(this.passwordForm.currentPassword, this.passwordForm.newPassword).subscribe({
       next: () => {
         this.isSaving = false;
-        this.showSuccess('Password changed successfully!');
+        this.showSuccess(this.i18n.t('profile.success.passwordChanged'));
         this.closePasswordModal();
       },
       error: (err: any) => {
         console.error('Failed to change password:', err);
         this.isSaving = false;
-        this.showError(err.error?.error || 'Failed to change password');
+        this.showError(err.error?.error || this.i18n.t('profile.error.changePassword'));
       }
     });
   }
@@ -170,5 +173,11 @@ export class ProfileComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  getRoleLabel(role: string | undefined): string {
+    if (role === 'admin') return this.i18n.t('role.admin');
+    if (role === 'worker') return this.i18n.t('role.worker');
+    return this.i18n.t('role.user');
   }
 }

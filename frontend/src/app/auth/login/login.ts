@@ -5,10 +5,12 @@ import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
 import { AuthService } from '../auth.service';
 import { ThemeService } from '../../theme.service';
+import { I18nService } from '../../i18n.service';
+import { TranslatePipe } from '../../translate.pipe';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, LucideAngularModule],
+  imports: [FormsModule, LucideAngularModule, TranslatePipe],
   templateUrl: './login.html',
   styleUrls: ['./login.css'],
 })
@@ -18,11 +20,11 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private router: Router, private authService: AuthService, public theme: ThemeService) {}
+  constructor(private router: Router, private authService: AuthService, public theme: ThemeService, public i18n: I18nService) {}
 
   login() {
   if (!this.email || !this.password) {
-    this.errorMessage = 'Please enter both email and password';
+    this.errorMessage = this.i18n.t('login.error.missingCredentials');
     return;
   }
 
@@ -36,7 +38,7 @@ export class LoginComponent {
     },
     error: (err: any) => {
       this.isLoading = false;
-      this.errorMessage = err.error?.error || 'Login failed';
+      this.errorMessage = err.error?.error || this.i18n.t('login.error.failed');
     }
   });
 }
@@ -51,5 +53,9 @@ export class LoginComponent {
 
   toggleTheme() {
     this.theme.toggle();
+  }
+
+  toggleLanguage() {
+    this.i18n.toggleLanguage();
   }
 }

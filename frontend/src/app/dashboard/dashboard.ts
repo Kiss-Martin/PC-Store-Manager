@@ -1,10 +1,12 @@
-import { Component, NgModule, OnInit } from '@angular/core';
+import { Component, NgModule, OnInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService, ExportFormat } from '../auth/auth.service';
 import { ThemeService } from '../theme.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { I18nService } from '../i18n.service';
+import { TranslatePipe } from '../translate.pipe';
 
 interface DashboardCard {
   title: string;
@@ -23,16 +25,28 @@ interface Activity {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [LucideAngularModule, FormsModule, CommonModule],
+  imports: [LucideAngularModule, FormsModule, CommonModule, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit {
+  private lastStats: any = {};
+  private hadLoadError = false;
+
   constructor(
     private router: Router,
     private auth: AuthService,
-    public theme: ThemeService
-  ) {}
+    public theme: ThemeService,
+    public i18n: I18nService,
+  ) {
+    effect(() => {
+      this.i18n.language();
+      this.stats = this.buildStats(this.lastStats);
+      if (this.hadLoadError) {
+        this.loadError = this.i18n.t('dashboard.error.load');
+      }
+    });
+  }
   stats: DashboardCard[] = [];
   activities: Activity[] = [];
   isLoading = true;
@@ -43,11 +57,13 @@ export class DashboardComponent implements OnInit {
   reportFormat: ExportFormat = 'csv';
   isGeneratingReport = false;
 
-  reportPeriods = [
-    { label: 'Last 7 Days', value: '7days' },
-    { label: 'Last 30 Days', value: '30days' },
-    { label: 'Last 90 Days', value: '90days' },
-  ];
+  get reportPeriods() {
+    return [
+      { label: this.i18n.t('dashboard.period.7days'), value: '7days' },
+      { label: this.i18n.t('dashboard.period.30days'), value: '30days' },
+      { label: this.i18n.t('dashboard.period.90days'), value: '90days' },
+    ];
+  }
 
   ngOnInit() {
     // Load dashboard data from backend
@@ -87,38 +103,44 @@ export class DashboardComponent implements OnInit {
     },
     error: (err: any) => {
       console.error('Report generation failed:', err);
-      alert('Failed to generate report');
+      alert(this.i18n.t('dashboard.error.generateReport'));
       this.isGeneratingReport = false;
     }
   });
 }
 
+  private buildStats(stats: any) {
+    return [
+      {
+        title: this.i18n.t('dashboard.stats.totalProducts'),
+        value: stats.totalProducts ?? 0,
+        icon: 'package',
+        color: '#f59e0b',
+      },
+      {
+        title: this.i18n.t('dashboard.stats.totalSales'),
+        value: stats.totalSales ?? '$0',
+        icon: 'badge-dollar-sign',
+        color: '#10b981',
+      },
+      {
+        title: this.i18n.t('dashboard.stats.activeOrders'),
+        value: stats.activeOrders ?? 0,
+        icon: 'shopping-cart',
+        color: '#3b82f6',
+      },
+      { title: this.i18n.t('dashboard.stats.customers'), value: stats.customers ?? 0, icon: 'users', color: '#8b5cf6' },
+    ];
+  }
+
   loadDashboardData() {
     this.loadError = '';
+    this.hadLoadError = false;
     this.auth.getDashboard().subscribe({
       next: (res: any) => {
         const s = res?.stats || {};
-        this.stats = [
-          {
-            title: 'Total Products',
-            value: s.totalProducts ?? 0,
-            icon: 'package',
-            color: '#f59e0b',
-          },
-          {
-            title: 'Total Sales',
-            value: s.totalSales ?? '$0',
-            icon: 'badge-dollar-sign',
-            color: '#10b981',
-          },
-          {
-            title: 'Active Orders',
-            value: s.activeOrders ?? 0,
-            icon: 'shopping-cart',
-            color: '#3b82f6',
-          },
-          { title: 'Customers', value: s.customers ?? 0, icon: 'users', color: '#8b5cf6' },
-        ];
+        this.lastStats = s;
+        this.stats = this.buildStats(s);
 
         this.activities = (res?.activities || []).map((a: any) => ({
           id: a.id,
@@ -131,14 +153,11 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Dashboard API error:', err);
-        this.stats = [
-          { title: 'Total Products', value: 0, icon: 'package', color: '#f59e0b' },
-          { title: 'Total Sales', value: '$0', icon: 'badge-dollar-sign', color: '#10b981' },
-          { title: 'Active Orders', value: 0, icon: 'shopping-cart', color: '#3b82f6' },
-          { title: 'Customers', value: 0, icon: 'users', color: '#8b5cf6' },
-        ];
+        this.lastStats = {};
+        this.stats = this.buildStats({});
         this.activities = [];
-        this.loadError = 'Failed to load dashboard data from the backend.';
+        this.hadLoadError = true;
+        this.loadError = this.i18n.t('dashboard.error.load');
 
         this.isLoading = false;
       },

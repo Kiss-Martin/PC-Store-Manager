@@ -6,6 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { I18nService } from '../../i18n.service';
+import { TranslatePipe } from '../../translate.pipe';
 
 interface Product {
   id: string;
@@ -25,7 +27,7 @@ interface Product {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css'],
 })
@@ -57,6 +59,7 @@ export class ProductsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     public theme: ThemeService,
+    public i18n: I18nService,
     private route: ActivatedRoute,
     private router: Router,
   ) {}
@@ -220,10 +223,10 @@ export class ProductsComponent implements OnInit {
   }
 
   getBrandName(product: Product): string {
-    return product.brands?.name || 'N/A';
+    return product.brands?.name || this.i18n.t('products.na');
   }
 
   getCategoryName(product: Product): string {
-    return product.categories?.name || 'N/A';
+    return product.categories?.name || this.i18n.t('products.na');
   }
 }

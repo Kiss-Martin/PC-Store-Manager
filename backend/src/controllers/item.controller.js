@@ -1,5 +1,6 @@
 // Items controller: handles item-related endpoints
 import ItemService from '../services/item.service.js';
+import { localizeValidationErrors } from '../utils/i18n.util.js';
 import { createItemSchema } from '../validators.js';
 
 export const getItems = async (req, res) => {
@@ -10,7 +11,7 @@ export const getItems = async (req, res) => {
 export const createItem = async (req, res) => {
   const parse = createItemSchema.safeParse(req.body);
   if (!parse.success)
-    return res.status(400).json({ error: parse.error.errors.map((e) => e.message) });
+    return res.status(400).json({ error: localizeValidationErrors(req.lang, parse.error.errors) });
   const item = await ItemService.createItem(parse.data);
   res.json({ success: true, item });
 };

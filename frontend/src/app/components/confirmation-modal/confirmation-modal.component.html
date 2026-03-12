@@ -6,19 +6,19 @@
       </div>
 
       <div class="modal-text">
-        <h2>{{ title }}</h2>
-        <p>{{ message }}</p>
+        <h2>{{ resolvedTitle }}</h2>
+        <p>{{ resolvedMessage }}</p>
       </div>
 
       <div class="modal-actions">
         <button class="btn-cancel" (click)="onCancel()">
-          {{ cancelText }}
+          {{ resolvedCancelText }}
         </button>
         <button
           class="btn-confirm"
           [class.danger]="confirmColor === 'danger'"
           (click)="onConfirm()">
-          {{ confirmText }}
+          {{ resolvedConfirmText }}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { generateCsvFromObjects } from '../utils/csv.util.js';
 import { generatePdfReport } from '../utils/pdf.util.js';
+import { localizedPeriod, t } from '../utils/i18n.util.js';
 
 function getDaysFromPeriod(period) {
   if (period === '30days') return 30;
@@ -215,7 +216,7 @@ const AnalyticsService = {
      * @param {object} query - Query params (period)
      * @returns {object} - { csv, filename }
      */
-    async exportAnalytics({ period = '7days', format = 'csv' }) {
+    async exportAnalytics({ period = '7days', format = 'csv', lang = 'en' }) {
       const exportFormat = format === 'pdf' ? 'pdf' : 'csv';
       const daysAgo = getDaysFromPeriod(period);
       const startDate = new Date();
@@ -231,27 +232,27 @@ const AnalyticsService = {
       );
       // Generate CSV using shared CSV util
       const columns = [
-        { key: 'date', label: 'Date' },
-        { key: 'product', label: 'Product' },
-        { key: 'brand', label: 'Brand' },
-        { key: 'category', label: 'Category' },
-        { key: 'quantity', label: 'Quantity' },
-        { key: 'unitPrice', label: 'Unit Price' },
-        { key: 'total', label: 'Total' },
-        { key: 'orderId', label: 'Order ID' },
+        { key: 'date', label: t(lang, 'export.sales.date') },
+        { key: 'product', label: t(lang, 'export.sales.product') },
+        { key: 'brand', label: t(lang, 'export.sales.brand') },
+        { key: 'category', label: t(lang, 'export.sales.category') },
+        { key: 'quantity', label: t(lang, 'export.sales.quantity') },
+        { key: 'unitPrice', label: t(lang, 'export.sales.unitPrice') },
+        { key: 'total', label: t(lang, 'export.sales.total') },
+        { key: 'orderId', label: t(lang, 'export.sales.orderId') },
       ];
 
       const rows = (salesLogs || []).map((log) => {
         const date = new Date(log.timestamp).toISOString().split('T')[0];
-        const product = log.items?.name || 'Unknown';
-        const brand = log.items?.brands?.name || 'N/A';
-        const category = log.items?.categories?.name || 'N/A';
+        const product = log.items?.name || t(lang, 'common.unknown');
+        const brand = log.items?.brands?.name || t(lang, 'common.na');
+        const category = log.items?.categories?.name || t(lang, 'common.na');
         const quantityMatch = log.details?.match(/Sold (\d+) unit/);
         const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
         const unitPrice = log.items?.price || 0;
         const total = unitPrice * quantity;
         const orderMatch = log.details?.match(/Order #(\d+)/);
-        const orderId = orderMatch ? orderMatch[1] : 'N/A';
+        const orderId = orderMatch ? orderMatch[1] : t(lang, 'common.na');
         return { date, product, brand, category, quantity, unitPrice, total, orderId };
       });
 
@@ -269,16 +270,17 @@ const AnalyticsService = {
         }, null);
 
         const content = await generatePdfReport({
-          title: 'Sales Report',
-          subtitle: `Period: ${period} | Generated on ${dateStamp}`,
+          title: t(lang, 'export.sales.title'),
+          subtitle: t(lang, 'export.sales.periodLine', { period: localizedPeriod(lang, period), date: dateStamp }),
           summary: [
-            { label: 'Transactions Exported', value: totalOrders },
-            { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}` },
-            { label: 'Average Order Value', value: `$${averageOrderValue.toFixed(2)}` },
-            { label: 'Top Product', value: topProduct?.product || 'N/A' },
+            { label: t(lang, 'export.sales.transactions'), value: totalOrders },
+            { label: t(lang, 'export.sales.totalRevenue'), value: `$${totalRevenue.toFixed(2)}` },
+            { label: t(lang, 'export.sales.averageOrderValue'), value: `$${averageOrderValue.toFixed(2)}` },
+            { label: t(lang, 'export.sales.topProduct'), value: topProduct?.product || t(lang, 'common.na') },
           ],
           columns,
           rows,
+          summaryTitle: t(lang, 'export.summary'),
         });
 
         return {
