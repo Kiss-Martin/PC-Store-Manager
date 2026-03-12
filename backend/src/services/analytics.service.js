@@ -25,6 +25,7 @@ const AnalyticsService = {
 
       // Get all items with stock and price info
       const allItems = await run(supabase.from('items').select('id, name, amount, price, categories(name), brands(name)'));
+      const allCustomers = await run(supabase.from('customers').select('id'));
 
       // Get sales logs (stock_out actions) for the period
       const salesLogs = await run(
@@ -183,6 +184,8 @@ const AnalyticsService = {
 
       // --- Summary ---
       const summary = {
+        totalProducts: allItems.length,
+        customers: (allCustomers || []).length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         totalOrders,
         averageOrderValue: Math.round(averageOrderValue * 100) / 100,

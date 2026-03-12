@@ -113,11 +113,21 @@ export class AuthService {
   }
 
   createItem(item: any): Observable<{ success: boolean; item: any }> {
-    return this.api.post<{ success: boolean; item: any }>('/items', item);
+    const payload = {
+      ...item,
+      specs: item.specifications ?? item.specs ?? '',
+    };
+    delete payload.specifications;
+    return this.api.post<{ success: boolean; item: any }>('/items', payload);
   }
 
   updateItem(id: string, item: any): Observable<{ item: any }> {
-    return this.api.patch<{ item: any }>(`/items/${id}`, item);
+    const payload = {
+      ...item,
+      specs: item.specifications ?? item.specs ?? '',
+    };
+    delete payload.specifications;
+    return this.api.patch<{ item: any }>(`/items/${id}`, payload);
   }
 
   deleteItem(id: string): Observable<{ success: boolean }> {
@@ -126,12 +136,12 @@ export class AuthService {
 
   // Categories endpoints
   getCategories(): Observable<{ categories: any[] }> {
-    return this.api.get<{ categories: any[] }>('/categories');
+    return this.api.get<{ categories: any[] }>('/items/categories');
   }
 
   // Brands endpoints
   getBrands(): Observable<{ brands: any[] }> {
-    return this.api.get<{ brands: any[] }>('/brands');
+    return this.api.get<{ brands: any[] }>('/items/brands');
   }
 
   // Orders endpoints
@@ -141,6 +151,10 @@ export class AuthService {
 
   updateOrderStatus(id: string, status: string): Observable<{ success: boolean }> {
     return this.api.patch<{ success: boolean }>(`/orders/${id}/status`, { status });
+  }
+
+  deleteOrder(id: string): Observable<{ success: boolean }> {
+    return this.api.delete<{ success: boolean }>(`/orders/${id}`);
   }
 
   exportOrders(status: string = 'all'): Observable<Blob> {

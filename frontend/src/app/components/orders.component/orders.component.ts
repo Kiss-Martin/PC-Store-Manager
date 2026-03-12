@@ -127,7 +127,7 @@ export class OrdersComponent implements OnInit {
 
   assignOrderToWorker(orderId: string, userId: string) {
     this.assigningOrder = orderId;
-    
+
     this.auth.assignOrder(orderId, userId || null).subscribe({
       next: () => {
         this.assigningOrder = null;
@@ -384,6 +384,12 @@ export class OrdersComponent implements OnInit {
     this.showCancelConfirm = true;
   }
 
+  confirmDeleteOrder(order: Order) {
+    if (!this.auth.isAdmin()) return;
+    this.orderToCancel = order;
+    this.showCancelConfirm = true;
+  }
+
   cancelOrder() {
     if (!this.orderToCancel) return;
 
@@ -396,6 +402,23 @@ export class OrdersComponent implements OnInit {
       error: (err) => {
         console.error('Failed to cancel order:', err);
         this.showCancelConfirm = false;
+      },
+    });
+  }
+
+  deleteOrder() {
+    if (!this.orderToCancel || !this.auth.isAdmin()) return;
+
+    this.auth.deleteOrder(this.orderToCancel.id).subscribe({
+      next: () => {
+        this.loadOrders();
+        this.showCancelConfirm = false;
+        this.orderToCancel = null;
+      },
+      error: (err) => {
+        console.error('Failed to delete order:', err);
+        this.showCancelConfirm = false;
+        this.orderToCancel = null;
       },
     });
   }

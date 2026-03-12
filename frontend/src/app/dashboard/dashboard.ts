@@ -36,17 +36,16 @@ export class DashboardComponent implements OnInit {
   stats: DashboardCard[] = [];
   activities: Activity[] = [];
   isLoading = true;
+  loadError = '';
 
   showReportModal = false;
   reportPeriod = '7days';
   isGeneratingReport = false;
 
   reportPeriods = [
-    { label: 'Today', value: 'Today' },
-    { label: 'Last 7 Days', value: 'Last 7 Days' },
-    { label: 'Last 30 Days', value: 'Last 30 Days' },
-    { label: 'This Month', value: 'This Month' },
-    { label: 'Last Month', value: 'Last Month' }
+    { label: 'Last 7 Days', value: '7days' },
+    { label: 'Last 30 Days', value: '30days' },
+    { label: 'Last 90 Days', value: '90days' },
   ];
 
   ngOnInit() {
@@ -64,14 +63,14 @@ export class DashboardComponent implements OnInit {
   }
 
   navigateToNewOrder() {
-  this.router.navigate(['/orders'], { 
-    queryParams: { action: 'new' } 
+  this.router.navigate(['/orders'], {
+    queryParams: { action: 'new' }
   });
 }
 
   downloadReport() {
   this.isGeneratingReport = true;
-  
+
   this.auth.generateBusinessReport(this.reportPeriod).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
@@ -94,7 +93,7 @@ export class DashboardComponent implements OnInit {
 }
 
   loadDashboardData() {
-    // Fetch dashboard data from backend; fall back to mock data on error
+    this.loadError = '';
     this.auth.getDashboard().subscribe({
       next: (res: any) => {
         const s = res?.stats || {};
@@ -131,20 +130,14 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Dashboard API error:', err);
-        // fallback to previous mock data if backend unavailable
         this.stats = [
-          { title: 'Total Products', value: 1250, icon: 'package', color: '#f59e0b' },
-          { title: 'Total Sales', value: '$45,231', icon: 'badge-dollar-sign', color: '#10b981' },
-          { title: 'Active Orders', value: 127, icon: 'shopping-cart', color: '#3b82f6' },
-          { title: 'Customers', value: 856, icon: 'users', color: '#8b5cf6' },
+          { title: 'Total Products', value: 0, icon: 'package', color: '#f59e0b' },
+          { title: 'Total Sales', value: '$0', icon: 'badge-dollar-sign', color: '#10b981' },
+          { title: 'Active Orders', value: 0, icon: 'shopping-cart', color: '#3b82f6' },
+          { title: 'Customers', value: 0, icon: 'users', color: '#8b5cf6' },
         ];
-
-        this.activities = [
-          { id: 1, description: 'New order received', timestamp: '2 hours ago', type: 'order' },
-          { id: 2, description: 'Product restocked', timestamp: '5 hours ago', type: 'inventory' },
-          { id: 3, description: 'Customer review posted', timestamp: '1 day ago', type: 'review' },
-          { id: 4, description: 'Payment processed', timestamp: '2 days ago', type: 'payment' },
-        ];
+        this.activities = [];
+        this.loadError = 'Failed to load dashboard data from the backend.';
 
         this.isLoading = false;
       },

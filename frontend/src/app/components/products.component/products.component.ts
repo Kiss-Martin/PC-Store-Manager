@@ -14,6 +14,7 @@ interface Product {
   price: number;
   model?: string;
   specifications?: string;
+  specs?: string;
   warranty?: string;
   brand_id?: string;
   category_id?: string;
@@ -82,7 +83,10 @@ export class ProductsComponent implements OnInit {
     this.isLoading = true;
     this.auth.getItems().subscribe({
       next: (res: any) => {
-        this.products = res.items || [];
+        this.products = (res.items || []).map((item: any) => ({
+          ...item,
+          specifications: item.specifications || item.specs || '',
+        }));
         this.filteredProducts = this.products;
         this.isLoading = false;
       },
@@ -136,7 +140,7 @@ export class ProductsComponent implements OnInit {
       amount: product.amount,
       price: product.price || 0,
       model: product.model || '',
-      specifications: product.specifications || '',
+      specifications: product.specifications || product.specs || '',
       warranty: product.warranty || '',
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',

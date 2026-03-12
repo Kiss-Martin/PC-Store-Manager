@@ -23,11 +23,22 @@ export class App {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
-        this.showNavbar = !event.url.includes('login') && !event.url.includes('register');
+        this.updateNavbarVisibility(event.urlAfterRedirects || event.url);
       });
+
+    this.updateNavbarVisibility(this.router.url);
 
     // apply admin background when appropriate
     document.body.classList.toggle('admin-bg', this.auth.isAdmin());
+  }
+
+  private updateNavbarVisibility(url: string) {
+    const isAuthRoute = url.includes('/login') || url.includes('/register') || url.includes('/forgot');
+    this.showNavbar = this.auth.isAuthenticated() && !isAuthRoute;
+
+    if (!this.showNavbar) {
+      this.isNavOpen = false;
+    }
   }
 
   toggleTheme() {

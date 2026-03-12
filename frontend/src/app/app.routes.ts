@@ -34,15 +34,18 @@ export const routes: Routes = [
   },
   {
     path: 'products',
-    component: ProductsComponent
+    component: ProductsComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'orders',
-    component: OrdersComponent
+    component: OrdersComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'analytics',
-    component: AnalyticsComponent
+    component: AnalyticsComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'profile',

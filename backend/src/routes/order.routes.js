@@ -12,5 +12,6 @@ router.get('/export', authMiddleware, requireRole('admin'), asyncWrap(OrderContr
 router.post('/', authMiddleware, requireRole('admin'), asyncWrap(OrderController.createOrder));
 router.patch('/:id/status', authMiddleware, requireRole('admin'), asyncWrap(OrderController.updateOrderStatus));
 router.patch('/:id/assign', authMiddleware, requireRole('admin'), asyncWrap(OrderController.assignOrder));
+router.delete('/:id', authMiddleware, requireRole('admin'), asyncWrap(OrderController.deleteOrder));
 
 export default router;

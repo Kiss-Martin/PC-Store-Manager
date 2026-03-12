@@ -14,6 +14,24 @@ const OrderService = {
       query = query.eq('assigned_to', user.id);
     }
     const data = await run(query);
+    const logIds = (data || []).map((log) => log.id);
+    const statuses = logIds.length > 0
+      ? await run(
+        supabase
+          .from('orders_status')
+          .select('log_id,status,updated_at')
+          .in('log_id', logIds)
+          .order('updated_at', { ascending: false })
+      ).catch(() => [])
+      : [];
+
+    const statusByLogId = new Map();
+    (statuses || []).forEach((row) => {
+      if (!statusByLogId.has(row.log_id)) {
+        statusByLogId.set(row.log_id, row.status);
+      }
+    });
+
     return (data || []).map((log) => {
       const orderMatch = log.details.match(/Order #(\d+)/);
       const quantityMatch = log.details.match(/Sold (\d+) unit/);
@@ -25,11 +43,11 @@ const OrderService = {
         quantity: quantityMatch ? parseInt(quantityMatch[1]) : 0,
         unitPrice: log.items?.price || 0,
         totalAmount: (log.items?.price || 0) * (quantityMatch ? parseInt(quantityMatch[1]) : 0),
-        status: 'completed',
+        status: statusByLogId.get(log.id) || 'completed',
         customer: log.customers?.name || 'Unknown',
         date: new Date(log.timestamp).toLocaleDateString(),
         timestamp: log.timestamp,
-        assigned_to: log.assigned_to,
+        assignedTo: log.assigned_to,
       };
     });
   },
@@ -92,6 +110,45 @@ const OrderService = {
 
   async assignOrder(id, assigned_to) {
     await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
+  },
+
+  async deleteOrder(id) {
+    const log = await run(
+      supabase
+        .from('logs')
+        .select('id,item_id,details,items(amount)')
+        .eq('id', id)
+        .eq('action', 'stock_out')
+        .single()
+    ).catch(() => null);
+
+    if (!log) {
+      throw new Error('Order not found');
+    }
+
+    const statusRow = await run(
+      supabase
+        .from('orders_status')
+        .select('status')
+        .eq('log_id', id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single()
+    ).catch(() => null);
+
+    const quantityMatch = log.details?.match(/Sold (\d+) unit/);
+    const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 0;
+    const status = statusRow?.status || 'completed';
+
+    if ((status === 'completed' || status === 'processing') && log.item_id && quantity > 0) {
+      const currentAmount = log.items?.amount || 0;
+      await run(
+        supabase.from('items').update({ amount: currentAmount + quantity }).eq('id', log.item_id)
+      );
+    }
+
+    await run(supabase.from('orders_status').delete().eq('log_id', id)).catch(() => null);
+    await run(supabase.from('logs').delete().eq('id', id));
   },
 };
 

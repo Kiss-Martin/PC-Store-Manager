@@ -26,6 +26,11 @@ export const assignOrder = async (req, res) => {
   res.json({ success: true });
 };
 
+export const deleteOrder = async (req, res) => {
+  await OrderService.deleteOrder(req.params.id);
+  res.json({ success: true });
+};
+
 export const exportOrders = async (req, res) => {
   const status = req.query.status || 'all';
   const orders = await OrderService.getOrders(req.user);
