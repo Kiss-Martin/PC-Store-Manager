@@ -197,10 +197,22 @@ const AuthService = {
     try {
       data = await run(query.single());
     } catch (e) {
-      throw new Error(t(lang, 'auth.invalidCredentials'));
+      const err = new Error(t(lang, 'auth.invalidCredentials'));
+      err.statusCode = 401;
+      throw err;
     }
     const ok = await bcrypt.compare(password, data.password_hash);
-    if (!ok) throw new Error(t(lang, 'auth.invalidCredentials'));
+    if (!ok) {
+      const err = new Error(t(lang, 'auth.invalidCredentials'));
+      err.statusCode = 401;
+      throw err;
+    }
+    // Admins that haven't been approved yet cannot log in
+    if (data.role === 'admin' && !data.admin_approved) {
+      const err = new Error(t(lang, 'auth.registeredAwaitingApproval'));
+      err.statusCode = 403;
+      throw err;
+    }
     // Issue short-lived access token and a refresh token (persisted)
     const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
     const refreshToken = generateRefreshTokenStr();

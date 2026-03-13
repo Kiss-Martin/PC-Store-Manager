@@ -231,9 +231,6 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'profile.uploadAvatar': 'Upload avatar',
     'profile.success.avatarUploaded': 'Avatar uploaded',
     'profile.error.avatarUpload': 'Failed to upload avatar',
-    'profile.uploadAvatar': 'Upload avatar',
-    'profile.success.avatarUploaded': 'Avatar uploaded',
-    'profile.error.avatarUpload': 'Failed to upload avatar',
 
     // Admin sessions
     'admin.sessionsTitle': 'Active Sessions (Admin)',

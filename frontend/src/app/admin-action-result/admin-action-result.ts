@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { TranslatePipe } from '../translate.pipe';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-admin-action-result',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="p-6 max-w-xl mx-auto text-center">
       <h1 class="text-2xl font-bold mb-4">{{ title }}</h1>

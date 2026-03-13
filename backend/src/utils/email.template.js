@@ -1,4 +1,4 @@
-export function renderAdminNotification({ lang = 'en', subject, email, username, fullname, approveUrl, rejectUrl, reviewLink }) {
+export function renderAdminNotification({ subject, email, username, fullname, approveUrl, rejectUrl, reviewLink }) {
   const plain = `A new administrator account was created and is awaiting approval:\nEmail: ${email}\nUsername: ${username}\nFull name: ${fullname}\n\nReview pending admins at: ${reviewLink}\nApprove: ${approveUrl}\nReject: ${rejectUrl}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
@@ -19,7 +19,7 @@ export function renderAdminNotification({ lang = 'en', subject, email, username,
   return { subject, text: plain, html };
 }
 
-export function renderRegistrationConfirmation({ lang = 'en', subject, username, fullname, link, awaitingApproval = false }) {
+export function renderRegistrationConfirmation({ subject, username, fullname, link, awaitingApproval = false }) {
   const plain = awaitingApproval
     ? `Your admin account (${username}) has been created and is awaiting approval. You will be notified once it is approved.`
     : `Welcome ${fullname || username}! Your account (${username}) has been created successfully. You can log in at: ${link}`;
@@ -34,7 +34,7 @@ export function renderRegistrationConfirmation({ lang = 'en', subject, username,
   return { subject, text: plain, html };
 }
 
-export function renderPasswordReset({ lang = 'en', subject, resetLink }) {
+export function renderPasswordReset({ subject, resetLink }) {
   const text = `Reset your password by visiting this link: ${resetLink}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">

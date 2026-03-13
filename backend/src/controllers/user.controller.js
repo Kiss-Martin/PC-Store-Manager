@@ -2,7 +2,6 @@
 import UserService from '../services/user.service.js';
 import path from 'path';
 import fs from 'fs';
-import { run } from '../utils/supabase.util.js';
 
 export const getWorkers = async (req, res) => {
   const users = await UserService.getWorkers();
@@ -29,8 +28,7 @@ export const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     // file saved by multer as {userId}.{ext}
-    // return a bustable URL that frontend can fetch via GET /users/me/avatar
-    const url = `${process.env.FRONTEND_URL || ''}/api-placeholder`; // not used by client; client will fetch blob
+    // client will fetch the binary via GET /users/me/avatar
     res.json({ success: true, message: 'Avatar uploaded' });
   } catch (e) {
     console.warn('uploadAvatar error', e && (e.message || e));
