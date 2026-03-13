@@ -16,6 +16,7 @@ import { TranslatePipe } from '../../translate.pipe';
 })
 export class ProfileComponent implements OnInit {
   user: any = null;
+  avatarUrl: string | null = null;
   isLoading = true;
   isEditingProfile = false;
 
@@ -47,6 +48,7 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.loadUserProfile();
     this.loadSessions();
+    this.loadAvatar();
   }
 
   loadUserProfile(): void {
@@ -65,6 +67,41 @@ export class ProfileComponent implements OnInit {
         console.error('Failed to load profile:', err);
         this.isLoading = false;
         this.showError(err.error?.error || this.i18n.t('profile.error.load'));
+      }
+    });
+  }
+
+  loadAvatar(): void {
+    // revoke previous object URL if present
+    if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) URL.revokeObjectURL(this.avatarUrl);
+    this.auth.getMyAvatar().subscribe({
+      next: (blob) => {
+        this.avatarUrl = URL.createObjectURL(blob);
+      },
+      error: () => {
+        this.avatarUrl = null;
+      }
+    });
+  }
+
+  onAvatarSelected(ev: any): void {
+    const f: File = ev?.target?.files?.[0];
+    if (!f) return;
+    // preview
+    if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) URL.revokeObjectURL(this.avatarUrl);
+    this.avatarUrl = URL.createObjectURL(f);
+    // upload
+    this.isSaving = true;
+    this.auth.uploadAvatar(f).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.showSuccess(this.i18n.t('profile.success.avatarUploaded'));
+        this.loadAvatar();
+      },
+      error: (err: any) => {
+        this.isSaving = false;
+        console.error('Failed to upload avatar:', err);
+        this.showError(err?.error?.error || this.i18n.t('profile.error.avatarUpload'));
       }
     });
   }

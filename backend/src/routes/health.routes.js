@@ -6,5 +6,7 @@ import * as HealthController from '../controllers/health.controller.js';
 const router = Router();
 
 router.get('/', asyncWrap(HealthController.healthCheck));
+// readiness probe: ensure DB (Supabase) is reachable
+router.get('/ready', asyncWrap(HealthController.healthReady));
 
 export default router;

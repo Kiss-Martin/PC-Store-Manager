@@ -23,6 +23,10 @@ export class ApiService {
     return this.http.post<T>(this.build(path), body);
   }
 
+  postFormData<T>(path: string, form: FormData, withCredentials: boolean = false) {
+    return this.http.post<T>(this.build(path), form, { withCredentials });
+  }
+
   // Convenience helpers for requests that require sending/receiving httpOnly cookies (withCredentials)
   postWithCredentials<T>(path: string, body?: any) {
     return this.http.post<T>(this.build(path), body, { withCredentials: true });

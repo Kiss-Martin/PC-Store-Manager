@@ -255,6 +255,17 @@ export class AuthService {
     return this.api.get<{ user: User }>('/users/me').pipe(tap((res) => this.user.set(res.user)));
   }
 
+  // Avatar endpoints
+  getMyAvatar(): Observable<Blob> {
+    return this.api.getBlob('/users/me/avatar');
+  }
+
+  uploadAvatar(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('avatar', file, file.name);
+    return this.api.postFormData('/users/me/avatar', fd, true);
+  }
+
   updateMe(data: {
     email?: string;
     username?: string;

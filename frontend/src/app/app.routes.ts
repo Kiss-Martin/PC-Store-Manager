@@ -12,6 +12,7 @@ import { AdminSessionsComponent } from './admin-sessions/admin-sessions';
 import { AdminAuditComponent } from './admin-audit/admin-audit';
 import { AdminGuard } from './auth/admin.guard';
 import { GuestGuard } from './auth/guest.guard';
+import { AdminActionResultComponent } from './admin-action-result/admin-action-result';
 
 export const routes: Routes = [
   {
@@ -28,6 +29,10 @@ export const routes: Routes = [
     path: 'admin/audit',
     component: AdminAuditComponent,
     canActivate: [AuthGuard, AdminGuard],
+  },
+  {
+    path: 'admin/action-result',
+    component: AdminActionResultComponent,
   },
   {
     path: 'admin/sessions',

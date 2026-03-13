@@ -11,7 +11,6 @@ import {
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import jwt from 'jsonwebtoken';
-import { hashToken } from '../utils/token.util.js';
 
 function buildCookieOptions(maxAge) {
   const options = {
@@ -190,6 +189,70 @@ export const rejectAdmin = async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to reject admin' });
+  }
+};
+
+// One-click approve via signed token (no auth required)
+export const approveAdminOneClick = async (req, res) => {
+  const token = req.query?.token || req.body?.token;
+  if (!token) return res.status(400).send('Missing token');
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'change-this-secret');
+    if (!payload || payload.type !== 'admin_action' || payload.action !== 'approve' || String(payload.target_id) !== String(req.params.id)) {
+      return res.status(400).send('Invalid token');
+    }
+    const approverId = payload.approver_id;
+    // verify approver is still an approved admin
+    const approver = await run(supabase.from('users').select('id,role,admin_approved').eq('id', approverId).single()).catch(() => null);
+    if (!approver || approver.role !== 'admin' || !approver.admin_approved) return res.status(403).send('Approver not authorized');
+
+    // ensure token JTI not already consumed (use revoked_tokens to track one-time use)
+    const nowIso = new Date().toISOString();
+    const tokenJti = payload.jti;
+    if (!tokenJti) return res.status(400).send('Invalid token');
+    const existing = await run(supabase.from('revoked_tokens').select('id,expires_at').eq('jti', tokenJti).limit(1).single()).catch(() => null);
+    if (existing) return res.status(400).send('Token already used or invalid');
+
+    // mark token jti as consumed (store until JWT expiry)
+    const expiresAt = payload.exp ? new Date(payload.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
+
+    await run(supabase.from('users').update({ admin_approved: true, admin_approved_by: approverId, admin_approved_at: nowIso }).eq('id', req.params.id));
+    try { await run(supabase.from('audit_logs').insert({ event_type: 'approve_admin_oneclick', actor_user_id: approverId, target_user_id: req.params.id, details: { via: 'email' } }).select().single()).catch(() => null); } catch (e) { /* ignore */ }
+
+    const redirectTo = (process.env.FRONTEND_URL || 'http://localhost:4200') + '/admin/action-result?result=approved';
+    return res.redirect(302, redirectTo);
+  } catch (e) {
+    return res.status(400).send('Invalid or expired token');
+  }
+};
+
+// One-click reject via signed token (no auth required)
+export const rejectAdminOneClick = async (req, res) => {
+  const token = req.query?.token || req.body?.token;
+  if (!token) return res.status(400).send('Missing token');
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'change-this-secret');
+    if (!payload || payload.type !== 'admin_action' || payload.action !== 'reject' || String(payload.target_id) !== String(req.params.id)) {
+      return res.status(400).send('Invalid token');
+    }
+    const approverId = payload.approver_id;
+    const approver = await run(supabase.from('users').select('id,role,admin_approved').eq('id', approverId).single()).catch(() => null);
+    if (!approver || approver.role !== 'admin' || !approver.admin_approved) return res.status(403).send('Approver not authorized');
+    const nowIso = new Date().toISOString();
+    const tokenJti = payload.jti;
+    if (!tokenJti) return res.status(400).send('Invalid token');
+    const existing = await run(supabase.from('revoked_tokens').select('id,expires_at').eq('jti', tokenJti).limit(1).single()).catch(() => null);
+    if (existing) return res.status(400).send('Token already used or invalid');
+    const expiresAt = payload.exp ? new Date(payload.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
+    await run(supabase.from('users').delete().eq('id', req.params.id).eq('role', 'admin').eq('admin_approved', false));
+    try { await run(supabase.from('audit_logs').insert({ event_type: 'reject_admin_oneclick', actor_user_id: approverId, target_user_id: req.params.id, details: { via: 'email' } }).select().single()).catch(() => null); } catch (e) { /* ignore */ }
+
+    const redirectTo = (process.env.FRONTEND_URL || 'http://localhost:4200') + '/admin/action-result?result=rejected';
+    return res.redirect(302, redirectTo);
+  } catch (e) {
+    return res.status(400).send('Invalid or expired token');
   }
 };
 

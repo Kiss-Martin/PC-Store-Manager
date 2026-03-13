@@ -228,6 +228,12 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'profile.error.newPasswordMismatch': 'New passwords do not match',
     'profile.success.passwordChanged': 'Password changed successfully!',
     'profile.error.changePassword': 'Failed to change password',
+    'profile.uploadAvatar': 'Upload avatar',
+    'profile.success.avatarUploaded': 'Avatar uploaded',
+    'profile.error.avatarUpload': 'Failed to upload avatar',
+    'profile.uploadAvatar': 'Upload avatar',
+    'profile.success.avatarUploaded': 'Avatar uploaded',
+    'profile.error.avatarUpload': 'Failed to upload avatar',
 
     // Admin sessions
     'admin.sessionsTitle': 'Active Sessions (Admin)',
@@ -617,6 +623,9 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'profile.error.newPasswordMismatch': 'Az új jelszavak nem egyeznek',
     'profile.success.passwordChanged': 'A jelszó sikeresen módosítva!',
     'profile.error.changePassword': 'Nem sikerült módosítani a jelszót',
+    'profile.uploadAvatar': 'Profilkép feltöltése',
+    'profile.success.avatarUploaded': 'Profilkép feltöltve',
+    'profile.error.avatarUpload': 'A profilkép feltöltése sikertelen',
 
     // Admin sessions
     'admin.sessionsTitle': 'Aktív munkamenetek (Admin)',

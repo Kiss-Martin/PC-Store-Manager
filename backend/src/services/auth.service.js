@@ -6,10 +6,12 @@ import nodemailer from 'nodemailer';
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { hashToken } from '../utils/token.util.js';
+import { renderAdminNotification, renderPasswordReset, renderRegistrationConfirmation } from '../utils/email.template.js';
 import { t } from '../utils/i18n.util.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 const smtpConfig = {
   host: process.env.SMTP_HOST?.trim(),
@@ -57,6 +59,8 @@ if (hasCompleteSmtpConfig) {
   console.warn(`SMTP configuration is incomplete. Missing: ${missingSmtpFields.join(', ')}. Password reset emails will be logged instead of sent.`);
 }
 
+// No DB-backed email queue required — emails are sent immediately using templates.
+
 function generateAccessToken(payload, expiresIn = '1h') {
   // include a unique JTI so we can revoke individual access tokens immediately
   const jti = crypto.randomBytes(16).toString('hex');
@@ -100,8 +104,59 @@ const AuthService = {
         admin_approved: role === 'admin' ? false : true,
       }).select('id,email,username,fullname,role,admin_approved').single()
     );
+    // send registration confirmation to the new user (inform about awaiting approval if admin)
+    try {
+      const regSubject = data.role === 'admin' && !data.admin_approved ? t(lang, 'auth.registrationAwaitingSubject') : t(lang, 'auth.registrationSubject');
+      const regLink = `${FRONTEND_URL}/`; 
+      const regTpl = renderRegistrationConfirmation({ lang, subject: regSubject, username: data.username, fullname: data.fullname || '', link: regLink, awaitingApproval: data.role === 'admin' && !data.admin_approved });
+      if (mailTransporter) {
+        await mailTransporter.sendMail({ to: data.email, from: smtpConfig.from, subject: regTpl.subject, text: regTpl.text, html: regTpl.html }).catch((e) => { throw e; });
+      } else {
+        console.log('Registration confirmation (no SMTP) ->', data.email, regTpl.text);
+      }
+    } catch (e) {
+      console.warn('Failed to send registration confirmation to', data.email, e && (e.message || e));
+    }
+
     // New admins must be approved before receiving tokens
     if (data.role === 'admin' && !data.admin_approved) {
+        // Notify existing approved admins by email that a new admin awaits approval
+        (async () => {
+          try {
+            const admins = await run(supabase.from('users').select('id,email').eq('role', 'admin').eq('admin_approved', true));
+            if (admins && admins.length) {
+              const subject = t(lang, 'auth.notifyAdminsSubject');
+              const link = `${FRONTEND_URL}/admin/pending-admins`;
+              for (const a of admins) {
+                try {
+                  // generate one-click approve/reject tokens for this approver
+                  const approveJti = crypto.randomBytes(16).toString('hex');
+                  const rejectJti = crypto.randomBytes(16).toString('hex');
+                  const approveToken = jwt.sign({ type: 'admin_action', action: 'approve', approver_id: a.id, approver_email: a.email, target_id: data.id, jti: approveJti }, JWT_SECRET, { expiresIn: '7d' });
+                  const rejectToken = jwt.sign({ type: 'admin_action', action: 'reject', approver_id: a.id, approver_email: a.email, target_id: data.id, jti: rejectJti }, JWT_SECRET, { expiresIn: '7d' });
+                  const approveUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-admins/${data.id}/approve/oneclick?token=${encodeURIComponent(approveToken)}`;
+                  const rejectUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-admins/${data.id}/reject/oneclick?token=${encodeURIComponent(rejectToken)}`;
+
+                  const tpl = renderAdminNotification({ lang, subject, email: data.email, username: data.username, fullname: data.fullname || '', approveUrl, rejectUrl, reviewLink: link });
+                  // send email immediately (no extra tables required). If SMTP missing, fallback to logging.
+                  try {
+                    if (mailTransporter) {
+                      await mailTransporter.sendMail({ to: a.email, from: smtpConfig.from, subject: tpl.subject, text: tpl.text, html: tpl.html });
+                    } else {
+                      console.log('Admin notification (no SMTP) ->', a.email, tpl.text, 'approve:', approveUrl, 'reject:', rejectUrl);
+                    }
+                  } catch (e) {
+                    console.warn('Failed to send admin notification to', a.email, e && e.message ? e.message : e);
+                  }
+                } catch (e) {
+                  console.warn('Failed to notify admin', a && a.email ? a.email : a, e && e.message ? e.message : e);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to lookup admins for notification:', e && e.message ? e.message : e);
+          }
+        })();
       return {
         user: data,
         accessToken: null,
@@ -335,13 +390,16 @@ const AuthService = {
     // Attempt to send email if transporter is configured; return status to caller
     if (mailTransporter) {
       try {
-        await mailTransporter.sendMail({
-          to: email,
-          from: smtpConfig.from,
-          subject: t(lang, 'auth.passwordResetSubject'),
-          text: t(lang, 'auth.passwordResetText', { link: resetLink }),
-          html: `<p>${t(lang, 'auth.passwordResetIntro')}: <a href="${resetLink}">${resetLink}</a></p>`,
-        });
+        const subject = t(lang, 'auth.passwordResetSubject');
+        const tpl = renderPasswordReset({ lang, subject, resetLink });
+        // send immediately; if mailTransporter fails, fall back to logging
+        try {
+          await mailTransporter.sendMail({ to: email, from: smtpConfig.from, subject: tpl.subject, text: tpl.text, html: tpl.html });
+        } catch (e) {
+          console.warn('Failed to send reset email via SMTP, logging token instead', e && (e.message || e));
+          console.log('Password reset token for', email, token, 'link:', resetLink);
+          return { sent: false, message: t(lang, 'auth.passwordResetGeneric') };
+        }
         return { sent: true, message: t(lang, 'auth.passwordResetSent') };
       } catch (e) {
         console.warn('Failed to send reset email', e && (e.message || e));

@@ -22,7 +22,17 @@
       <div class="profile-card main-card">
         <div class="profile-avatar-section">
           <div class="profile-avatar">
-            <lucide-icon name="circle-user" [size]="80"></lucide-icon>
+            @if (avatarUrl) {
+              <img [src]="avatarUrl" alt="avatar" style="width:80px;height:80px;border-radius:999px;object-fit:cover" />
+            } @else {
+              <lucide-icon name="circle-user" [size]="80"></lucide-icon>
+            }
+            <div style="margin-top:8px">
+              <label class="btn-secondary" style="cursor:pointer">
+                {{ 'profile.uploadAvatar' | t }}
+                <input type="file" accept="image/*" (change)="onAvatarSelected($event)" style="display:none" />
+              </label>
+            </div>
           </div>
           <div class="profile-info">
             <h2>{{ user.fullname || user.username }}</h2>

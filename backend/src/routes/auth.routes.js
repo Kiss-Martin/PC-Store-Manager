@@ -19,6 +19,9 @@ router.post('/register', asyncWrap(AuthController.register));
 router.post('/login', asyncWrap(AuthController.login));
 router.post('/forgot-password', asyncWrap(AuthController.forgotPassword));
 router.post('/reset-password', asyncWrap(AuthController.resetPassword));
+// One-click approve/reject links (token-based)
+router.get('/admin/pending-admins/:id/approve/oneclick', asyncWrap(AuthController.approveAdminOneClick));
+router.get('/admin/pending-admins/:id/reject/oneclick', asyncWrap(AuthController.rejectAdminOneClick));
 router.post('/refresh', refreshLimiter, asyncWrap(AuthController.refresh));
 router.post('/logout', asyncWrap(AuthController.logout));
 // Sessions: list and revoke
