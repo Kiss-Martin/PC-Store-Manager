@@ -17,12 +17,6 @@
     </div>
 
     <div class="forgot-card">
-      @if (message) {
-        <div class="status-message" [class.success-message]="sent" [class.error-message]="!sent">
-          <p class="status-text">{{ message }}</p>
-        </div>
-      }
-
       <form (ngSubmit)="sendReset()" class="form">
         <div class="form-group">
           <label for="email" class="form-label">{{ 'forgot.email' | t }}</label>

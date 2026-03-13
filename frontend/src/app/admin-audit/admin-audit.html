@@ -1,0 +1,107 @@
+<div class="admin-audit-container">
+  <div class="page-header">
+    <div>
+      <h1>
+        <lucide-icon name="clipboard" [size]="28"></lucide-icon>
+        {{ 'admin.audit.title' | t }}
+      </h1>
+      <p class="subtitle">{{ 'admin.audit.subtitle' | t }}</p>
+    </div>
+    <button class="btn-secondary" (click)="refreshLogs()">
+      <lucide-icon name="refresh-cw" [size]="18"></lucide-icon>
+      {{ 'admin.refresh' | t }}
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon primary">
+        <lucide-icon name="clipboard-list" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.total' | t }}</p>
+        <h3 class="stat-value">{{ total }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon info">
+        <lucide-icon name="list" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.visible' | t }}</p>
+        <h3 class="stat-value">{{ logs.length }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon success">
+        <lucide-icon name="bookmark" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.page' | t }}</p>
+        <h3 class="stat-value">{{ page }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <section class="section-card">
+    <div class="section-header">
+      <div>
+        <h2>{{ 'admin.audit.title' | t }}</h2>
+        <p class="subtitle">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
+      <p>{{ 'admin.audit.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!loading && logs && logs.length">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'admin.audit.table.event' | t }}</th>
+              <th>{{ 'admin.audit.table.actor' | t }}</th>
+              <th>{{ 'admin.audit.table.target' | t }}</th>
+              <th>{{ 'admin.audit.table.details' | t }}</th>
+              <th>{{ 'admin.table.issued' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of logs">
+              <td>
+                <span class="event-chip">{{ l.event_type }}</span>
+              </td>
+              <td><span class="id-chip">{{ l.actor_user_id || '-' }}</span></td>
+              <td><span class="id-chip">{{ l.target_user_id || '-' }}</span></td>
+              <td>
+                <pre class="details-block">{{ l.details | json }}</pre>
+              </td>
+              <td>{{ l.created_at | date:'medium' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <button class="btn-secondary" (click)="prev()" [disabled]="page <= 1">{{ 'admin.prev' | t }}</button>
+        <span class="pagination-text">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</span>
+        <button class="btn-secondary" (click)="next()" [disabled]="(page * limit) >= total">{{ 'admin.next' | t }}</button>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!loading && (!logs || logs.length === 0)" class="empty-state">
+      <lucide-icon name="clipboard-x" [size]="56" class="empty-icon"></lucide-icon>
+      <h3>{{ 'admin.audit.noLogs' | t }}</h3>
+      <p>{{ 'admin.audit.subtitle' | t }}</p>
+    </div>
+  </section>
+</div>

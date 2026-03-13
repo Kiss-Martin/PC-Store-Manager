@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server as IO } from 'socket.io';
@@ -21,8 +22,29 @@ import customerRoutes from './routes/customer.routes.js';
 import userRoutes from './routes/user.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import { run } from './utils/supabase.util.js';
+import supabase from './db.js';
 
 const app = express();
+
+function resolveTrustProxySetting(value) {
+  if (value === undefined || value === null || value === '') {
+    return process.env.NODE_ENV === 'production' ? 1 : false;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (['false', '0', 'off', 'no'].includes(normalized)) return false;
+  if (['true', 'on', 'yes'].includes(normalized)) return true;
+
+  const asNumber = Number(normalized);
+  if (Number.isInteger(asNumber) && asNumber >= 0) return asNumber;
+
+  return value;
+}
+
+const trustProxySetting = resolveTrustProxySetting(process.env.TRUST_PROXY);
+
+app.set('trust proxy', trustProxySetting);
 
 app.use(
   cors({
@@ -36,6 +58,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser());
 app.use(helmet());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -130,5 +153,23 @@ console.log(
   `   Environment: ${bold}${yellow}${process.env.NODE_ENV || "development"}${reset}`,
 );
 console.log(`   SMTP:        ${smtpSummary}`);
+console.log(`   Trust proxy: ${bold}${yellow}${String(trustProxySetting)}${reset}`);
 console.log(cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" + reset);
 });
+
+// Schedule periodic cleanup of expired revoked tokens
+async function cleanupExpiredRevoked() {
+  try {
+    const nowIso = new Date().toISOString();
+    await run(supabase.from('revoked_tokens').delete().lt('expires_at', nowIso));
+    // eslint-disable-next-line no-console
+    console.log('[cleanup] expired revoked_tokens cleaned up at', nowIso);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[cleanup] failed to cleanup revoked_tokens:', e && e.message ? e.message : e);
+  }
+}
+
+// Run once at startup, then every hour
+cleanupExpiredRevoked().catch(() => null);
+setInterval(() => cleanupExpiredRevoked().catch(() => null), 60 * 60 * 1000);

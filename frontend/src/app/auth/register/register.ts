@@ -1,4 +1,4 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '../auth.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { LucideAngularModule } from "lucide-angular";
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
 
 interface RegistrationData {
   icon: string;
@@ -40,7 +41,7 @@ export class RegisterComponent {
   errors: { [key: string]: string } = {};
   isLoading = false;
 
-  constructor(private router: Router, private authService: AuthService, public theme: ThemeService, public i18n: I18nService) {}
+  constructor(private router: Router, private authService: AuthService, private toast: ToastService, public theme: ThemeService, public i18n: I18nService) {}
 
   get progressPercentage() {
     return ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
@@ -119,13 +120,21 @@ submitRegistration() {
     role: this.formData.role
   }).subscribe({
     next: (res) => {
-      console.log('Register success:', res);
       this.isLoading = false;
-      this.router.navigate(['/login']);
+      if (res.accessToken || res.access_token || res.token) {
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+
+      this.router.navigate(['/login'], {
+        state: {
+          message: res.message || this.i18n.t('register.success.awaitingApproval'),
+          toastType: 'info',
+        },
+      });
     },
-    error: (err: any) => {  // ✅ Just add type annotation
-      console.error(err);
-      this.errors['general'] = err.error?.error || err.error?.message || this.i18n.t('register.error.failed');
+    error: (err: any) => {
+      this.toast.show(err.error?.error || err.error?.message || this.i18n.t('register.error.failed'), { type: 'error', timeout: 3500 });
       this.isLoading = false;
     }
   });

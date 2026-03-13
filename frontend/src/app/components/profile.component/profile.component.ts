@@ -35,6 +35,8 @@ export class ProfileComponent implements OnInit {
   isSaving = false;
   successMessage = '';
   errorMessage = '';
+  sessions: any[] = [];
+  sessionsLoading = false;
 
   constructor(
     public auth: AuthService,
@@ -44,6 +46,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUserProfile();
+    this.loadSessions();
   }
 
   loadUserProfile(): void {
@@ -62,6 +65,34 @@ export class ProfileComponent implements OnInit {
         console.error('Failed to load profile:', err);
         this.isLoading = false;
         this.showError(err.error?.error || this.i18n.t('profile.error.load'));
+      }
+    });
+  }
+
+  loadSessions(): void {
+    this.sessionsLoading = true;
+    this.auth.getSessions().subscribe({
+      next: (res) => {
+        this.sessions = res.tokens || [];
+        this.sessionsLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load sessions:', err);
+        this.sessionsLoading = false;
+      }
+    });
+  }
+
+  revokeSession(id: string): void {
+    if (!confirm(this.i18n.t('profile.confirmRevokeSession'))) return;
+    this.auth.revokeSession(id).subscribe({
+      next: () => {
+        this.showSuccess(this.i18n.t('profile.success.sessionRevoked'));
+        this.loadSessions();
+      },
+      error: (err: any) => {
+        console.error('Failed to revoke session:', err);
+        this.showError(err.error?.error || this.i18n.t('profile.error.revokeSession'));
       }
     });
   }

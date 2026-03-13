@@ -23,6 +23,19 @@ export class ApiService {
     return this.http.post<T>(this.build(path), body);
   }
 
+  // Convenience helpers for requests that require sending/receiving httpOnly cookies (withCredentials)
+  postWithCredentials<T>(path: string, body?: any) {
+    return this.http.post<T>(this.build(path), body, { withCredentials: true });
+  }
+
+  getWithCredentials<T>(path: string, params?: any) {
+    return this.http.get<T>(this.build(path), { params, withCredentials: true });
+  }
+
+  deleteWithCredentials<T>(path: string) {
+    return this.http.delete<T>(this.build(path), { withCredentials: true });
+  }
+
   patch<T>(path: string, body?: any) {
     return this.http.patch<T>(this.build(path), body);
   }

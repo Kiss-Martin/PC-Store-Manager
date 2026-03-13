@@ -1,12 +1,14 @@
-import { Component, NgModule } from '@angular/core';
+import { Component } from '@angular/core';
 
-import { FormsModule, NgModel } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from "lucide-angular";
 import { AuthService } from '../auth.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
+import { Toast } from '../../shared/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -17,31 +19,36 @@ import { TranslatePipe } from '../../translate.pipe';
 export class LoginComponent {
   email = '';
   password = '';
+  rememberMe = false;
   isLoading = false;
-  errorMessage = '';
 
-  constructor(private router: Router, private authService: AuthService, public theme: ThemeService, public i18n: I18nService) {}
-
-  login() {
-  if (!this.email || !this.password) {
-    this.errorMessage = this.i18n.t('login.error.missingCredentials');
-    return;
+  constructor(private router: Router, private authService: AuthService, private toast: ToastService, public theme: ThemeService, public i18n: I18nService) {
+    const message = history.state?.message || '';
+    if (message) {
+      const toastType = (history.state?.toastType || (history.state?.showToast ? 'success' : 'info')) as Toast['type'];
+      this.toast.show(message, { type: toastType, timeout: 3000 });
+    }
   }
 
-  this.isLoading = true;
-  this.errorMessage = '';
-
-  this.authService.login(this.email, this.password).subscribe({
-    next: () => {
-      this.isLoading = false;
-      this.router.navigate(['/dashboard']);
-    },
-    error: (err: any) => {
-      this.isLoading = false;
-      this.errorMessage = err.error?.error || this.i18n.t('login.error.failed');
+  login() {
+    if (!this.email || !this.password) {
+      this.toast.show(this.i18n.t('login.error.missingCredentials'), { type: 'error', timeout: 3000 });
+      return;
     }
-  });
-}
+
+    this.isLoading = true;
+
+    this.authService.login(this.email, this.password, this.rememberMe).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.toast.show(err.error?.error || this.i18n.t('login.error.failed'), { type: 'error', timeout: 3500 });
+      }
+    });
+  }
 
   goToRegister() {
     this.router.navigate(['/register']);

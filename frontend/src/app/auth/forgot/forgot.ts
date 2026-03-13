@@ -19,7 +19,6 @@ import { TranslatePipe } from '../../translate.pipe';
 export class ForgotComponent {
   email = '';
   isLoading = false;
-  message = '';
   sent = false;
 
 
@@ -33,7 +32,7 @@ export class ForgotComponent {
 
   sendReset(): void {
     if (!this.email) {
-      this.message = this.i18n.t('forgot.error.enterEmail');
+      this.toast.show(this.i18n.t('forgot.error.enterEmail'), { type: 'error', timeout: 3000 });
       return;
     }
     this.isLoading = true;
@@ -43,20 +42,19 @@ export class ForgotComponent {
         // Always show non-disclosive message
         if (res && res.sent) {
           this.sent = true;
-          this.message = res.message || this.i18n.t('forgot.success.sent');
+          const message = res.message || this.i18n.t('forgot.success.sent');
           // show toast and redirect after short delay
-          try { this.toast.show(this.message, { type: 'success', timeout: 3000 }); } catch (e) {}
+          this.toast.show(message, { type: 'success', timeout: 3000 });
           setTimeout(() => this.router.navigate(['/login']), 3000);
         } else {
           // backend didn't send (either no SMTP) — still show generic message
           this.sent = false;
-          this.message = res?.message || this.i18n.t('forgot.info.generic');
-          this.toast.show(this.message, { type: 'info', timeout: 4000 });
+          this.toast.show(res?.message || this.i18n.t('forgot.info.generic'), { type: 'info', timeout: 4000 });
         }
       },
       error: (err: any) => {
         this.isLoading = false;
-        this.message = err?.error?.message || this.i18n.t('forgot.error.failed');
+        this.toast.show(err?.error?.message || this.i18n.t('forgot.error.failed'), { type: 'error', timeout: 3500 });
       }
     });
   }

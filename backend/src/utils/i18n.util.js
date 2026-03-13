@@ -12,6 +12,8 @@ const dictionaries = {
     'auth.passwordResetGeneric': 'If that email exists, a reset link has been sent.',
     'auth.invalidOrExpiredToken': 'Invalid or expired token',
     'auth.tokenExpired': 'Token expired',
+    'auth.awaitingApproval': 'Your admin account is waiting for approval from another administrator.',
+    'auth.registeredAwaitingApproval': 'Admin account created and waiting for approval.',
 
     'user.noValidFields': 'No valid fields to update',
     'user.passwordRequired': 'Current password and new password required',
@@ -103,6 +105,8 @@ const dictionaries = {
     'auth.passwordResetGeneric': 'Ha az e-mail cím létezik, elküldtük a visszaállító linket.',
     'auth.invalidOrExpiredToken': 'Érvénytelen vagy lejárt token',
     'auth.tokenExpired': 'A token lejárt',
+    'auth.awaitingApproval': 'Az admin fiókod jóváhagyásra vár egy másik adminisztrátortól.',
+    'auth.registeredAwaitingApproval': 'Az admin fiók létrejött, és jóváhagyásra vár.',
 
     'user.noValidFields': 'Nincs frissíthető mező',
     'user.passwordRequired': 'A jelenlegi és az új jelszó megadása kötelező',

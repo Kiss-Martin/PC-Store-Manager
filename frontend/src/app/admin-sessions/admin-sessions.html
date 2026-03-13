@@ -1,0 +1,221 @@
+<div class="admin-sessions-container">
+  <div class="page-header">
+    <div>
+      <h1>
+        <lucide-icon name="shield" [size]="28"></lucide-icon>
+        {{ 'admin.sessionsTitle' | t }}
+      </h1>
+      <p class="subtitle">{{ 'admin.sessionsSubtitle' | t }}</p>
+    </div>
+    <button class="btn-secondary" (click)="refreshData()">
+      <lucide-icon name="refresh-cw" [size]="18"></lucide-icon>
+      {{ 'admin.refresh' | t }}
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon primary">
+        <lucide-icon name="monitor" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.total' | t }}</p>
+        <h3 class="stat-value">{{ total }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon info">
+        <lucide-icon name="list" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.visible' | t }}</p>
+        <h3 class="stat-value">{{ sessions.length }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card" *ngIf="pendingAdmins.length">
+      <div class="stat-icon warning">
+        <lucide-icon name="user-check" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.pending' | t }}</p>
+        <h3 class="stat-value">{{ pendingAdmins.length }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon success">
+        <lucide-icon name="bookmark" [size]="22"></lucide-icon>
+      </div>
+      <div>
+        <p class="stat-label">{{ 'admin.stat.page' | t }}</p>
+        <h3 class="stat-value">{{ page }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="success" class="alert alert-success">
+    <lucide-icon name="badge-check" [size]="18"></lucide-icon>
+    <span>{{ success }}</span>
+  </div>
+
+  <div class="filters-card">
+    <div class="filters-header">
+      <div>
+        <h2>{{ 'admin.search' | t }}</h2>
+        <p class="subtitle">{{ 'admin.searchSubtitle' | t }}</p>
+      </div>
+    </div>
+
+    <div class="filters-grid">
+      <label class="field search-field">
+        <span>{{ 'admin.searchPlaceholder' | t }}</span>
+        <div class="input-shell">
+          <lucide-icon name="search" [size]="18"></lucide-icon>
+          <input type="search" [(ngModel)]="q" [placeholder]="'admin.searchPlaceholder' | t" />
+        </div>
+      </label>
+
+      <label class="field">
+        <span>{{ 'admin.filterEmail' | t }}</span>
+        <input type="email" [(ngModel)]="email" [placeholder]="'admin.filterEmail' | t" />
+      </label>
+
+      <label class="field">
+        <span>{{ 'admin.filterStart' | t }}</span>
+        <input type="date" [(ngModel)]="start" />
+      </label>
+
+      <label class="field">
+        <span>{{ 'admin.filterEnd' | t }}</span>
+        <input type="date" [(ngModel)]="end" />
+      </label>
+    </div>
+
+    <div class="filters-actions">
+      <button class="btn-primary" (click)="onSearch()">
+        <lucide-icon name="search" [size]="18"></lucide-icon>
+        {{ 'admin.search' | t }}
+      </button>
+      <button class="btn-secondary" (click)="clearFilters()" [disabled]="!hasActiveFilters()">
+        <lucide-icon name="x" [size]="18"></lucide-icon>
+        {{ 'admin.clearFilters' | t }}
+      </button>
+    </div>
+  </div>
+
+  <section *ngIf="pendingAdmins && pendingAdmins.length" class="section-card">
+    <div class="section-header">
+      <div>
+        <h2>{{ 'admin.pendingTitle' | t }}</h2>
+        <p class="subtitle">{{ 'admin.pendingSubtitle' | t }}</p>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'admin.table.user' | t }}</th>
+            <th>{{ 'register.review.email' | t }}</th>
+            <th>{{ 'register.fullName' | t }}</th>
+            <th>{{ 'admin.table.issued' | t }}</th>
+            <th>{{ 'admin.table.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of pendingAdmins">
+            <td>
+              <div class="user-cell">
+                <div class="avatar-badge">{{ (p.email || p.username || '?').charAt(0) | uppercase }}</div>
+                <div>
+                  <div class="primary-text">{{ p.username || ('admin.unknownUser' | t) }}</div>
+                  <div class="secondary-text">{{ p.fullname || ('profile.notSet' | t) }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ p.email }}</td>
+            <td>{{ p.fullname || ('profile.notSet' | t) }}</td>
+            <td>{{ p.created_at | date:'medium' }}</td>
+            <td>
+              <div class="action-group">
+                <button class="btn-primary btn-small" (click)="approveAdmin(p.id)">{{ 'admin.approve' | t }}</button>
+                <button class="btn-secondary btn-small danger" (click)="rejectAdmin(p.id)">{{ 'admin.reject' | t }}</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="section-header">
+      <div>
+        <h2>{{ 'admin.sessionsTitle' | t }}</h2>
+        <p class="subtitle">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
+      <p>{{ 'admin.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!loading && sessions && sessions.length">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ 'admin.table.user' | t }}</th>
+              <th>{{ 'admin.table.ip' | t }}</th>
+              <th>{{ 'admin.table.agent' | t }}</th>
+              <th>{{ 'admin.table.issued' | t }}</th>
+              <th>{{ 'admin.table.expires' | t }}</th>
+              <th>{{ 'admin.table.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of sessions">
+              <td>
+                <div *ngIf="s.user" class="user-cell">
+                  <div class="avatar-badge">{{ (s.user.email || s.user.username || '?').charAt(0) | uppercase }}</div>
+                  <div>
+                    <div class="primary-text">{{ s.user.email }}</div>
+                    <div class="secondary-text">@{{ s.user.username }}</div>
+                  </div>
+                </div>
+                <div *ngIf="!s.user" class="secondary-text">{{ 'admin.unknownUser' | t }}</div>
+              </td>
+              <td><span class="chip">{{ s.ip || ('profile.unknown' | t) }}</span></td>
+              <td class="agent-cell">{{ s.user_agent || ('profile.unknown' | t) }}</td>
+              <td>{{ s.created_at | date:'medium' }}</td>
+              <td>{{ s.expires_at | date:'medium' }}</td>
+              <td>
+                <button class="btn-secondary btn-small" (click)="revoke(s.id)">{{ 'admin.revoke' | t }}</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <button class="btn-secondary" (click)="prev()" [disabled]="page <= 1">{{ 'admin.prev' | t }}</button>
+        <span class="pagination-text">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</span>
+        <button class="btn-secondary" (click)="next()" [disabled]="(page * limit) >= total">{{ 'admin.next' | t }}</button>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!loading && (!sessions || sessions.length === 0)" class="empty-state">
+      <lucide-icon name="monitor-x" [size]="56" class="empty-icon"></lucide-icon>
+      <h3>{{ 'admin.noSessions' | t }}</h3>
+      <p>{{ 'admin.searchSubtitle' | t }}</p>
+    </div>
+  </section>
+</div>

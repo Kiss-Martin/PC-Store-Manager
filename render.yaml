@@ -16,6 +16,8 @@ projects:
       envVars:
       - key: NODE_ENV
         value: production
+      - key: TRUST_PROXY
+        value: "1"
     - type: web
       name: PC-Store-Manager-Frontend
       runtime: static

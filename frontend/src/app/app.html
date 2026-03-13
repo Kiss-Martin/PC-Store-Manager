@@ -19,6 +19,10 @@
           <li><a (click)="navigate('products')" class="nav-link">{{ 'app.nav.products' | t }}</a></li>
           <li><a (click)="navigate('orders')" class="nav-link">{{ 'app.nav.orders' | t }}</a></li>
           <li><a (click)="navigate('analytics')" class="nav-link">{{ 'app.nav.analytics' | t }}</a></li>
+          @if (auth.isAdmin()) {
+            <li><a (click)="navigate('admin/sessions')" class="nav-link">{{ 'admin.sessionsTitle' | t }}</a></li>
+            <li><a (click)="navigate('admin/audit')" class="nav-link">{{ 'admin.auditNav' | t }}</a></li>
+          }
           <li class="nav-extra">
             <button type="button" class="btn language-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
               {{ 'app.lang.toggle' | t }}
