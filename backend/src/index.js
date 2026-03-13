@@ -22,6 +22,7 @@ import customerRoutes from './routes/customer.routes.js';
 import userRoutes from './routes/user.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import supportRoutes from './routes/support.routes.js';
 import { run } from './utils/supabase.util.js';
 import supabase from './db.js';
 
@@ -91,6 +92,7 @@ app.use('/orders', orderRoutes);
 app.use('/items', itemRoutes);
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/support', supportRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

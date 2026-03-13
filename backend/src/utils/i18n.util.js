@@ -97,6 +97,11 @@ const dictionaries = {
     'common.all': 'All',
     'common.na': 'N/A',
     'common.unknown': 'Unknown',
+
+    'support.messagRequired': 'Message is required',
+    'support.sent': 'Your message has been sent. We will get back to you soon.',
+    'support.failed': 'Failed to send your message. Please try again later.',
+    'support.emailSubject': 'Support Request — PC Store Manager',
   },
   hu: {
     'auth.invalidCredentials': 'Érvénytelen bejelentkezési adatok',
@@ -119,6 +124,11 @@ const dictionaries = {
     'auth.registrationText': 'Üdvözlünk {fullname}! A fiókod ({username}) létrejött. Bejelentkezhetsz: {link}',
     'auth.registrationAwaitingSubject': 'Regisztráció beérkezett — jóváhagyásra vár',
     'auth.registrationAwaitingText': 'Az admin fiók ({username}) létrejött és jóváhagyásra vár. Értesítünk, ha jóváhagyásra kerül.',
+
+    'support.messagRequired': 'Az üzenet megadása kötelező',
+    'support.sent': 'Az üzeneted elküldve. Hamarosan felvesszük veled a kapcsolatot.',
+    'support.failed': 'Az üzenet küldése sikertelen. Kérjük, próbáld meg újra.',
+    'support.emailSubject': 'Támogatási kérelem — PC Store Manager',
 
     'user.noValidFields': 'Nincs frissíthető mező',
     'user.passwordRequired': 'A jelenlegi és az új jelszó megadása kötelező',

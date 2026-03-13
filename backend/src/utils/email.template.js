@@ -49,4 +49,22 @@ export function renderPasswordReset({ subject, resetLink }) {
   return { subject, text, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset };
+export function renderSupportContact({ senderName, senderEmail, message }) {
+  const safe = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const plain = `Support request received\n\nFrom: ${senderName || 'Anonymous'} <${senderEmail || 'not provided'}>\n\nMessage:\n${message}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">&#128226; New Support Request</h2>
+    <p>A user has submitted a support request through the PC Store Manager portal.</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:120px">Name</td><td style="padding:10px 14px">${safe(senderName) || '<em style="color:#9ca3af">not provided</em>'}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">Email</td><td style="padding:10px 14px">${senderEmail ? `<a href="mailto:${safe(senderEmail)}">${safe(senderEmail)}</a>` : '<em style="color:#9ca3af">not provided</em>'}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600;vertical-align:top">Message</td><td style="padding:10px 14px;white-space:pre-wrap">${safe(message)}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">This message was sent automatically by the PC Store Manager application.</p>
+  </div>
+  `;
+  return { subject: 'Support Request — PC Store Manager', text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact };

@@ -9,6 +9,7 @@ import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
 import { ToastService } from '../../shared/toast.service';
 import { Toast } from '../../shared/toast.service';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +23,14 @@ export class LoginComponent {
   rememberMe = false;
   isLoading = false;
 
-  constructor(private router: Router, private authService: AuthService, private toast: ToastService, public theme: ThemeService, public i18n: I18nService) {
+  // Contact support modal
+  showContactModal = false;
+  contactName = '';
+  contactEmail = '';
+  contactMessage = '';
+  contactLoading = false;
+
+  constructor(private router: Router, private authService: AuthService, private api: ApiService, private toast: ToastService, public theme: ThemeService, public i18n: I18nService) {
     const message = history.state?.message || '';
     if (message) {
       const toastType = (history.state?.toastType || (history.state?.showToast ? 'success' : 'info')) as Toast['type'];
@@ -56,6 +64,41 @@ export class LoginComponent {
 
   goToForgot() {
     this.router.navigate(['/forgot']);
+  }
+
+  openContactModal() {
+    this.contactName = '';
+    this.contactEmail = '';
+    this.contactMessage = '';
+    this.contactLoading = false;
+    this.showContactModal = true;
+  }
+
+  closeContactModal() {
+    this.showContactModal = false;
+  }
+
+  submitContactSupport() {
+    if (!this.contactMessage.trim()) {
+      this.toast.show(this.i18n.t('login.contactModal.errorEmpty'), { type: 'warning', timeout: 3000 });
+      return;
+    }
+    this.contactLoading = true;
+    this.api.post<{ success: boolean; message?: string }>('/support/contact', {
+      name: this.contactName.trim() || undefined,
+      email: this.contactEmail.trim() || undefined,
+      message: this.contactMessage.trim(),
+    }).subscribe({
+      next: () => {
+        this.contactLoading = false;
+        this.showContactModal = false;
+        this.toast.show(this.i18n.t('login.contactModal.success'), { type: 'success', timeout: 5000 });
+      },
+      error: () => {
+        this.contactLoading = false;
+        this.toast.show(this.i18n.t('login.contactModal.error'), { type: 'error', timeout: 4000 });
+      },
+    });
   }
 
   toggleTheme() {

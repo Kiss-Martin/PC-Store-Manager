@@ -86,9 +86,50 @@
         <!-- Footer -->
         <div class="footer">
           <p class="footer-text">
-            {{ 'login.needHelp' | t }} <a href="#" class="footer-link">{{ 'login.contactSupport' | t }}</a>
+            {{ 'login.needHelp' | t }} <button type="button" class="footer-link" (click)="openContactModal()">{{ 'login.contactSupport' | t }}</button>
           </p>
         </div>
       </div>
     </div>
+
+    <!-- Contact Support Modal -->
+    @if (showContactModal) {
+      <div class="modal-backdrop" (click)="closeContactModal()" role="dialog" aria-modal="true">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2 class="modal-title">{{ 'login.contactModal.title' | t }}</h2>
+            <button type="button" class="modal-close" (click)="closeContactModal()" aria-label="Close">
+              <lucide-icon name="x" size="18"></lucide-icon>
+            </button>
+          </div>
+          <p class="modal-subtitle">{{ 'login.contactModal.subtitle' | t }}</p>
+          <form (ngSubmit)="submitContactSupport()" class="modal-form">
+            <div class="form-group">
+              <label class="form-label">{{ 'login.contactModal.name' | t }}</label>
+              <input type="text" [(ngModel)]="contactName" name="contactName"
+                [placeholder]="'login.contactModal.namePlaceholder' | t" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ 'login.contactModal.email' | t }}</label>
+              <input type="email" [(ngModel)]="contactEmail" name="contactEmail"
+                [placeholder]="'login.contactModal.emailPlaceholder' | t" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ 'login.contactModal.message' | t }}</label>
+              <textarea [(ngModel)]="contactMessage" name="contactMessage" rows="4"
+                [placeholder]="'login.contactModal.messagePlaceholder' | t"
+                class="form-input contact-textarea" required></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="modal-btn-cancel" (click)="closeContactModal()" [disabled]="contactLoading">
+                {{ 'login.contactModal.cancel' | t }}
+              </button>
+              <button type="submit" class="modal-btn-send" [disabled]="contactLoading">
+                {{ contactLoading ? ('login.contactModal.sending' | t) : ('login.contactModal.send' | t) }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
 
