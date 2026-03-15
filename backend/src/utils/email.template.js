@@ -15,6 +15,11 @@ const emailStrings = {
       goToDashboard: 'Go to Dashboard',
       disclaimer: 'If you did not perform this action, please contact support.',
     },
+    approval: {
+      body: 'Your administrator account has been approved! You can now log in and access the admin panel.',
+      goToDashboard: 'Go to Dashboard',
+      disclaimer: 'If you did not register for this account, please contact support.',
+    },
     passwordReset: {
       body: 'We received a request to reset your password. Click the button below to reset it.',
       button: 'Reset Password',
@@ -45,6 +50,11 @@ const emailStrings = {
       welcomeBody: 'Üdvözlünk! A fiókod sikeresen létrejött.',
       goToDashboard: 'Ugrás a vezérlőpultra',
       disclaimer: 'Ha nem te végezted ezt a műveletet, kérjük, lépj kapcsolatba a támogatással.',
+    },
+    approval: {
+      body: 'Az adminisztrátori fiókodat jóváhagyták! Most már bejelentkezhetsz és használhatod az admin felületet.',
+      goToDashboard: 'Ugrás a vezérlőpultra',
+      disclaimer: 'Ha nem te regisztráltad ezt a fiókot, kérjük, lépj kapcsolatba a támogatással.',
     },
     passwordReset: {
       body: 'Jelszó-visszaállítási kérelmet kaptunk. Kattints az alábbi gombra a visszaállításhoz.',
@@ -140,4 +150,18 @@ export function renderSupportContact({ lang = 'en', senderName, senderEmail, mes
   return { subject: 'Support Request — PC Store Manager', text: plain, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset, renderSupportContact };
+export function renderApprovalNotification({ lang = 'en', subject, username, loginLink }) {
+  const s = getEmailStrings(lang);
+  const plain = `${s.approval.body} (${username}) — ${loginLink}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${subject}</h2>
+    <p>${s.approval.body}</p>
+    <p style="margin-top:18px"><a href="${loginLink}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none">${s.approval.goToDashboard}</a></p>
+    <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.approval.disclaimer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification };

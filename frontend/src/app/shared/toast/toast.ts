@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService, Toast } from '../toast.service';
 
@@ -9,11 +9,16 @@ import { ToastService, Toast } from '../toast.service';
   templateUrl: './toast.html',
   styleUrls: ['./toast.css'],
 })
-export class ToastComponent {
-  toasts$ = null as any;
+export class ToastComponent implements OnDestroy {
+  toasts: Toast[] = [];
+  private sub: any;
 
   constructor(private toastService: ToastService) {
-    this.toasts$ = this.toastService.toasts$;
+    this.sub = this.toastService.toasts$.subscribe(t => this.toasts = t);
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
   }
 
   dismiss(id: number) {

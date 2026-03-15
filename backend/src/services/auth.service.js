@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { hashToken } from '../utils/token.util.js';
-import { renderAdminNotification, renderPasswordReset, renderRegistrationConfirmation } from '../utils/email.template.js';
+import { renderAdminNotification, renderPasswordReset, renderRegistrationConfirmation, renderApprovalNotification } from '../utils/email.template.js';
 import { t } from '../utils/i18n.util.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
@@ -104,6 +104,14 @@ const AuthService = {
         admin_approved: role === 'admin' ? false : true,
       }).select('id,email,username,fullname,role,admin_approved').single()
     );
+    // Auto-approve the first admin if no other approved admins exist
+    if (data.role === 'admin' && !data.admin_approved) {
+      const existingAdmins = await run(supabase.from('users').select('id').eq('role', 'admin').eq('admin_approved', true));
+      if (!existingAdmins || existingAdmins.length === 0) {
+        await run(supabase.from('users').update({ admin_approved: true, admin_approved_at: new Date().toISOString() }).eq('id', data.id));
+        data.admin_approved = true;
+      }
+    }
     // send registration confirmation to the new user (inform about awaiting approval if admin)
     try {
       const regSubject = data.role === 'admin' && !data.admin_approved ? t(lang, 'auth.registrationAwaitingSubject') : t(lang, 'auth.registrationSubject');
@@ -170,7 +178,7 @@ const AuthService = {
     // create access token and refresh token
     const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
     const refreshToken = generateRefreshTokenStr();
-    const refreshExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+    const refreshExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // try to persist refresh token (store hashed token); if table missing, warn but continue
     try {
       const tokenHash = hashToken(refreshToken);
@@ -186,6 +194,23 @@ const AuthService = {
       console.warn('Could not persist refresh token (refresh_tokens table missing?). Continuing.');
     }
     return { user: data, accessToken, refreshToken, refreshExpires };
+  },
+
+  async sendApprovalEmail(userId, lang = 'en') {
+    try {
+      const user = await run(supabase.from('users').select('email,username').eq('id', userId).single()).catch(() => null);
+      if (!user) return;
+      const subject = t(lang, 'auth.approvalSubject');
+      const loginLink = `${FRONTEND_URL}/login`;
+      const tpl = renderApprovalNotification({ lang, subject, username: user.username, loginLink });
+      if (mailTransporter) {
+        await mailTransporter.sendMail({ to: user.email, from: smtpConfig.from, subject: tpl.subject, text: tpl.text, html: tpl.html });
+      } else {
+        console.log('Approval notification (no SMTP) ->', user.email, tpl.text);
+      }
+    } catch (e) {
+      console.warn('Failed to send approval notification:', e && e.message ? e.message : e);
+    }
   },
 
   async login({ email, username, password, rememberMe }, lang = 'en', metadata = {}) {
@@ -207,17 +232,10 @@ const AuthService = {
       err.statusCode = 401;
       throw err;
     }
-    // Admins that haven't been approved yet cannot log in
-    if (data.role === 'admin' && !data.admin_approved) {
-      const err = new Error(t(lang, 'auth.registeredAwaitingApproval'));
-      err.statusCode = 403;
-      throw err;
-    }
     // Issue short-lived access token and a refresh token (persisted)
     const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
     const refreshToken = generateRefreshTokenStr();
-    const expiresDays = rememberMe ? 30 : 7;
-    const refreshExpires = new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000).toISOString();
+    const refreshExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // keep up to max tokens per user (append new and cleanup older)
     const maxTokens = 5;
     try {

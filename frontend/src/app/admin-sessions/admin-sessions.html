@@ -116,8 +116,7 @@
     </div>
   </div>
 
-  @if (pendingAdmins && pendingAdmins.length) {
-    <section class="section-card">
+  <section class="section-card">
     <div class="section-header">
       <div>
         <h2>{{ 'admin.pendingTitle' | t }}</h2>
@@ -125,6 +124,7 @@
       </div>
     </div>
 
+    @if (pendingAdmins && pendingAdmins.length) {
     <div class="table-container">
       <table class="data-table">
         <thead>
@@ -132,7 +132,6 @@
             <th>{{ 'admin.table.user' | t }}</th>
             <th>{{ 'register.review.email' | t }}</th>
             <th>{{ 'register.fullName' | t }}</th>
-            <th>{{ 'admin.table.issued' | t }}</th>
             <th>{{ 'admin.table.actions' | t }}</th>
           </tr>
         </thead>
@@ -150,7 +149,6 @@
             </td>
             <td>{{ p.email }}</td>
             <td>{{ p.fullname || ('profile.notSet' | t) }}</td>
-            <td>{{ p.created_at | date:'medium' }}</td>
             <td>
               <div class="action-group">
                 <button class="btn-primary btn-small" (click)="approveAdmin(p.id)">{{ 'admin.approve' | t }}</button>
@@ -162,8 +160,13 @@
         </tbody>
       </table>
     </div>
+    } @else {
+      <div class="empty-state">
+        <lucide-icon name="user-check" [size]="30"></lucide-icon>
+        <p>{{ 'admin.noPending' | t }}</p>
+      </div>
+    }
   </section>
-  }
 
   <section class="section-card">
     <div class="section-header">

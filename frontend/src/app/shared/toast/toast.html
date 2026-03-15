@@ -1,5 +1,5 @@
 <div class="toast-area" aria-live="polite">
-  @for (t of toasts$ | async; track t.id) {
+  @for (t of toasts; track t.id) {
     <div class="toast" [class]="'toast-' + (t.type || 'info')">
       <div class="toast-message">{{ t.message }}</div>
       <button class="toast-close" (click)="dismiss(t.id)">×</button>

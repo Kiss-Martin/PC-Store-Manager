@@ -159,8 +159,11 @@ export const listAllSessions = async (req, res) => {
 export const listPendingAdmins = async (req, res) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   try {
-    const resp = await run(supabase.from('users').select('id,email,username,fullname,created_at').eq('role', 'admin').eq('admin_approved', false).order('created_at', { ascending: true }));
-    res.json({ users: resp });
+    // Match admin_approved = false OR admin_approved IS NULL (column may be nullable)
+    const resp = await run(supabase.from('users').select('id,email,username,fullname').eq('role', 'admin').or('admin_approved.eq.false,admin_approved.is.null'));
+    // Exclude the requesting admin themselves
+    const filtered = (resp || []).filter(u => u.id !== req.user.id);
+    res.json({ users: filtered });
   } catch (e) {
     res.status(500).json({ error: 'Failed to list pending admins' });
   }
@@ -174,6 +177,8 @@ export const approveAdmin = async (req, res) => {
     await run(supabase.from('users').update({ admin_approved: true, admin_approved_by: req.user.id, admin_approved_at: new Date().toISOString() }).eq('id', id));
     // audit
     try { await run(supabase.from('audit_logs').insert({ event_type: 'approve_admin', actor_user_id: req.user?.id || null, target_user_id: id, details: null }).select().single()).catch(() => null); } catch (e) { /* ignore audit errors */ }
+    // notify the approved user by email
+    AuthService.sendApprovalEmail(id, req.lang).catch(() => {});
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to approve admin' });
@@ -185,7 +190,7 @@ export const rejectAdmin = async (req, res) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   const id = req.params.id;
   try {
-    await run(supabase.from('users').delete().eq('id', id).eq('role', 'admin').eq('admin_approved', false));
+    await run(supabase.from('users').delete().eq('id', id).eq('role', 'admin').or('admin_approved.eq.false,admin_approved.is.null'));
     try { await run(supabase.from('audit_logs').insert({ event_type: 'reject_admin', actor_user_id: req.user?.id || null, target_user_id: id, details: null }).select().single()).catch(() => null); } catch (e) { /* ignore audit errors */ }
     res.json({ success: true });
   } catch (e) {
@@ -219,6 +224,8 @@ export const approveAdminOneClick = async (req, res) => {
     const nowIso = new Date().toISOString();
     await run(supabase.from('users').update({ admin_approved: true, admin_approved_by: approverId, admin_approved_at: nowIso }).eq('id', req.params.id));
     try { await run(supabase.from('audit_logs').insert({ event_type: 'approve_admin_oneclick', actor_user_id: approverId, target_user_id: req.params.id, details: { via: 'email' } }).select().single()).catch(() => null); } catch (e) { /* ignore */ }
+    // notify the approved user by email
+    AuthService.sendApprovalEmail(req.params.id).catch(() => {});
 
     const redirectTo = (process.env.FRONTEND_URL || 'http://localhost:4200') + '/admin/action-result?result=approved';
     return res.redirect(302, redirectTo);
@@ -245,7 +252,7 @@ export const rejectAdminOneClick = async (req, res) => {
     if (existing) return res.status(400).send('Token already used or invalid');
     const expiresAt = payload.exp ? new Date(payload.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
-    await run(supabase.from('users').delete().eq('id', req.params.id).eq('role', 'admin').eq('admin_approved', false));
+    await run(supabase.from('users').delete().eq('id', req.params.id).eq('role', 'admin').or('admin_approved.eq.false,admin_approved.is.null'));
     try { await run(supabase.from('audit_logs').insert({ event_type: 'reject_admin_oneclick', actor_user_id: approverId, target_user_id: req.params.id, details: { via: 'email' } }).select().single()).catch(() => null); } catch (e) { /* ignore */ }
 
     const redirectTo = (process.env.FRONTEND_URL || 'http://localhost:4200') + '/admin/action-result?result=rejected';

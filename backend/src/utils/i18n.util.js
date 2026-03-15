@@ -20,6 +20,7 @@ const dictionaries = {
     'auth.registrationText': 'Welcome {fullname}! Your account ({username}) has been created. You can log in at: {link}',
     'auth.registrationAwaitingSubject': 'Registration received — awaiting approval',
     'auth.registrationAwaitingText': 'Your admin account ({username}) has been created and is awaiting approval. You will be notified when it is approved.',
+    'auth.approvalSubject': 'Your admin account has been approved',
 
     'user.noValidFields': 'No valid fields to update',
     'user.passwordRequired': 'Current password and new password required',
@@ -124,6 +125,7 @@ const dictionaries = {
     'auth.registrationText': 'Üdvözlünk {fullname}! A fiókod ({username}) létrejött. Bejelentkezhetsz: {link}',
     'auth.registrationAwaitingSubject': 'Regisztráció beérkezett — jóváhagyásra vár',
     'auth.registrationAwaitingText': 'Az admin fiók ({username}) létrejött és jóváhagyásra vár. Értesítünk, ha jóváhagyásra kerül.',
+    'auth.approvalSubject': 'Az admin fiókodat jóváhagyták',
 
     'support.messagRequired': 'Az üzenet megadása kötelező',
     'support.sent': 'Az üzeneted elküldve. Hamarosan felvesszük veled a kapcsolatot.',
