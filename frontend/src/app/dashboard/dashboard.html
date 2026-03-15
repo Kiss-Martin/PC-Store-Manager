@@ -119,9 +119,11 @@
               [(ngModel)]="reportPeriod"
               class="form-select"
             >
-              <option *ngFor="let period of reportPeriods" [value]="period.value">
-                {{ period.label }}
-              </option>
+              @for (period of reportPeriods; track period.value) {
+                <option [value]="period.value">
+                  {{ period.label }}
+                </option>
+              }
             </select>
           </div>
 

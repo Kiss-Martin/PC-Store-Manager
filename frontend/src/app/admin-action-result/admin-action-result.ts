@@ -1,34 +1,62 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { TranslatePipe } from '../translate.pipe';
 
 @Component({
   selector: 'app-admin-action-result',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
-    <div class="p-6 max-w-xl mx-auto text-center">
-      <h1 class="text-2xl font-bold mb-4">{{ title }}</h1>
-      <p class="mb-6">{{ message }}</p>
-      <a class="inline-block px-4 py-2 bg-sky-600 text-white rounded" [routerLink]="['/admin/pending-admins']">Manage pending admins</a>
+    <div class="result-container">
+      <h1 class="result-title">{{ titleKey | t }}</h1>
+      <p class="result-message">{{ messageKey | t }}</p>
+      <a class="result-link" [routerLink]="['/admin/pending-admins']">{{ 'adminResult.manage' | t }}</a>
     </div>
   `,
+  styles: [`
+    .result-container {
+      max-width: 36rem;
+      margin: 6rem auto;
+      padding: 2rem;
+      text-align: center;
+    }
+    .result-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .result-message {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+    .result-link {
+      display: inline-block;
+      padding: 0.6rem 1.25rem;
+      background: var(--accent, #7c3aed);
+      color: #fff;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .result-link:hover { opacity: 0.85; }
+  `],
 })
 export class AdminActionResultComponent {
-  title = 'Admin action';
-  message = '';
+  titleKey = 'adminResult.title';
+  messageKey = 'adminResult.unknown';
 
-  constructor(private route: ActivatedRoute, private router: Router) {
+  constructor(private route: ActivatedRoute) {
     const q = this.route.snapshot.queryParamMap.get('result');
     if (q === 'approved') {
-      this.title = 'Admin Approved';
-      this.message = 'The admin account has been approved.';
+      this.titleKey = 'adminResult.approved.title';
+      this.messageKey = 'adminResult.approved.message';
     } else if (q === 'rejected') {
-      this.title = 'Admin Rejected';
-      this.message = 'The admin account has been rejected and removed.';
-    } else {
-      this.title = 'Action Result';
-      this.message = 'The action result is unknown or the token may be invalid/expired.';
+      this.titleKey = 'adminResult.rejected.title';
+      this.messageKey = 'adminResult.rejected.message';
     }
   }
 }

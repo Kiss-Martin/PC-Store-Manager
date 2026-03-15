@@ -12,7 +12,7 @@ const ItemService = {
     }));
   },
 
-  async createItem({ name, model, specs, price, amount, warranty, category_id, brand_id }) {
+  async createItem({ name, model, specs, price, amount, warranty, category_id, brand_id }, userId) {
     const data = await run(
       supabase.from('items').insert({
         name,
@@ -33,6 +33,7 @@ const ItemService = {
         action: 'stock_in',
         details: `Added new item: ${name}`,
         timestamp: new Date().toISOString(),
+        user_id: userId || null,
       })
     );
     return data;

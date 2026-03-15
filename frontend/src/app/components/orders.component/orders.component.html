@@ -137,6 +137,7 @@
   }
 
 <!-- Orders Table -->
+@if (!isLoading) {
 <div class="table-container">
   <table class="orders-table">
     <thead>
@@ -177,9 +178,11 @@
                 [disabled]="assigningOrder === order.id"
               >
                 <option value="">{{ 'orders.unassigned' | t }}</option>
-                <option *ngFor="let worker of workers" [value]="worker.id">
-                  {{ worker.username }}
-                </option>
+                @for (worker of workers; track worker.id) {
+                  <option [value]="worker.id">
+                    {{ worker.username }}
+                  </option>
+                }
               </select>
             } @else {
               <span class="worker-badge">{{ getWorkerName(order.assignedTo) }}</span>
@@ -210,6 +213,7 @@
     </tbody>
   </table>
 </div>
+}
 
   <!-- Empty State -->
 @if (!isLoading && filteredOrders.length === 0) {
@@ -229,7 +233,7 @@
             <h2>{{ 'orders.details.title' | t }}</h2>
             <p class="order-number-header">{{ selectedOrder.orderNumber }}</p>
           </div>
-          <button aria-label="Bezárás" class="btn-close" (click)="closeDetailsModal()">
+          <button [attr.aria-label]="'common.close' | t" class="btn-close" (click)="closeDetailsModal()">
             <lucide-icon name="x" size="24"></lucide-icon>
           </button>
         </div>
@@ -295,7 +299,7 @@
       <div class="modal-content status-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>{{ 'orders.statusModal.title' | t }}</h2>
-          <button aria-label="Bezárás" class="btn-close" (click)="closeStatusModal()">
+          <button [attr.aria-label]="'common.close' | t" class="btn-close" (click)="closeStatusModal()">
             <lucide-icon name="x" size="24"></lucide-icon>
           </button>
         </div>

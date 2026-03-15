@@ -45,10 +45,12 @@
     </div>
   </div>
 
-  <div *ngIf="error" class="alert alert-error">
-    <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
-    <span>{{ error }}</span>
-  </div>
+  @if (error) {
+    <div class="alert alert-error">
+      <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
+      <span>{{ error }}</span>
+    </div>
+  }
 
   <section class="section-card">
     <div class="section-header">
@@ -58,12 +60,14 @@
       </div>
     </div>
 
-    <div *ngIf="loading" class="loading-state">
-      <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
-      <p>{{ 'admin.audit.loading' | t }}</p>
-    </div>
+    @if (loading) {
+      <div class="loading-state">
+        <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
+        <p>{{ 'admin.audit.loading' | t }}</p>
+      </div>
+    }
 
-    <ng-container *ngIf="!loading && logs && logs.length">
+    @if (!loading && logs && logs.length) {
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -76,17 +80,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let l of logs">
-              <td>
-                <span class="event-chip">{{ l.event_type }}</span>
-              </td>
-              <td><span class="id-chip">{{ l.actor_user_id || '-' }}</span></td>
-              <td><span class="id-chip">{{ l.target_user_id || '-' }}</span></td>
-              <td>
-                <pre class="details-block">{{ l.details | json }}</pre>
-              </td>
-              <td>{{ l.created_at | date:'medium' }}</td>
-            </tr>
+            @for (l of logs; track l.id) {
+              <tr>
+                <td>
+                  <span class="event-chip">{{ l.event_type }}</span>
+                </td>
+                <td><span class="id-chip">{{ l.actor_user_id || '-' }}</span></td>
+                <td><span class="id-chip">{{ l.target_user_id || '-' }}</span></td>
+                <td>
+                  <pre class="details-block">{{ l.details | json }}</pre>
+                </td>
+                <td>{{ l.created_at | date:'medium' }}</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
@@ -96,12 +102,14 @@
         <span class="pagination-text">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</span>
         <button class="btn-secondary" (click)="next()" [disabled]="(page * limit) >= total">{{ 'admin.next' | t }}</button>
       </div>
-    </ng-container>
+    }
 
-    <div *ngIf="!loading && (!logs || logs.length === 0)" class="empty-state">
-      <lucide-icon name="clipboard-x" [size]="56" class="empty-icon"></lucide-icon>
-      <h3>{{ 'admin.audit.noLogs' | t }}</h3>
-      <p>{{ 'admin.audit.subtitle' | t }}</p>
-    </div>
+    @if (!loading && (!logs || logs.length === 0)) {
+      <div class="empty-state">
+        <lucide-icon name="clipboard-x" [size]="56" class="empty-icon"></lucide-icon>
+        <h3>{{ 'admin.audit.noLogs' | t }}</h3>
+        <p>{{ 'admin.audit.subtitle' | t }}</p>
+      </div>
+    }
   </section>
 </div>

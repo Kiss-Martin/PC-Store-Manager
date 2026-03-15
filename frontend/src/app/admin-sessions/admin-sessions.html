@@ -34,15 +34,17 @@
       </div>
     </div>
 
-    <div class="stat-card" *ngIf="pendingAdmins.length">
-      <div class="stat-icon warning">
-        <lucide-icon name="user-check" [size]="22"></lucide-icon>
+    @if (pendingAdmins.length) {
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <lucide-icon name="user-check" [size]="22"></lucide-icon>
+        </div>
+        <div>
+          <p class="stat-label">{{ 'admin.stat.pending' | t }}</p>
+          <h3 class="stat-value">{{ pendingAdmins.length }}</h3>
+        </div>
       </div>
-      <div>
-        <p class="stat-label">{{ 'admin.stat.pending' | t }}</p>
-        <h3 class="stat-value">{{ pendingAdmins.length }}</h3>
-      </div>
-    </div>
+    }
 
     <div class="stat-card">
       <div class="stat-icon success">
@@ -55,15 +57,19 @@
     </div>
   </div>
 
-  <div *ngIf="error" class="alert alert-error">
-    <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
-    <span>{{ error }}</span>
-  </div>
+  @if (error) {
+    <div class="alert alert-error">
+      <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
+      <span>{{ error }}</span>
+    </div>
+  }
 
-  <div *ngIf="success" class="alert alert-success">
-    <lucide-icon name="badge-check" [size]="18"></lucide-icon>
-    <span>{{ success }}</span>
-  </div>
+  @if (success) {
+    <div class="alert alert-success">
+      <lucide-icon name="badge-check" [size]="18"></lucide-icon>
+      <span>{{ success }}</span>
+    </div>
+  }
 
   <div class="filters-card">
     <div class="filters-header">
@@ -110,7 +116,8 @@
     </div>
   </div>
 
-  <section *ngIf="pendingAdmins && pendingAdmins.length" class="section-card">
+  @if (pendingAdmins && pendingAdmins.length) {
+    <section class="section-card">
     <div class="section-header">
       <div>
         <h2>{{ 'admin.pendingTitle' | t }}</h2>
@@ -130,7 +137,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of pendingAdmins">
+          @for (p of pendingAdmins; track p.id) {
+            <tr>
             <td>
               <div class="user-cell">
                 <div class="avatar-badge">{{ (p.email || p.username || '?').charAt(0) | uppercase }}</div>
@@ -150,10 +158,12 @@
               </div>
             </td>
           </tr>
+          }
         </tbody>
       </table>
     </div>
   </section>
+  }
 
   <section class="section-card">
     <div class="section-header">
@@ -163,12 +173,14 @@
       </div>
     </div>
 
-    <div *ngIf="loading" class="loading-state">
-      <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
-      <p>{{ 'admin.loading' | t }}</p>
-    </div>
+    @if (loading) {
+      <div class="loading-state">
+        <lucide-icon name="loader-circle" [size]="30" class="spin"></lucide-icon>
+        <p>{{ 'admin.loading' | t }}</p>
+      </div>
+    }
 
-    <ng-container *ngIf="!loading && sessions && sessions.length">
+    @if (!loading && sessions && sessions.length) {
       <div class="table-container">
         <table class="data-table">
           <thead>
@@ -182,17 +194,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let s of sessions">
-              <td>
-                <div *ngIf="s.user" class="user-cell">
-                  <div class="avatar-badge">{{ (s.user.email || s.user.username || '?').charAt(0) | uppercase }}</div>
-                  <div>
-                    <div class="primary-text">{{ s.user.email }}</div>
-                    <div class="secondary-text">@{{ s.user.username }}</div>
-                  </div>
-                </div>
-                <div *ngIf="!s.user" class="secondary-text">{{ 'admin.unknownUser' | t }}</div>
-              </td>
+            @for (s of sessions; track s.id) {
+              <tr>
+                <td>
+                  @if (s.user) {
+                    <div class="user-cell">
+                      <div class="avatar-badge">{{ (s.user.email || s.user.username || '?').charAt(0) | uppercase }}</div>
+                      <div>
+                        <div class="primary-text">{{ s.user.email }}</div>
+                        <div class="secondary-text">@{{ s.user.username }}</div>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="secondary-text">{{ 'admin.unknownUser' | t }}</div>
+                  }
+                </td>
               <td><span class="chip">{{ s.ip || ('profile.unknown' | t) }}</span></td>
               <td class="agent-cell">{{ s.user_agent || ('profile.unknown' | t) }}</td>
               <td>{{ s.created_at | date:'medium' }}</td>
@@ -201,6 +217,7 @@
                 <button class="btn-secondary btn-small" (click)="revoke(s.id)">{{ 'admin.revoke' | t }}</button>
               </td>
             </tr>
+            }
           </tbody>
         </table>
       </div>
@@ -210,12 +227,14 @@
         <span class="pagination-text">{{ 'admin.pageInfo' | t:{ page: page, total: total } }}</span>
         <button class="btn-secondary" (click)="next()" [disabled]="(page * limit) >= total">{{ 'admin.next' | t }}</button>
       </div>
-    </ng-container>
+    }
 
-    <div *ngIf="!loading && (!sessions || sessions.length === 0)" class="empty-state">
-      <lucide-icon name="monitor-x" [size]="56" class="empty-icon"></lucide-icon>
-      <h3>{{ 'admin.noSessions' | t }}</h3>
-      <p>{{ 'admin.searchSubtitle' | t }}</p>
-    </div>
+    @if (!loading && (!sessions || sessions.length === 0)) {
+      <div class="empty-state">
+        <lucide-icon name="monitor-x" [size]="56" class="empty-icon"></lucide-icon>
+        <h3>{{ 'admin.noSessions' | t }}</h3>
+        <p>{{ 'admin.searchSubtitle' | t }}</p>
+      </div>
+    }
   </section>
 </div>

@@ -71,6 +71,7 @@ const OrderService = {
         action: 'stock_out',
         details: `Sold ${quantity} unit${quantity > 1 ? 's' : ''} - Order #${orderNumber}`,
         timestamp: new Date().toISOString(),
+        user_id: user?.id || null,
       }).select().single()
     );
     await run(

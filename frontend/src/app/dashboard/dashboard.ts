@@ -1,4 +1,4 @@
-import { Component, NgModule, OnInit, effect } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService, ExportFormat } from '../auth/auth.service';

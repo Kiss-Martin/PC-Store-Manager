@@ -190,7 +190,7 @@ export class AuthService {
   getAllSessions(): Observable<{ tokens: any[] }> {
     return this.api.getWithCredentials<{ tokens: any[] }>('/auth/admin/sessions');
   }
-  
+
   getAllSessionsPaged(page: number = 1, limit: number = 25, q: string = '', email: string = '', start: string = '', end: string = '') {
     const params: any = { page, limit };
     if (q) params.q = q;
@@ -274,7 +274,8 @@ export class AuthService {
     return this.api.patch<{ user: User }>('/users/me', data).pipe(
       tap((res) => {
         this.user.set(res.user);
-        localStorage.setItem('user', JSON.stringify(res.user));
+        const storage = this.shouldRestoreSession() ? localStorage : sessionStorage;
+        storage.setItem('user', JSON.stringify(res.user));
       }),
     );
   }
@@ -395,5 +396,10 @@ export class AuthService {
   // Password reset initiation
   forgotPassword(email: string): Observable<{ success?: boolean; sent?: boolean; message?: string }> {
     return this.api.post<{ success?: boolean; sent?: boolean; message?: string }>('/auth/forgot-password', { email });
+  }
+
+  // Password reset completion
+  resetPassword(token: string, newPassword: string): Observable<{ success: boolean }> {
+    return this.api.post<{ success: boolean }>('/auth/reset-password', { token, newPassword });
   }
 }

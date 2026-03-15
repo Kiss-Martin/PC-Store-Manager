@@ -35,7 +35,7 @@ export class App {
   }
 
   private updateNavbarVisibility(url: string) {
-    const isAuthRoute = url.includes('/login') || url.includes('/register') || url.includes('/forgot');
+    const isAuthRoute = url.includes('/login') || url.includes('/register') || url.includes('/forgot') || url.includes('/reset-password');
     this.showNavbar = this.auth.isAuthenticated() && !isAuthRoute;
 
     if (!this.showNavbar) {

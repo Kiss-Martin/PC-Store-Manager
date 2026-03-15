@@ -12,7 +12,7 @@ export const createItem = async (req, res) => {
   const parse = createItemSchema.safeParse(req.body);
   if (!parse.success)
     return res.status(400).json({ error: localizeValidationErrors(req.lang, parse.error.errors) });
-  const item = await ItemService.createItem(parse.data);
+  const item = await ItemService.createItem(parse.data, req.user?.id);
   res.json({ success: true, item });
 };
 
