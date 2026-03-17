@@ -14,10 +14,11 @@ import { hashToken } from '../utils/token.util.js';
 import jwt from 'jsonwebtoken';
 
 function buildCookieOptions(maxAge) {
+  const isProduction = process.env.NODE_ENV === 'production';
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
   };
   if (typeof maxAge === 'number') options.maxAge = maxAge;
