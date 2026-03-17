@@ -296,20 +296,16 @@ export class AuthService {
   }
 
   createItem(item: any): Observable<{ success: boolean; item: any }> {
-    const payload = {
-      ...item,
-      specs: item.specifications ?? item.specs ?? '',
-    };
+    const payload = { ...item };
     delete payload.specifications;
+    delete payload.specs;
     return this.api.post<{ success: boolean; item: any }>('/items', payload);
   }
 
   updateItem(id: string, item: any): Observable<{ item: any }> {
-    const payload = {
-      ...item,
-      specs: item.specifications ?? item.specs ?? '',
-    };
+    const payload = { ...item };
     delete payload.specifications;
+    delete payload.specs;
     return this.api.patch<{ item: any }>(`/items/${id}`, payload);
   }
 
