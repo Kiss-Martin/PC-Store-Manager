@@ -129,10 +129,11 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  assignOrderToWorker(orderId: string, userId: string) {
+  assignOrderToWorker(orderId: string, userId: string | null) {
     this.assigningOrder = orderId;
+    const assignTo = userId || null;
 
-    this.auth.assignOrder(orderId, userId || null).subscribe({
+    this.auth.assignOrder(orderId, assignTo).subscribe({
       next: () => {
         this.assigningOrder = null;
         this.loadOrders();
@@ -155,7 +156,10 @@ export class OrdersComponent implements OnInit {
     this.isLoading = true;
     this.auth.getOrders().subscribe({
       next: (res: any) => {
-        this.orders = res.orders || [];
+        this.orders = (res.orders || []).map((o: any) => ({
+          ...o,
+          assignedTo: o.assignedTo || null,
+        }));
         this.filteredOrders = this.orders;
         this.calculateStats();
         this.filterOrders();

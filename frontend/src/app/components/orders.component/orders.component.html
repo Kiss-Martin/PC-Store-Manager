@@ -172,14 +172,14 @@
           <td>
             @if (auth.isAdmin()) {
               <select
-                [value]="order.assignedTo || ''"
-                (change)="assignOrderToWorker(order.id, $any($event.target).value)"
+                [(ngModel)]="order.assignedTo"
+                (ngModelChange)="assignOrderToWorker(order.id, $event)"
                 class="worker-select"
                 [disabled]="assigningOrder === order.id"
               >
-                <option value="">{{ 'orders.unassigned' | t }}</option>
+                <option [ngValue]="null">{{ 'orders.unassigned' | t }}</option>
                 @for (worker of workers; track worker.id) {
-                  <option [value]="worker.id">
+                  <option [ngValue]="worker.id">
                     {{ worker.username }}
                   </option>
                 }

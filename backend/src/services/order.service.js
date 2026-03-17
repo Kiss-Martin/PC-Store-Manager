@@ -118,20 +118,9 @@ const OrderService = {
   async assignOrder(id, assigned_to) {
     // Convert empty string to null for unassignment
     const value = assigned_to || null;
-    console.log(`[assignOrder] id=${id}, assigned_to=${value}`);
-    
-    // Step 1: perform the update
     const updated = await run(
       supabase.from('logs').update({ assigned_to: value }).eq('id', id).select('id,assigned_to').single()
     );
-    console.log('[assignOrder] update result:', JSON.stringify(updated));
-
-    // Step 2: verify by re-reading the row
-    const verify = await run(
-      supabase.from('logs').select('id,assigned_to').eq('id', id).single()
-    );
-    console.log('[assignOrder] verify read:', JSON.stringify(verify));
-
     return updated;
   },
 
