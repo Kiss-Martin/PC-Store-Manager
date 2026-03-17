@@ -184,7 +184,7 @@ const AuthService = {
       const tokenHash = hashToken(refreshToken);
       await run(supabase.from('refresh_tokens').insert({ user_id: data.id, token_hash: tokenHash, expires_at: refreshExpires, ip: sessionMetadata.ip, user_agent: sessionMetadata.userAgent, access_jti: accessJti }).select().single());
       // cleanup old tokens for this user (keep max 5)
-      const { data: tokens } = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
+      const tokens = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
       const maxTokens = 5;
       if (tokens && tokens.length > maxTokens) {
         const toRemove = tokens.slice(maxTokens).map((r) => r.id);
@@ -222,12 +222,20 @@ const AuthService = {
     try {
       data = await run(query.single());
     } catch (e) {
+      console.warn('Login: user lookup failed for', email || username, ':', e && e.message ? e.message : e);
+      const err = new Error(t(lang, 'auth.invalidCredentials'));
+      err.statusCode = 401;
+      throw err;
+    }
+    if (!data || !data.password_hash) {
+      console.warn('Login: user record missing or has no password_hash for', email || username);
       const err = new Error(t(lang, 'auth.invalidCredentials'));
       err.statusCode = 401;
       throw err;
     }
     const ok = await bcrypt.compare(password, data.password_hash);
     if (!ok) {
+      console.warn('Login: password mismatch for user', email || username);
       const err = new Error(t(lang, 'auth.invalidCredentials'));
       err.statusCode = 401;
       throw err;
@@ -241,7 +249,7 @@ const AuthService = {
     try {
       const tokenHash = hashToken(refreshToken);
       await run(supabase.from('refresh_tokens').insert({ user_id: data.id, token_hash: tokenHash, expires_at: refreshExpires, ip: sessionMetadata.ip, user_agent: sessionMetadata.userAgent, access_jti: accessJti }).select().single());
-      const { data: tokens } = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
+      const tokens = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
       if (tokens && tokens.length > maxTokens) {
         const toRemove = tokens.slice(maxTokens).map((r) => r.id);
         await run(supabase.from('refresh_tokens').delete().in('id', toRemove)).catch(() => null);
@@ -331,8 +339,8 @@ const AuthService = {
 
   // List refresh tokens for a given user (most recent first)
   async listTokensForUser(userId) {
-    const resp = await run(supabase.from('refresh_tokens').select('id,expires_at,ip,user_agent,created_at').eq('user_id', userId).order('created_at', { ascending: false })).catch(() => ({ data: [] }));
-    return resp.data || [];
+    const tokens = await run(supabase.from('refresh_tokens').select('id,expires_at,ip,user_agent,created_at').eq('user_id', userId).order('created_at', { ascending: false })).catch(() => []);
+    return tokens || [];
   },
 
   // List all refresh tokens (admin use) with pagination and optional search.
