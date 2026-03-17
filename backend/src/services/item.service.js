@@ -40,7 +40,21 @@ const ItemService = {
   },
 
   async updateItem(id, updates) {
-    const data = await run(supabase.from('items').update(updates).eq('id', id).select().single());
+    // Only pass known columns to Supabase; convert empty-string FKs to null
+    const allowed = ['name', 'model', 'specs', 'price', 'amount', 'warranty', 'brand_id', 'category_id'];
+    const clean = {};
+    for (const key of allowed) {
+      if (key in updates) {
+        const val = updates[key];
+        // Convert empty strings to null for UUID foreign key columns
+        if ((key === 'brand_id' || key === 'category_id') && (val === '' || val === null)) {
+          clean[key] = null;
+        } else {
+          clean[key] = val;
+        }
+      }
+    }
+    const data = await run(supabase.from('items').update(clean).eq('id', id).select().single());
     return data;
   },
 

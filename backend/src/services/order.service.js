@@ -96,7 +96,12 @@ const OrderService = {
     if (!ORDER_STATUSES.includes(status)) {
       throw new Error(t(lang, 'order.invalidStatus'));
     }
-    const existingStatus = await run(supabase.from('orders_status').select('id').eq('log_id', id).single()).catch(() => null);
+    let existingStatus = null;
+    try {
+      existingStatus = await run(supabase.from('orders_status').select('id').eq('log_id', id).single());
+    } catch (_e) {
+      existingStatus = null;
+    }
     let result;
     if (existingStatus) {
       result = await run(
@@ -104,14 +109,16 @@ const OrderService = {
       );
     } else {
       result = await run(
-        supabase.from('orders_status').insert({ log_id: id, status, updated_by: userId }).select().single()
+        supabase.from('orders_status').insert({ log_id: id, status, updated_by: userId, updated_at: new Date().toISOString() }).select().single()
       );
     }
     return result;
   },
 
   async assignOrder(id, assigned_to) {
-    await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
+    // Convert empty string to null for unassignment
+    const value = assigned_to || null;
+    await run(supabase.from('logs').update({ assigned_to: value }).eq('id', id).select().single());
   },
 
   async deleteOrder(id, lang = 'en') {

@@ -8,6 +8,7 @@ import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
 
 interface Product {
   id: string;
@@ -62,6 +63,7 @@ export class ProductsComponent implements OnInit {
     public i18n: I18nService,
     private route: ActivatedRoute,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -178,16 +180,24 @@ export class ProductsComponent implements OnInit {
         next: () => {
           this.loadProducts();
           this.closeModal();
+          this.toast.show(this.i18n.t('products.updateSuccess'), { type: 'success', timeout: 3000 });
         },
-        error: (err) => console.error('Failed to update product:', err),
+        error: (err) => {
+          console.error('Failed to update product:', err);
+          this.toast.show(err.error?.error || this.i18n.t('products.updateError'), { type: 'error', timeout: 4000 });
+        },
       });
     } else {
       this.auth.createItem(this.newProduct).subscribe({
         next: () => {
           this.loadProducts();
           this.closeModal();
+          this.toast.show(this.i18n.t('products.createSuccess'), { type: 'success', timeout: 3000 });
         },
-        error: (err) => console.error('Failed to create product:', err),
+        error: (err) => {
+          console.error('Failed to create product:', err);
+          this.toast.show(err.error?.error || this.i18n.t('products.createError'), { type: 'error', timeout: 4000 });
+        },
       });
     }
   }
@@ -207,9 +217,11 @@ export class ProductsComponent implements OnInit {
         this.loadProducts();
         this.showDeleteConfirm = false;
         this.productToDelete = null;
+        this.toast.show(this.i18n.t('products.deleteSuccess'), { type: 'success', timeout: 3000 });
       },
       error: (err) => {
         console.error('Failed to delete product:', err);
+        this.toast.show(err.error?.error || this.i18n.t('products.deleteError'), { type: 'error', timeout: 4000 });
         this.showDeleteConfirm = false;
         this.productToDelete = null;
       },
