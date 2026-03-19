@@ -1,402 +1,211 @@
-# PC Store Manager - Frontend Documentation
+# Frontend Documentation
 
-## Project Overview
+Last updated: March 19, 2026
 
-A modern Angular 20 frontend for a PC Store management system featuring authentication, a dashboard, and a multi-step registration flow. Built with a purple minimalist design theme.
+## 1) Overview
 
----
+The frontend is a standalone-component Angular application (Angular 21) for PC Store Manager. It includes authentication, inventory/order/customer workflows, analytics dashboards, profile/session management, admin moderation tools, localization, theming, and toast-based UX feedback.
 
-## Components Created
+Key stack:
+- Angular 21 standalone API
+- Angular Router + functional guards
+- HttpClient + functional interceptor
+- `ng2-charts` + `chart.js` for analytics visuals
+- `lucide-angular` icons
+- Custom i18n service (`en` / `hu`)
 
-### 1. **Dashboard Component**
-**Location:** `src/app/dashboard/`
+## 2) App architecture
 
-#### Files:
-- `dashboard.ts` - Component logic
-- `dashboard.html` - Template
-- `dashboard.css` - Styling
+Root bootstrap:
+- `src/main.ts` bootstraps `App` with `appConfig`
 
-#### Features:
-- **Stats Grid**: Displays 4 key metrics with icons
-  - Total Products
-  - Total Sales
-  - Active Orders
-  - Customers
-  
-- **Recent Activity Panel**: Shows timestamped activity logs
-  - Order received
-  - Product restocked
-  - Customer reviews
-  - Payment processed
+Configuration:
+- `app.config.ts` provides:
+  - router
+  - global HTTP interceptor (`authInterceptor`)
+  - Lucide icon provider
 
-- **Quick Actions Panel**: Fast navigation to main features
-  - Add Product
-  - View Orders
-  - View Reports
-  - Settings
+Main shell:
+- `app.ts` controls navbar visibility, mobile nav, theme toggle, language toggle
+- Navbar is shown only when authenticated and not on auth screens
 
-#### Mock Data Structure:
-```typescript
-stats = [
-  { title: string, value: number | string, icon: string, color: string }
-]
+## 3) Routing map
 
-activities = [
-  { id: number, description: string, timestamp: string, type: string }
-]
+Primary routes:
+- `/login` (guest-only)
+- `/register` (guest-only)
+- `/forgot` (guest-only)
+- `/reset-password` (guest-only)
+- `/dashboard` (auth)
+- `/products` (auth)
+- `/orders` (auth)
+- `/analytics` (auth)
+- `/profile` (auth)
+- `/admin/sessions` (auth + admin)
+- `/admin/audit` (auth + admin)
+- `/admin/action-result` (public result page for one-click admin actions)
+
+Default/fallback:
+- `/` redirects to `/dashboard`
+- unknown routes redirect to `/dashboard`
+
+## 4) Auth/session behavior
+
+Implemented in `auth.service.ts` + guards + interceptor.
+
+### Token storage model
+- Access token + user are stored in:
+  - `localStorage` if “remember me” is enabled
+  - `sessionStorage` otherwise
+- Refresh token is stored in backend-issued httpOnly cookie
+
+### Automatic refresh flow
+- Interceptor attaches `Authorization` and `Accept-Language`
+- On `401` (non-auth endpoints), interceptor attempts `/auth/refresh`
+- If refresh succeeds, request is retried
+- If refresh fails, user is logged out with “session expired” state
+
+### Guards
+- `AuthGuard`: allows route if authenticated; otherwise optionally attempts one-time refresh
+- `AdminGuard`: same as above, with role check
+- `GuestGuard`: blocks auth pages for already-authenticated users
+
+## 5) API integration layer
+
+`ApiService` centralizes URL building and request helpers:
+- standard JSON calls (`get`, `post`, `patch`, `delete`)
+- cookie-enabled variants (`getWithCredentials`, `postWithCredentials`, `deleteWithCredentials`)
+- blob download helper (`getBlob`)
+
+Environment-based base URL:
+- `environment.apiUrl`
+
+## 6) Feature modules/components
+
+### Authentication
+- Login (`auth/login`)
+  - email/password login
+  - remember-me flag
+  - support contact modal (`/support/contact`)
+- Register (`auth/register`)
+  - 4-step workflow
+  - role selection (`admin` / `worker`)
+  - handles “awaiting admin approval” path
+- Forgot password (`auth/forgot`)
+  - generic non-disclosing reset messages
+- Reset password (`auth/reset-password`)
+  - token from query param
+
+### Dashboard
+- Loads backend summary from `/dashboard`
+- Shows stats + activity list
+- Quick actions (new order, add product)
+- Business report download (`/analytics/export`) in CSV/PDF
+
+### Products
+- CRUD on inventory via `/items`
+- Category/brand loading (`/items/categories`, `/items/brands`)
+- Search/filter UI
+- Shared confirmation modal for deletes
+
+### Orders
+- Order listing/filtering/search
+- Order status updates
+- Create manual order (+ optional inline customer creation)
+- Worker assignment (admin)
+- Export orders (`/orders/export`) CSV/PDF
+
+### Analytics
+- Pulls `/analytics?period=...`
+- Revenue line chart + category doughnut chart
+- Summary cards and top products
+- Recent transactions section for admins
+- Export analytics CSV/PDF
+
+### Profile
+- View/update own profile
+- Change password
+- Avatar upload/reload
+- Active session listing + revoke own session
+
+### Admin pages
+- Admin sessions (`/admin/sessions`)
+  - paginated session list
+  - filters by search/email/date range
+  - revoke sessions
+  - approve/reject pending admins
+- Audit logs (`/admin/audit`)
+  - paginated events from backend audit stream
+- Admin action result (`/admin/action-result`)
+  - displays result of one-click email approve/reject action
+
+### Shared UX
+- Toast service + toast component
+- Reusable confirmation modal component
+
+## 7) Internationalization and theme
+
+### i18n
+- `i18n.service.ts` contains large in-app dictionary for `en` and `hu`
+- `TranslatePipe` (`t`) renders translated keys in templates
+- Interceptor sends current language in `Accept-Language`
+
+### Theme
+- `theme.service.ts` toggles dark/light mode via `body` class
+- Choice persisted in `localStorage` (`pc_theme`)
+
+## 8) Data contracts (frontend models)
+
+`api.models.ts` defines:
+- `User`
+- `AuthResponse` (supports `token`, `accessToken`, `access_token` variants)
+
+The frontend is defensive with backend token naming differences and supports all currently used response variants.
+
+## 9) Build and run
+
+From `frontend/`:
+
+```bash
+npm install
+npm start
 ```
 
-#### Integration Points:
-Replace mock data in `loadDashboardData()` method with actual API calls:
-```typescript
-// Example:
-this.stats = await this.apiService.getStats();
-this.activities = await this.apiService.getActivities();
-```
+Other scripts:
+- `npm run build`
+- `npm run watch`
+- `npm run test`
 
----
+Default dev app URL: `http://localhost:4200`
 
-### 2. **Login Component**
-**Location:** `src/app/auth/login/`
+## 10) Deployment notes
 
-#### Files:
-- `login.ts` - Component logic
-- `login.html` - Template
-- `login.css` - Styling
+Render static deployment is configured to publish:
+- `frontend/dist/frontend/browser`
 
-#### Features:
-- Simple, clean login form
-- Username and password fields
-- Error message display
-- Navigation to registration
-- Loading state on submit
-- Auto-redirect to dashboard on success
+Backend API base URL comes from Angular environment files.
 
-#### Key Methods:
-```typescript
-login(): void
-// Validates form and sends credentials to backend
-// Redirects to dashboard on success
+Current repo state note:
+- `environment.prod.ts` points to Render backend URL
+- `environment.ts` also has `production: true` in current source; verify this behavior against desired dev/prod build expectations before release.
 
-goToRegister(): void
-// Navigates to registration page
-```
+## 11) Dependencies (current major set)
 
-#### Integration:
-Current implementation simulates API call with 1-second delay. Replace with:
-```typescript
-this.authService.login(this.username, this.password)
-  .subscribe({
-    next: (token) => this.router.navigate(['/dashboard']),
-    error: (err) => this.errorMessage = err.message
-  });
-```
+- `@angular/*` 21.x
+- `rxjs` 7.8
+- `chart.js` 4.x
+- `ng2-charts` 8.x
+- `lucide-angular`
+- Tailwind packages are present in dependencies, while component styling remains primarily custom CSS.
 
----
+## 12) Extension guidelines
 
-### 3. **Registration Component** ⭐ Multiple Steps
-**Location:** `src/app/auth/register/`
-
-#### Files:
-- `register.ts` - Component logic with state management
-- `register.html` - Multi-step template
-- `register.css` - Styling
-
-#### Step-by-Step Flow:
-
-**Step 1: Role Selection**
-- Choose between Admin or Worker roles
-- Visual card-based selection
-- Validation: Role must be selected
-
-**Step 2: Credentials**
-- Username (min 3 characters)
-- Password (min 6 characters)
-- Confirm password (must match)
-- Validation: All fields required, password match
-
-**Step 3: Personal Information**
-- Full Name (required)
-- Email Address (email validation)
-- Validation: Standard email format check
-
-**Step 4: Review & Confirm**
-- Display summary of all entered information
-- Terms of Service notice
-- Submit button
-
-#### Progress Bar Implementation:
-```typescript
-get progressPercentage(): number {
-  return ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
-}
-```
-- Dynamic width calculation
-- Smooth CSS transitions
-- Step indicators with checkmarks
-
-#### Form Data Structure:
-```typescript
-formData: RegistrationData = {
-  role: string,
-  username: string,
-  password: string,
-  confirmPassword: string,
-  email: string,
-  fullName: string
-}
-```
-
-#### Key Methods:
-```typescript
-nextStep(): void
-// Validates current step before advancing
-
-prevStep(): void
-// Moves to previous step
-
-validateStep(step: number): boolean
-// Step-specific validation
-
-selectRole(role: string): void
-// Sets selected role
-
-submitRegistration(): void
-// Final submission with redirect to dashboard
-
-isValidEmail(email: string): boolean
-// Email format validation
-```
-
----
-
-## Routing Configuration
-
-**Location:** `src/app/app.routes.ts`
-
-```typescript
-const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
-  },
-  {
-    path: 'login',
-    component: LoginComponent
-  },
-  {
-    path: 'register',
-    component: RegisterComponent
-  },
-  {
-    path: 'dashboard',
-    component: DashboardComponent
-  }
-];
-```
-
-**Flow:**
-- Default route → Login page
-- New users → Registration (4 steps)
-- After auth → Dashboard
-- Navbar only shows on dashboard
-
----
-
-## Navigation & Layout
-
-**Location:** `src/app/app.ts` and `src/app/app.html`
-
-#### Features:
-- Conditional navbar rendering (hidden on login/register)
-- Navigation menu with links:
-  - Dashboard
-  - Products
-  - Orders
-  - Analytics
-  - Settings
-
-- Responsive mobile menu with hamburger toggle
-- Purple color scheme `#7c3aed`
-
-#### App Component Logic:
-```typescript
-showNavbar: boolean
-// Tracks current route to show/hide navbar
-
-toggleNav(): void
-// Opens/closes mobile menu
-
-navigate(path: string): void
-// Navigates and closes mobile menu
-```
-
----
-
-## Styling Approach
-
-### CSS Architecture:
-- **Pure CSS** (no frameworks like Tailwind for stability)
-- **CSS Variables** for theming
-- **Responsive Design** with media queries
-- **Smooth Transitions** for better UX
-
-### Color Scheme:
-```css
---primary: #7c3aed (Purple)
---primary-dark: #6d28d9
---background: #fafbfc (Light Gray)
---text-primary: #0f172a (Dark)
---text-secondary: #64748b (Gray)
---border: #e2e8f0 (Light Border)
---error: #dc2626 (Red)
-```
-
-### Files:
-- `src/styles.css` - Global styles
-- `src/app/app.css` - Navigation styling
-- `src/app/dashboard/dashboard.css` - Dashboard styling
-- `src/app/auth/login/login.css` - Login styling
-- `src/app/auth/register/register.css` - Registration styling
-
----
-
-## File Structure
-
-```
-src/
-├── app/
-│   ├── app.ts                    # Root component
-│   ├── app.html                  # Root template (layout wrapper)
-│   ├── app.css                   # Navigation styles
-│   ├── app.routes.ts             # Route configuration
-│   │
-│   ├── dashboard/
-│   │   ├── dashboard.ts
-│   │   ├── dashboard.html
-│   │   └── dashboard.css
-│   │
-│   ├── auth/
-│   │   ├── login/
-│   │   │   ├── login.ts
-│   │   │   ├── login.html
-│   │   │   └── login.css
-│   │   │
-│   │   └── register/
-│   │       ├── register.ts
-│   │       ├── register.html
-│   │       └── register.css
-│   │
-│   └── main.ts
-│
-├── styles.css                    # Global styles
-└── index.html
-```
-
----
-
-## Key Features
-
-### 🎨 Design System
-- **Purple Theme**: Primary color `#7c3aed` consistently applied
-- **Minimalist Cards**: Clean white cards with subtle borders
-- **No Heavy Shadows**: Light shadows only for depth
-- **Responsive**: Fully responsive from mobile to desktop
-
-### 🔐 Authentication Flow
-1. User lands on login page
-2. Can register using 4-step form
-3. Role-based registration (Admin/Worker)
-4. After successful login → Dashboard access
-5. Navigation appears only when authenticated
-
-### 📊 Dashboard Features
-- Real-time stats display
-- Activity timeline
-- Quick action buttons for common tasks
-- Extensible for more panels/widgets
-
-### ✅ Form Validation
-- **Step 1**: Role required
-- **Step 2**: Username (3+ chars), password (6+ chars), match confirmation
-- **Step 3**: Full name required, valid email format
-- Real-time error messages
-
-### 📱 Responsive Design
-- **Desktop**: Full layout with sidebar navigation
-- **Tablet**: Adjusted grid columns
-- **Mobile**: Hamburger menu, stacked layouts
-
----
-
-## How to Extend
-
-### Adding a New Page/Feature:
-1. Create new component: `src/app/features/my-feature/`
-2. Add files: `my-feature.ts`, `my-feature.html`, `my-feature.css`
-3. Import in `app.routes.ts` and add route
-4. Add navigation link in `app.html` if needed
-
-### Connecting to Backend:
-1. Create a service: `src/app/services/api.service.ts`
-2. Use HttpClient to make requests
-3. Replace mock data with API calls in components
-4. Add error handling and loading states
-
-### Customizing Theme:
-- All colors defined in component CSS files
-- Search for `#7c3aed` (purple) to change primary color
-- Update background gradients in `css` files
-
----
-
-## Current State Note
-
-### Mock Data:
-- Login accepts any credentials (demo mode)
-- Dashboard shows sample statistics
-- Registration doesn't actually create accounts yet
-
-### To Enable Backend Integration:
-1. Create backend API endpoint
-2. Implement authentication service
-3. Add JWT token storage
-4. Implement route guards
-5. Update components to use real API calls
-
----
-
-## Performance Notes
-
-- ✅ Lightweight (no heavy dependencies)
-- ✅ Fast load times (pure CSS, minimal JS)
-- ✅ Smooth animations (CSS transitions)
-- ✅ Responsive images (emoji icons for demo)
-
----
-
-## Browser Support
-
-- Chrome/Chromium (Latest)
-- Firefox (Latest)
-- Safari (Latest)
-- Edge (Latest)
-
----
-
-## Dependencies Used
-
-```json
-{
-  "@angular/common": "^20.3.0",
-  "@angular/core": "^20.3.0",
-  "@angular/forms": "^20.3.0",
-  "@angular/platform-browser": "^20.3.0",
-  "@angular/router": "^20.3.0",
-  "rxjs": "~7.8.0"
-}
-```
+When adding features:
+1. Add new standalone component under `src/app/...`
+2. Add route in `app.routes.ts` with proper guard(s)
+3. Add API wrapper method in `auth.service.ts` or `api.service.ts`
+4. Add i18n keys in both `en` and `hu`
+5. Surface user feedback via toast or existing modal patterns
 
 ---
 
