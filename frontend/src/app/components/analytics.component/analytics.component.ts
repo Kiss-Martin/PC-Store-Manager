@@ -8,33 +8,10 @@ import { AuthService, ExportFormat } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
+import { AnalyticsSummary, TopProduct, Transaction } from '../../models/api.models';
 
 Chart.register(...registerables);
-
-interface AnalyticsSummary {
-  totalRevenue: number;
-  totalOrders: number;
-  averageOrderValue: number;
-  topSellingProduct: string;
-  lowStockItems: number;
-  revenueGrowth: number;
-}
-
-interface TopProduct {
-  name: string;
-  sales: number;
-  revenue: number;
-  trend: string;
-}
-
-interface Transaction {
-  id: string;
-  product: string;
-  customer: string;
-  amount: number;
-  status: string;
-  date: string;
-}
 
 @Component({
   selector: 'app-analytics',
@@ -175,6 +152,7 @@ export class AnalyticsComponent implements OnInit {
     public theme: ThemeService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {
     // Watch for theme changes
     effect(() => {
@@ -197,7 +175,7 @@ export class AnalyticsComponent implements OnInit {
 
     // ✅ Call real API endpoint
     this.auth.getAnalytics(this.selectedPeriod).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         // Summary stats
         this.summary = res.summary || {
           totalRevenue: 0,
@@ -292,9 +270,9 @@ export class AnalyticsComponent implements OnInit {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     },
-    error: (err: any) => {
+    error: (err) => {
       console.error('Export failed:', err);
-      alert(this.i18n.t('analytics.error.export'));
+      this.toast.show(this.i18n.t('analytics.error.export'), { type: 'error' });
     }
   });
 }

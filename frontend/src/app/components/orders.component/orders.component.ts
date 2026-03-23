@@ -8,21 +8,8 @@ import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-m
 import { ActivatedRoute } from '@angular/router';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  product: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  totalAmount: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  customer: string;
-  date: string;
-  timestamp: string;
-  assignedTo?: string | null;
-}
+import { ToastService } from '../../shared/toast.service';
+import { Order, OrderStatus, Item, Customer, User } from '../../models/api.models';
 
 @Component({
   selector: 'app-orders',
@@ -33,7 +20,7 @@ interface Order {
 })
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];
-  workers: any[] = [];
+  workers: User[] = [];
   assigningOrder: string | null = null;
   filteredOrders: Order[] = [];
   isLoading = true;
@@ -46,7 +33,7 @@ export class OrdersComponent implements OnInit {
   // Status update modal
   showStatusModal = false;
   orderToUpdate: Order | null = null;
-  newStatus: 'pending' | 'processing' | 'completed' | 'cancelled' = 'pending';
+  newStatus: OrderStatus = 'pending';
 
   // Cancel confirmation
   showCancelConfirm = false;
@@ -63,14 +50,14 @@ export class OrdersComponent implements OnInit {
   showStatusFilterDropdown = false;
   showOrderStatusDropdown = false;
 
-  products: any[] = [];
-  customers: any[] = [];
+  products: Item[] = [];
+  customers: Customer[] = [];
 
   newOrder = {
     item_id: '',
     customer_id: '',
     quantity: 1,
-    status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
+    status: 'pending' as OrderStatus,
   };
 
   newCustomer = {
@@ -94,7 +81,8 @@ export class OrdersComponent implements OnInit {
     public theme: ThemeService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService,
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -122,10 +110,10 @@ export class OrdersComponent implements OnInit {
   }
   loadWorkers() {
     this.auth.getWorkers().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.workers = res.users || [];
       },
-      error: (err: any) => console.error('Failed to load workers:', err)
+      error: (err) => console.error('Failed to load workers:', err)
     });
   }
 
@@ -138,9 +126,9 @@ export class OrdersComponent implements OnInit {
         this.assigningOrder = null;
         this.loadOrders();
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error('Failed to assign order:', err);
-        alert(this.i18n.t('orders.error.assign'));
+        this.toast.show(this.i18n.t('orders.error.assign'), { type: 'error' });
         this.assigningOrder = null;
       }
     });
@@ -155,8 +143,8 @@ export class OrdersComponent implements OnInit {
   loadOrders() {
     this.isLoading = true;
     this.auth.getOrders().subscribe({
-      next: (res: any) => {
-        this.orders = (res.orders || []).map((o: any) => ({
+      next: (res) => {
+        this.orders = (res.orders || []).map((o) => ({
           ...o,
           assignedTo: o.assignedTo || null,
         }));
@@ -175,7 +163,7 @@ export class OrdersComponent implements OnInit {
 
   loadProducts() {
     this.auth.getItems().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.products = res.items || [];
         this.cdr.detectChanges();
       },
@@ -187,7 +175,7 @@ export class OrdersComponent implements OnInit {
 
   loadCustomers() {
     this.auth.getCustomers().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.customers = res.customers || [];
         this.cdr.detectChanges();
       },
@@ -216,7 +204,7 @@ export class OrdersComponent implements OnInit {
       item_id: '',
       customer_id: '',
       quantity: 1,
-      status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
+      status: 'pending' as OrderStatus,
     };
     this.newCustomer = {
       name: '',
@@ -248,7 +236,7 @@ export class OrdersComponent implements OnInit {
     this.orderError = '';
 
     this.auth.createCustomer(this.newCustomer).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.customers.push(res.customer);
         this.newOrder.customer_id = res.customer.id;
         this.showNewCustomerForm = false;
@@ -256,9 +244,9 @@ export class OrdersComponent implements OnInit {
         this.orderSuccess = this.i18n.t('orders.success.customerCreated');
         setTimeout(() => (this.orderSuccess = ''), 2000);
       },
-      error: (err: any) => {
+      error: (err) => {
         this.isSavingCustomer = false;
-        this.orderError = err.error?.error || this.i18n.t('orders.error.createCustomer');
+        this.orderError = (err as any).error?.error || this.i18n.t('orders.error.createCustomer');
       },
     });
   }
@@ -296,9 +284,9 @@ export class OrdersComponent implements OnInit {
           this.loadOrders();
         }, 1500);
       },
-      error: (err: any) => {
+      error: (err) => {
         this.isSavingOrder = false;
-        this.orderError = err.error?.error || this.i18n.t('orders.error.createOrder');
+        this.orderError = (err as any).error?.error || this.i18n.t('orders.error.createOrder');
       },
     });
   }
@@ -382,7 +370,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to update order status:', err);
-        alert(this.i18n.t('orders.error.updateStatus'));
+        this.toast.show(this.i18n.t('orders.error.updateStatus'), { type: 'error' });
       },
     });
   }
@@ -456,7 +444,7 @@ export class OrdersComponent implements OnInit {
     return icons[status] || 'clock';
   }
 
-  getStatusDescription(status: 'pending' | 'processing' | 'completed' | 'cancelled'): string {
+  getStatusDescription(status: OrderStatus): string {
     return this.i18n.t(`orders.statusDescription.${status}`);
   }
 
@@ -474,7 +462,7 @@ export class OrdersComponent implements OnInit {
     this.showOrderStatusDropdown = !this.showOrderStatusDropdown;
   }
 
-  selectOrderStatus(status: 'pending' | 'processing' | 'completed' | 'cancelled') {
+  selectOrderStatus(status: OrderStatus) {
     this.newOrder.status = status;
     this.showOrderStatusDropdown = false;
   }
@@ -505,7 +493,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to export orders:', err);
-        alert(this.i18n.t('orders.error.export'));
+        this.toast.show(this.i18n.t('orders.error.export'), { type: 'error' });
       },
     });
   }

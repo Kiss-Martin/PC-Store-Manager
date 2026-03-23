@@ -5,16 +5,18 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
 import { I18nService } from '../i18n.service';
 import { TranslatePipe } from '../translate.pipe';
+import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
+import { Session, PendingAdmin } from '../models/api.models';
 
 @Component({
   selector: 'app-admin-sessions',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, ConfirmationModalComponent],
   templateUrl: './admin-sessions.html',
   styleUrls: ['./admin-sessions.css'],
 })
 export class AdminSessionsComponent implements OnInit {
-  sessions: any[] = [];
+  sessions: Session[] = [];
   loading = false;
   error = '';
   success = '';
@@ -25,7 +27,17 @@ export class AdminSessionsComponent implements OnInit {
   email = '';
   start = '';
   end = '';
-  pendingAdmins: any[] = [];
+  pendingAdmins: PendingAdmin[] = [];
+
+  // Confirmation modal state
+  showConfirmModal = false;
+  confirmAction: 'approve' | 'reject' | 'revoke' = 'approve';
+  confirmTargetId: string | null = null;
+  confirmTitle = '';
+  confirmMessage = '';
+  confirmButtonText = '';
+  confirmColor: 'danger' | 'primary' = 'primary';
+  confirmIcon = 'shield';
 
   constructor(public auth: AuthService, public i18n: I18nService) {}
 
@@ -69,8 +81,64 @@ export class AdminSessionsComponent implements OnInit {
     });
   }
 
-  approveAdmin(id: string): void {
-    if (!confirm(this.i18n.t('admin.confirmApprove'))) return;
+  requestApproveAdmin(id: string): void {
+    this.confirmAction = 'approve';
+    this.confirmTargetId = id;
+    this.confirmTitle = this.i18n.t('admin.approveTitle');
+    this.confirmMessage = this.i18n.t('admin.confirmApprove');
+    this.confirmButtonText = this.i18n.t('admin.approve');
+    this.confirmColor = 'primary';
+    this.confirmIcon = 'user-check';
+    this.showConfirmModal = true;
+  }
+
+  requestRejectAdmin(id: string): void {
+    this.confirmAction = 'reject';
+    this.confirmTargetId = id;
+    this.confirmTitle = this.i18n.t('admin.rejectTitle');
+    this.confirmMessage = this.i18n.t('admin.confirmReject');
+    this.confirmButtonText = this.i18n.t('admin.reject');
+    this.confirmColor = 'danger';
+    this.confirmIcon = 'user-x';
+    this.showConfirmModal = true;
+  }
+
+  requestRevoke(id: string): void {
+    this.confirmAction = 'revoke';
+    this.confirmTargetId = id;
+    this.confirmTitle = this.i18n.t('admin.revokeTitle');
+    this.confirmMessage = this.i18n.t('admin.confirmRevoke');
+    this.confirmButtonText = this.i18n.t('admin.revoke');
+    this.confirmColor = 'danger';
+    this.confirmIcon = 'shield-alert';
+    this.showConfirmModal = true;
+  }
+
+  cancelConfirm(): void {
+    this.showConfirmModal = false;
+    this.confirmTargetId = null;
+  }
+
+  executeConfirm(): void {
+    if (!this.confirmTargetId) return;
+    const id = this.confirmTargetId;
+    this.showConfirmModal = false;
+    this.confirmTargetId = null;
+
+    switch (this.confirmAction) {
+      case 'approve':
+        this.doApproveAdmin(id);
+        break;
+      case 'reject':
+        this.doRejectAdmin(id);
+        break;
+      case 'revoke':
+        this.doRevoke(id);
+        break;
+    }
+  }
+
+  private doApproveAdmin(id: string): void {
     this.auth.approveAdmin(id).subscribe({
       next: () => {
         this.pendingAdmins = this.pendingAdmins.filter((u) => u.id !== id);
@@ -83,8 +151,7 @@ export class AdminSessionsComponent implements OnInit {
     });
   }
 
-  rejectAdmin(id: string): void {
-    if (!confirm(this.i18n.t('admin.confirmReject'))) return;
+  private doRejectAdmin(id: string): void {
     this.auth.rejectAdmin(id).subscribe({
       next: () => {
         this.pendingAdmins = this.pendingAdmins.filter((u) => u.id !== id);
@@ -97,8 +164,7 @@ export class AdminSessionsComponent implements OnInit {
     });
   }
 
-  revoke(id: string): void {
-    if (!confirm(this.i18n.t('admin.confirmRevoke'))) return;
+  private doRevoke(id: string): void {
     this.auth.revokeSessionByAdmin(id).subscribe({
       next: () => {
         this.success = this.i18n.t('admin.success.revoked');

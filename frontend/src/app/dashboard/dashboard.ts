@@ -7,19 +7,14 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { I18nService } from '../i18n.service';
 import { TranslatePipe } from '../translate.pipe';
+import { ToastService } from '../shared/toast.service';
+import { DashboardStats, DashboardActivity } from '../models/api.models';
 
 interface DashboardCard {
   title: string;
   value: string | number;
   icon: string;
   color: string;
-}
-
-interface Activity {
-  id: number;
-  description: string;
-  timestamp: string;
-  type: string;
 }
 
 @Component({
@@ -30,7 +25,7 @@ interface Activity {
   styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit {
-  private lastStats: any = {};
+  private lastStats: DashboardStats = {};
   private hadLoadError = false;
 
   constructor(
@@ -38,6 +33,7 @@ export class DashboardComponent implements OnInit {
     private auth: AuthService,
     public theme: ThemeService,
     public i18n: I18nService,
+    private toast: ToastService,
   ) {
     effect(() => {
       this.i18n.language();
@@ -48,7 +44,7 @@ export class DashboardComponent implements OnInit {
     });
   }
   stats: DashboardCard[] = [];
-  activities: Activity[] = [];
+  activities: DashboardActivity[] = [];
   isLoading = true;
   loadError = '';
 
@@ -101,15 +97,15 @@ export class DashboardComponent implements OnInit {
       this.isGeneratingReport = false;
       this.closeReportModal();
     },
-    error: (err: any) => {
+    error: (err) => {
       console.error('Report generation failed:', err);
-      alert(this.i18n.t('dashboard.error.generateReport'));
+      this.toast.show(this.i18n.t('dashboard.error.generateReport'), { type: 'error' });
       this.isGeneratingReport = false;
     }
   });
 }
 
-  private buildStats(stats: any) {
+  private buildStats(stats: DashboardStats) {
     return [
       {
         title: this.i18n.t('dashboard.stats.totalProducts'),
@@ -137,12 +133,12 @@ export class DashboardComponent implements OnInit {
     this.loadError = '';
     this.hadLoadError = false;
     this.auth.getDashboard().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         const s = res?.stats || {};
         this.lastStats = s;
         this.stats = this.buildStats(s);
 
-        this.activities = (res?.activities || []).map((a: any) => ({
+        this.activities = (res?.activities || []).map((a: DashboardActivity) => ({
           id: a.id,
           description: a.description,
           timestamp: a.timestamp || '',

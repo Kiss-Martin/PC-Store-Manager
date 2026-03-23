@@ -9,6 +9,7 @@ import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-m
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
 import { ToastService } from '../../shared/toast.service';
+import { Category, Brand } from '../../models/api.models';
 
 interface Product {
   id: string;
@@ -35,8 +36,8 @@ interface Product {
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
-  categories: any[] = [];
-  brands: any[] = [];
+  categories: Category[] = [];
+  brands: Brand[] = [];
   isLoading = true;
   searchTerm = '';
   showAddModal = false;
@@ -87,10 +88,10 @@ export class ProductsComponent implements OnInit {
   loadProducts() {
     this.isLoading = true;
     this.auth.getItems().subscribe({
-      next: (res: any) => {
-        this.products = (res.items || []).map((item: any) => ({
+      next: (res) => {
+        this.products = (res.items || []).map((item) => ({
           ...item,
-          specifications: item.specifications || item.specs || '',
+          specifications: (item as any).specifications || (item as any).specs || '',
         }));
         this.filteredProducts = this.products;
         this.isLoading = false;
@@ -104,7 +105,7 @@ export class ProductsComponent implements OnInit {
 
   loadCategories() {
     this.auth.getCategories().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.categories = res.categories || [];
       },
       error: (err) => console.error('Failed to load categories:', err),
@@ -113,7 +114,7 @@ export class ProductsComponent implements OnInit {
 
   loadBrands() {
     this.auth.getBrands().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.brands = res.brands || [];
       },
       error: (err) => console.error('Failed to load brands:', err),

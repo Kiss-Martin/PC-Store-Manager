@@ -245,7 +245,7 @@
                       </div>
                     </div>
                     <div class="session-actions">
-                      <button class="btn-outline" (click)="revokeSession(s.id)">{{ 'profile.revoke' | t }}</button>
+                      <button class="btn-outline" (click)="requestRevokeSession(s.id)">{{ 'profile.revoke' | t }}</button>
                     </div>
                   </li>
                 }
@@ -277,6 +277,19 @@
     </div>
   }
 </div>
+
+<!-- Revoke Session Confirmation -->
+<app-confirmation-modal
+  [show]="showRevokeConfirm"
+  [title]="'profile.revokeSessionTitle' | t"
+  [message]="'profile.confirmRevokeSession' | t"
+  [confirmText]="'profile.revoke' | t"
+  [cancelText]="'profile.cancel' | t"
+  confirmColor="danger"
+  icon="shield-alert"
+  (confirm)="confirmRevokeSession()"
+  (cancel)="cancelRevokeSession()">
+</app-confirmation-modal>
 
 <!-- Change Password Modal -->
 @if (showPasswordModal) {

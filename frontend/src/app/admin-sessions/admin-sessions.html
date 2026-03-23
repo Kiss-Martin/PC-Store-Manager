@@ -151,8 +151,8 @@
             <td>{{ p.fullname || ('profile.notSet' | t) }}</td>
             <td>
               <div class="action-group">
-                <button class="btn-primary btn-small" (click)="approveAdmin(p.id)">{{ 'admin.approve' | t }}</button>
-                <button class="btn-secondary btn-small danger" (click)="rejectAdmin(p.id)">{{ 'admin.reject' | t }}</button>
+                <button class="btn-primary btn-small" (click)="requestApproveAdmin(p.id)">{{ 'admin.approve' | t }}</button>
+                <button class="btn-secondary btn-small danger" (click)="requestRejectAdmin(p.id)">{{ 'admin.reject' | t }}</button>
               </div>
             </td>
           </tr>
@@ -217,7 +217,7 @@
               <td>{{ s.created_at | date:'medium' }}</td>
               <td>{{ s.expires_at | date:'medium' }}</td>
               <td>
-                <button class="btn-secondary btn-small" (click)="revoke(s.id)">{{ 'admin.revoke' | t }}</button>
+                <button class="btn-secondary btn-small" (click)="requestRevoke(s.id)">{{ 'admin.revoke' | t }}</button>
               </td>
             </tr>
             }
@@ -241,3 +241,16 @@
     }
   </section>
 </div>
+
+<!-- Confirmation modal for approve/reject/revoke actions -->
+<app-confirmation-modal
+  [show]="showConfirmModal"
+  [title]="confirmTitle"
+  [message]="confirmMessage"
+  [confirmText]="confirmButtonText"
+  [cancelText]="'confirmation.default.cancel' | t"
+  [confirmColor]="confirmColor"
+  [icon]="confirmIcon"
+  (confirm)="executeConfirm()"
+  (cancel)="cancelConfirm()">
+</app-confirmation-modal>

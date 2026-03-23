@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap, shareReplay, finalize } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
-import { User, AuthResponse } from '../models/api.models';
+import { User, AuthResponse, Item, Category, Brand, Customer, Order, Session, AnalyticsSummary, TopProduct, Transaction, DashboardStats, DashboardActivity, PendingAdmin } from '../models/api.models';
 import { I18nService } from '../i18n.service';
 import { Toast } from '../shared/toast.service';
 
@@ -182,27 +182,27 @@ export class AuthService {
   }
 
   // Sessions (active refresh tokens) for current user
-  getSessions(): Observable<{ tokens: any[] }> {
-    return this.api.getWithCredentials<{ tokens: any[] }>('/auth/tokens');
+  getSessions(): Observable<{ tokens: Session[] }> {
+    return this.api.getWithCredentials<{ tokens: Session[] }>('/auth/tokens');
   }
 
   // Admin: list all sessions across users
-  getAllSessions(): Observable<{ tokens: any[] }> {
-    return this.api.getWithCredentials<{ tokens: any[] }>('/auth/admin/sessions');
+  getAllSessions(): Observable<{ tokens: Session[] }> {
+    return this.api.getWithCredentials<{ tokens: Session[] }>('/auth/admin/sessions');
   }
 
   getAllSessionsPaged(page: number = 1, limit: number = 25, q: string = '', email: string = '', start: string = '', end: string = '') {
-    const params: any = { page, limit };
-    if (q) params.q = q;
-    if (email) params.email = email;
-    if (start) params.start = start;
-    if (end) params.end = end;
-    return this.api.getWithCredentials<{ tokens: any[], total: number }>('/auth/admin/sessions', params);
+    const params: Record<string, string | number> = { page, limit };
+    if (q) params['q'] = q;
+    if (email) params['email'] = email;
+    if (start) params['start'] = start;
+    if (end) params['end'] = end;
+    return this.api.getWithCredentials<{ tokens: Session[], total: number }>('/auth/admin/sessions', params);
   }
 
   // Admin: pending admin approvals
-  listPendingAdmins(): Observable<{ users: any[] }> {
-    return this.api.getWithCredentials<{ users: any[] }>('/auth/admin/pending-admins');
+  listPendingAdmins(): Observable<{ users: PendingAdmin[] }> {
+    return this.api.getWithCredentials<{ users: PendingAdmin[] }>('/auth/admin/pending-admins');
   }
 
   approveAdmin(id: string) {
@@ -260,10 +260,10 @@ export class AuthService {
     return this.api.getBlob('/users/me/avatar');
   }
 
-  uploadAvatar(file: File): Observable<any> {
+  uploadAvatar(file: File): Observable<{ success: boolean; message: string }> {
     const fd = new FormData();
     fd.append('avatar', file, file.name);
-    return this.api.postFormData('/users/me/avatar', fd, true);
+    return this.api.postFormData<{ success: boolean; message: string }>('/users/me/avatar', fd, true);
   }
 
   updateMe(data: {
@@ -291,22 +291,22 @@ export class AuthService {
   }
 
   // Items/Products endpoints
-  getItems(): Observable<{ items: any[] }> {
-    return this.api.get<{ items: any[] }>('/items');
+  getItems(): Observable<{ items: Item[] }> {
+    return this.api.get<{ items: Item[] }>('/items');
   }
 
-  createItem(item: any): Observable<{ success: boolean; item: any }> {
-    const payload = { ...item };
-    delete payload.specifications;
-    delete payload.specs;
-    return this.api.post<{ success: boolean; item: any }>('/items', payload);
+  createItem(item: Partial<Item>): Observable<{ success: boolean; item: Item }> {
+    const payload = { ...item } as Record<string, unknown>;
+    delete payload['specifications'];
+    delete payload['specs'];
+    return this.api.post<{ success: boolean; item: Item }>('/items', payload);
   }
 
-  updateItem(id: string, item: any): Observable<{ item: any }> {
-    const payload = { ...item };
-    delete payload.specifications;
-    delete payload.specs;
-    return this.api.patch<{ item: any }>(`/items/${id}`, payload);
+  updateItem(id: string, item: Partial<Item>): Observable<{ item: Item }> {
+    const payload = { ...item } as Record<string, unknown>;
+    delete payload['specifications'];
+    delete payload['specs'];
+    return this.api.patch<{ item: Item }>(`/items/${id}`, payload);
   }
 
   deleteItem(id: string): Observable<{ success: boolean }> {
@@ -314,18 +314,18 @@ export class AuthService {
   }
 
   // Categories endpoints
-  getCategories(): Observable<{ categories: any[] }> {
-    return this.api.get<{ categories: any[] }>('/items/categories');
+  getCategories(): Observable<{ categories: Category[] }> {
+    return this.api.get<{ categories: Category[] }>('/items/categories');
   }
 
   // Brands endpoints
-  getBrands(): Observable<{ brands: any[] }> {
-    return this.api.get<{ brands: any[] }>('/items/brands');
+  getBrands(): Observable<{ brands: Brand[] }> {
+    return this.api.get<{ brands: Brand[] }>('/items/brands');
   }
 
   // Orders endpoints
-  getOrders(): Observable<{ orders: any[] }> {
-    return this.api.get<{ orders: any[] }>('/orders');
+  getOrders(): Observable<{ orders: Order[] }> {
+    return this.api.get<{ orders: Order[] }>('/orders');
   }
 
   updateOrderStatus(id: string, status: string): Observable<{ success: boolean }> {
@@ -341,25 +341,31 @@ export class AuthService {
   }
 
   // Dashboard endpoint
-  getDashboard(): Observable<any> {
-    return this.api.get('/dashboard');
+  getDashboard(): Observable<{ stats: DashboardStats; activities: DashboardActivity[] }> {
+    return this.api.get<{ stats: DashboardStats; activities: DashboardActivity[] }>('/dashboard');
   }
 
   // Analytics endpoint
-  getAnalytics(period: string = '7days'): Observable<any> {
+  getAnalytics(period: string = '7days'): Observable<{
+    summary: AnalyticsSummary;
+    revenueChart?: { labels: string[]; data: number[] };
+    categoryChart?: { labels: string[]; data: number[] };
+    topProducts: TopProduct[];
+    recentTransactions?: Transaction[];
+  }> {
     return this.api.get(`/analytics?period=${period}`);
   }
 
-  getCustomers(): Observable<{ customers: any[] }> {
-    return this.api.get<{ customers: any[] }>('/customers');
+  getCustomers(): Observable<{ customers: Customer[] }> {
+    return this.api.get<{ customers: Customer[] }>('/customers');
   }
 
   createCustomer(customer: {
     name: string;
     email?: string;
     phone?: string;
-  }): Observable<{ success: boolean; customer: any }> {
-    return this.api.post<{ success: boolean; customer: any }>('/customers', customer);
+  }): Observable<{ success: boolean; customer: Customer }> {
+    return this.api.post<{ success: boolean; customer: Customer }>('/customers', customer);
   }
 
   // Create manual order
@@ -367,8 +373,8 @@ export class AuthService {
     item_id: string;
     customer_id: string;
     quantity: number;
-  }): Observable<{ success: boolean; order: any }> {
-    return this.api.post<{ success: boolean; order: any }>('/orders', order);
+  }): Observable<{ success: boolean; order: Order }> {
+    return this.api.post<{ success: boolean; order: Order }>('/orders', order);
   }
 
   generateBusinessReport(period: string = '7days', format: ExportFormat = 'csv'): Observable<Blob> {
@@ -376,8 +382,8 @@ export class AuthService {
   }
 
   // Get workers for assignment
-  getWorkers(): Observable<{ users: any[] }> {
-    return this.api.get<{ users: any[] }>('/users/workers');
+  getWorkers(): Observable<{ users: User[] }> {
+    return this.api.get<{ users: User[] }>('/users/workers');
   }
 
   // Assign order to worker

@@ -167,7 +167,11 @@ body {
   }
 
   .nav-menu.active {
-    max-height: 400px;
+    max-height: 600px;
+  }
+
+  .nav-extra {
+    border-top: 1px solid rgba(124, 58, 237, 0.15);
   }
 
   .nav-menu li {

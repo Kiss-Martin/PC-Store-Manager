@@ -6,16 +6,18 @@ import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { User, Session } from '../../models/api.models';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, ConfirmationModalComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css'],
 })
 export class ProfileComponent implements OnInit {
-  user: any = null;
+  user: User | null = null;
   avatarUrl: string | null = null;
   isLoading = true;
   isEditingProfile = false;
@@ -36,8 +38,12 @@ export class ProfileComponent implements OnInit {
   isSaving = false;
   successMessage = '';
   errorMessage = '';
-  sessions: any[] = [];
+  sessions: Session[] = [];
   sessionsLoading = false;
+
+  // Revoke session confirmation modal
+  showRevokeConfirm = false;
+  sessionToRevoke: string | null = null;
 
   constructor(
     public auth: AuthService,
@@ -120,8 +126,21 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  revokeSession(id: string): void {
-    if (!confirm(this.i18n.t('profile.confirmRevokeSession'))) return;
+  requestRevokeSession(id: string): void {
+    this.sessionToRevoke = id;
+    this.showRevokeConfirm = true;
+  }
+
+  cancelRevokeSession(): void {
+    this.showRevokeConfirm = false;
+    this.sessionToRevoke = null;
+  }
+
+  confirmRevokeSession(): void {
+    if (!this.sessionToRevoke) return;
+    const id = this.sessionToRevoke;
+    this.showRevokeConfirm = false;
+    this.sessionToRevoke = null;
     this.auth.revokeSession(id).subscribe({
       next: () => {
         this.showSuccess(this.i18n.t('profile.success.sessionRevoked'));
@@ -138,9 +157,9 @@ export class ProfileComponent implements OnInit {
     this.isEditingProfile = !this.isEditingProfile;
     if (!this.isEditingProfile) {
       this.profileForm = {
-        email: this.user.email || '',
-        username: this.user.username || '',
-        fullname: this.user.fullname || ''
+        email: this.user?.email || '',
+        username: this.user?.username || '',
+        fullname: this.user?.fullname || ''
       };
     }
     this.clearMessages();
