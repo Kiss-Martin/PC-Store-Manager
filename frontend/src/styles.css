@@ -59,3 +59,102 @@
 }
 ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#6d28d9 0%,#9333ea 100%); }
 * { scrollbar-width: thin; scrollbar-color: #7c3aed rgba(124,58,237,0.05); }
+
+/* ── Print styles ──────────────────────────────────────────── */
+@media print {
+  /* Force light background and black text for readability */
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
+
+  /* Hide navigation bar, buttons, modals, selects, and interactive elements */
+  nav,
+  .no-print,
+  button,
+  select,
+  input,
+  .fixed,
+  .backdrop-blur-sm,
+  lucide-icon[name="printer"] {
+    display: none !important;
+  }
+
+  /* Keep lucide-icons visible inside data areas (status icons etc.) */
+  td lucide-icon,
+  .rounded-2xl lucide-icon,
+  .status lucide-icon {
+    display: inline-flex !important;
+  }
+
+  /* Reset layout — full width, no overflow clipping */
+  .max-w-7xl,
+  .max-w-350 {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .overflow-x-auto,
+  .overflow-hidden,
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* Remove shadows, transforms, and hover effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* Cards: keep borders, remove background gradients */
+  .rounded-2xl {
+    break-inside: avoid;
+    border-color: #d1d5db !important;
+  }
+
+  /* Tables: clean readable print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 12px !important;
+    text-align: left !important;
+  }
+
+  thead tr {
+    background: #f3f4f6 !important;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Charts: keep visible and sized for print */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: landscape;
+    margin: 1.5cm;
+  }
+
+  /* Add a subtle title header for printed pages */
+  h1 {
+    font-size: 18pt !important;
+    margin-bottom: 12pt !important;
+  }
+}

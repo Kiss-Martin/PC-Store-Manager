@@ -41,6 +41,10 @@
             <lucide-icon name="download" size="18"></lucide-icon>
             {{ 'analytics.exportReport' | t }}
           </button>
+          <button class="inline-flex items-center gap-2 border-2 bg-transparent px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:bg-violet-600/5 no-print" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="printCurrentView()">
+            <lucide-icon name="printer" size="18"></lucide-icon>
+            {{ 'common.print' | t }}
+          </button>
         </div>
       }
     </div>

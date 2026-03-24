@@ -498,6 +498,10 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  printCurrentView() {
+    window.print();
+  }
+
   onProductChange() {
     // Reset quantity when product changes
     const maxStock = this.getProductStock(this.newOrder.item_id);

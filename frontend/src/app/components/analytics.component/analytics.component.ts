@@ -277,6 +277,10 @@ export class AnalyticsComponent implements OnInit {
   });
 }
 
+  printCurrentView() {
+    window.print();
+  }
+
   formatCurrency(value: number): string {
     return value.toLocaleString(this.i18n.locale(), {
       minimumFractionDigits: 0,

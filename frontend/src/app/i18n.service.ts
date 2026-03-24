@@ -444,6 +444,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
 
     'common.csv': 'CSV',
     'common.pdf': 'PDF',
+    'common.print': 'Print',
     'common.units': 'units',
     'common.status': 'Status',
     'common.close': 'Close',
@@ -895,6 +896,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
 
     'common.csv': 'CSV',
     'common.pdf': 'PDF',
+    'common.print': 'Nyomtatás',
     'common.units': 'db',
     'common.status': 'Állapot',
     'common.close': 'Bezárás',

@@ -177,4 +177,8 @@ export class DashboardComponent implements OnInit {
   addNewProduct() {
     this.router.navigate(['products'], { queryParams: { action: 'add' } });
   }
+
+  printCurrentView() {
+    window.print();
+  }
 }
