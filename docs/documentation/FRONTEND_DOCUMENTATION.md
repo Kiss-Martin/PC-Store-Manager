@@ -15,7 +15,7 @@ Core stack:
 | HTTP | `HttpClient` + functional interceptor (`authInterceptor`) |
 | Charts | `ng2-charts` + `chart.js` 4.x |
 | Icons | `lucide-angular` |
-| Styling | Custom CSS (light/dark themes via CSS custom properties) |
+| Styling | Tailwind CSS 4 utility classes + custom CSS (light/dark themes via CSS custom properties) |
 | i18n | Custom signal-based service with `TranslatePipe` (`en` / `hu`) |
 
 ## 2) App architecture
@@ -143,6 +143,7 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 - Recent activity feed
 - Quick action buttons (new order, add product)
 - Business report download modal (period selector, CSV/PDF format)
+- **Print** button — opens the browser print dialog to print the current dashboard view
 - Stats rebuild on language change via Angular `effect()`
 
 ### Products
@@ -154,11 +155,12 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 
 ### Orders
 
-- Order listing with search, status filter dropdown
+- Order listing with search, custom status filter dropdown (uses `custom-dropdown` class with `HostListener` click-outside detection)
 - Order status updates (pending → processing → completed / cancelled)
 - Manual order creation with inline customer creation option
 - Worker assignment (admin only)
 - Export orders as CSV/PDF
+- **Print** button (admin only) — prints the current orders view via the browser print dialog
 
 ### Analytics
 
@@ -168,6 +170,7 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 - Recent transactions section (admin only)
 - Period selector (`7days` / `30days` / `90days`)
 - Export analytics as CSV/PDF
+- **Print** button (admin only) — prints the current analytics view via the browser print dialog
 - Charts auto-update colors on theme change
 
 ### Profile
@@ -209,6 +212,16 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 - `ThemeService` toggles dark/light mode via `body` class (`dark-theme`)
 - Theme persisted in `localStorage` (`pc_theme`)
 - Charts dynamically update their color scheme on theme change
+
+### Print styles
+
+- Global `@media print` rules defined in `src/styles.css`
+- Hides navbar, buttons, inputs, selects, modals, and elements with the `.no-print` class
+- Forces landscape orientation with `1.5cm` margins
+- Styles tables with clean collapsed borders for readability
+- Prevents page breaks inside cards and table rows (`break-inside: avoid`)
+- Removes box shadows and transforms for clean paper output
+- Preserves chart canvases and status badge colors via `print-color-adjust: exact`
 
 ## 8) Data contracts (`api.models.ts`)
 
@@ -278,7 +291,7 @@ Backend API base URL is configured via Angular environment files:
 | `@angular/build` | 21.x | Build tooling |
 | `@angular/cli` | 21.x | CLI |
 | `typescript` | 5.9.x | TypeScript compiler |
-| `tailwindcss` | 4.x | Present in dependencies (styling is custom CSS) |
+| `tailwindcss` | 4.x | Utility-first CSS framework (used extensively in templates) |
 | `karma` / `jasmine` | — | Test runner / assertion library |
 
 ## 12) Extension guidelines
@@ -291,3 +304,6 @@ When adding features:
 4. Add i18n keys in **both** `en` and `hu` sections of `i18n.service.ts`
 5. Surface user feedback via `ToastService` or `ConfirmationModalComponent`
 6. Use shared interfaces from `api.models.ts` — avoid `any` types in component properties
+7. For printable views, add the `.no-print` class to elements that should be hidden when printing (buttons, controls, etc.).
+   The existing `@media print` rules in `src/styles.css` automatically hide `nav`, `button`, `select`, `input`, and `.fixed` elements.
+8. Custom dropdowns must include the `custom-dropdown` CSS class on their wrapper div so the `HostListener`-based click-outside logic can distinguish internal clicks from document clicks.

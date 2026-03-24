@@ -300,6 +300,7 @@ Request payloads are validated with **Zod** schemas in controllers (register, lo
 
 - **Orders export:** CSV or PDF filtered by status (`all`, `pending`, `processing`, `completed`, `cancelled`)
 - **Analytics export:** CSV or PDF sales report for a selected period (`7days`, `30days`, `90days`)
+- **Print:** The frontend provides a browser-native print option on all pages that support export (Orders, Analytics, Dashboard). The backend is not involved — the print dialog is triggered client-side via `window.print()` with dedicated `@media print` styles.
 - PDF generation uses `pdfkit`
 - CSV generation uses the shared utility in `src/utils/csv.util.js`
 
