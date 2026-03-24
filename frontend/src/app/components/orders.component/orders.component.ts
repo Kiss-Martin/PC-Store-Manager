@@ -97,7 +97,9 @@ export class OrdersComponent implements OnInit {
   ngOnInit() {
     this.loadOrders();
     this.loadProducts();
-    this.loadCustomers();
+    if (!this.auth.isBuyer()) {
+      this.loadCustomers();
+    }
     if (this.auth.isAdmin()) {
       this.loadWorkers();
     }
@@ -193,7 +195,9 @@ export class OrdersComponent implements OnInit {
       this.newOrder.status = 'pending';
     }
     this.loadProducts();
-    this.loadCustomers();
+    if (!this.auth.isBuyer()) {
+      this.loadCustomers();
+    }
   }
 
   closeAddOrderModal() {
@@ -258,7 +262,7 @@ export class OrdersComponent implements OnInit {
     this.orderError = '';
     this.orderSuccess = '';
 
-    if (!this.newOrder.item_id || !this.newOrder.customer_id || !this.newOrder.quantity) {
+    if (!this.newOrder.item_id || !this.newOrder.quantity || (!this.auth.isBuyer() && !this.newOrder.customer_id)) {
       this.orderError = this.i18n.t('orders.error.requiredFields');
       return;
     }

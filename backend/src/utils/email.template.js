@@ -34,6 +34,17 @@ const emailStrings = {
       notProvided: 'not provided',
       footer: 'This message was sent automatically by the PC Store Manager application.',
     },
+    newOrder: {
+      heading: '&#128230; New Order Placed',
+      body: 'A new order has been placed in the PC Store Manager system.',
+      orderNumber: 'Order Number',
+      product: 'Product',
+      quantity: 'Quantity',
+      total: 'Total Amount',
+      customer: 'Customer',
+      status: 'Status',
+      footer: 'This notification was sent automatically by the PC Store Manager application.',
+    },
   },
   hu: {
     adminNotify: {
@@ -69,6 +80,17 @@ const emailStrings = {
       message: 'Üzenet',
       notProvided: 'nem adta meg',
       footer: 'Ezt az üzenetet automatikusan küldte a PC Store Manager alkalmazás.',
+    },
+    newOrder: {
+      heading: '&#128230; Új rendelés érkezett',
+      body: 'Új rendelés érkezett a PC Store Manager rendszerben.',
+      orderNumber: 'Rendelés száma',
+      product: 'Termék',
+      quantity: 'Mennyiség',
+      total: 'Összeg',
+      customer: 'Ügyfél',
+      status: 'Státusz',
+      footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
     },
   },
 };
@@ -164,4 +186,27 @@ export function renderApprovalNotification({ lang = 'en', subject, username, log
   return { subject, text: plain, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification };
+export function renderNewOrderNotification({ lang = 'en', orderNumber, product, quantity, totalAmount, customer, status }) {
+  const s = getEmailStrings(lang);
+  const n = s.newOrder;
+  const subject = `${n.heading} — ${orderNumber}`;
+  const plain = `${n.body}\n\n${n.orderNumber}: ${orderNumber}\n${n.product}: ${product}\n${n.quantity}: ${quantity}\n${n.total}: $${totalAmount}\n${n.customer}: ${customer}\n${n.status}: ${status}\n\n${n.footer}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${n.heading}</h2>
+    <p>${n.body}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:140px">${n.orderNumber}</td><td style="padding:10px 14px">${orderNumber}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.product}</td><td style="padding:10px 14px">${product}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.quantity}</td><td style="padding:10px 14px">${quantity}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.total}</td><td style="padding:10px 14px">$${totalAmount}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.customer}</td><td style="padding:10px 14px">${customer}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.status}</td><td style="padding:10px 14px">${status}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">${n.footer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification };

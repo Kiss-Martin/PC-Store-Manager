@@ -34,7 +34,7 @@ export const createItemSchema = z.object({
 
 export const createOrderSchema = z.object({
   item_id: z.string().min(1),
-  customer_id: z.string().min(1),
+  customer_id: z.string().min(1).optional(),
   quantity: z.number().int().positive(),
   status: z.string().optional(),
 });

@@ -383,7 +383,7 @@ export class AuthService {
   // Create manual order
   createOrder(order: {
     item_id: string;
-    customer_id: string;
+    customer_id?: string;
     quantity: number;
   }): Observable<{ success: boolean; order: Order }> {
     return this.api.post<{ success: boolean; order: Order }>('/orders', order);

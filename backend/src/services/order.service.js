@@ -3,6 +3,8 @@ import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { ORDER_STATUSES } from '../utils/constants.js';
 import { t } from '../utils/i18n.util.js';
+import { mailTransporter, smtpConfig } from './auth.service.js';
+import { renderNewOrderNotification } from '../utils/email.template.js';
 
 const OrderService = {
   async getOrders(user, lang = 'en') {
@@ -59,6 +61,7 @@ const OrderService = {
     if (!ORDER_STATUSES.includes(status)) {
       throw new Error(t(lang, 'order.invalidStatus'));
     }
+    const resolvedCustomerId = await this._resolveCustomerIdForOrder(user, customer_id, lang);
     const item = await run(supabase.from('items').select('id, name, price, amount').eq('id', item_id).single()).catch(() => null);
     if (!item) throw new Error(t(lang, 'order.itemNotFound'));
     if (item.amount < quantity) throw new Error(t(lang, 'order.insufficientStock', { count: item.amount }));
@@ -69,7 +72,7 @@ const OrderService = {
     const log = await run(
       supabase.from('logs').insert({
         item_id,
-        customer_id,
+        customer_id: resolvedCustomerId,
         action: 'stock_out',
         details: `Sold ${quantity} unit${quantity > 1 ? 's' : ''} - Order #${orderNumber}`,
         timestamp: new Date().toISOString(),
@@ -84,7 +87,7 @@ const OrderService = {
         updated_at: new Date().toISOString(),
       })
     );
-    return {
+    const result = {
       id: log.id,
       orderNumber: `#${orderNumber}`,
       product: item.name,
@@ -92,6 +95,78 @@ const OrderService = {
       totalAmount: Math.round((item.price || 0) * quantity * 100) / 100,
       status,
     };
+
+    // Notify all workers via email
+    this._notifyWorkersOfNewOrder(result, resolvedCustomerId, lang).catch((err) =>
+      console.error('Failed to send new-order notifications:', err?.message || err)
+    );
+
+    return result;
+  },
+
+  async _resolveCustomerIdForOrder(user, customerId, lang = 'en') {
+    if (user?.role !== 'buyer') {
+      if (!customerId) throw new Error(t(lang, 'validation.customerRequired'));
+      return customerId;
+    }
+
+    const buyer = await run(
+      supabase.from('users').select('id, email, username, fullname').eq('id', user.id).single()
+    ).catch(() => null);
+    if (!buyer) throw new Error(t(lang, 'user.fetchFailed'));
+
+    if (buyer.email) {
+      const existingByEmail = await run(
+        supabase.from('customers').select('id').eq('email', buyer.email).limit(1)
+      ).catch(() => []);
+      if (existingByEmail?.[0]?.id) return existingByEmail[0].id;
+    }
+
+    const created = await run(
+      supabase.from('customers').insert({
+        name: buyer.fullname || buyer.username || buyer.email || t(lang, 'common.unknown'),
+        email: buyer.email || null,
+        phone: null,
+      }).select('id').single()
+    );
+    return created.id;
+  },
+
+  async _notifyWorkersOfNewOrder(order, customerId, lang = 'en') {
+    if (!mailTransporter) return;
+    // Fetch all workers
+    const workers = await run(
+      supabase.from('users').select('email').eq('role', 'worker')
+    ).catch(() => []);
+    if (!workers || workers.length === 0) return;
+
+    // Get customer name
+    const customer = await run(
+      supabase.from('customers').select('name').eq('id', customerId).single()
+    ).catch(() => null);
+
+    const emailData = {
+      lang,
+      orderNumber: order.orderNumber,
+      product: order.product,
+      quantity: order.quantity,
+      totalAmount: order.totalAmount,
+      customer: customer?.name || 'Unknown',
+      status: order.status,
+    };
+    const tpl = renderNewOrderNotification(emailData);
+
+    await Promise.allSettled(
+      workers.map((w) =>
+        mailTransporter.sendMail({
+          to: w.email,
+          from: smtpConfig.from,
+          subject: tpl.subject,
+          text: tpl.text,
+          html: tpl.html,
+        })
+      )
+    );
   },
 
   async updateOrderStatus(id, status, userId, lang = 'en') {

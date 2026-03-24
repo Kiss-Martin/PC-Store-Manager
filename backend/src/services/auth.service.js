@@ -466,4 +466,5 @@ const AuthService = {
   },
 };
 
+export { mailTransporter, smtpConfig };
 export default AuthService;
