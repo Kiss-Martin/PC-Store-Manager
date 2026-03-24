@@ -34,6 +34,17 @@ describe('registerSchema', () => {
     expect(result.data.role).toBe('admin');
   });
 
+  it('should accept buyer role', () => {
+    const result = registerSchema.safeParse({
+      email: 'buyer@example.com',
+      username: 'buyeruser',
+      password: 'secret123',
+      role: 'buyer',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.role).toBe('buyer');
+  });
+
   it('should reject invalid email', () => {
     const result = registerSchema.safeParse({
       email: 'not-an-email',

@@ -213,12 +213,14 @@ describe('Swagger docs', () => {
 
 describe('Protected routes with valid JWT', () => {
   let token;
+  let buyerToken;
 
   beforeAll(async () => {
     // generate a JWT matching the app's secret
     const jwt = await import('jsonwebtoken');
     const secret = process.env.JWT_SECRET || 'change-this-secret';
     token = jwt.default.sign({ id: 'test-user-id', role: 'admin', jti: 'test-jti' }, secret, { expiresIn: '1h' });
+    buyerToken = jwt.default.sign({ id: 'buyer-user-id', role: 'buyer', jti: 'buyer-jti' }, secret, { expiresIn: '1h' });
   });
 
   it('GET /items should return 200 with valid token', async () => {
@@ -240,5 +242,52 @@ describe('Protected routes with valid JWT', () => {
   it('GET /users/me should return 200 with valid token', async () => {
     const res = await request(app, 'GET', '/users/me', null, { Authorization: `Bearer ${token}` });
     expect(res.status).toBe(200);
+  });
+
+  // ── Buyer role route access tests ──
+
+  it('GET /items should return 200 for buyer (view products)', async () => {
+    const res = await request(app, 'GET', '/items', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /orders should return 200 for buyer (own orders)', async () => {
+    const res = await request(app, 'GET', '/orders', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /customers should return 200 for buyer', async () => {
+    const res = await request(app, 'GET', '/customers', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /analytics should return 200 for buyer', async () => {
+    const res = await request(app, 'GET', '/analytics', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(200);
+  });
+
+  it('DELETE /items/fake-id should return 403 for buyer', async () => {
+    const res = await request(app, 'DELETE', '/items/fake-id', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(403);
+  });
+
+  it('PATCH /orders/fake-id/assign should return 403 for buyer', async () => {
+    const res = await request(app, 'PATCH', '/orders/fake-id/assign', { userId: 'u1' }, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(403);
+  });
+
+  it('DELETE /orders/fake-id should return 403 for buyer', async () => {
+    const res = await request(app, 'DELETE', '/orders/fake-id', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(403);
+  });
+
+  it('GET /analytics/export should return 403 for buyer', async () => {
+    const res = await request(app, 'GET', '/analytics/export?period=7days&format=csv', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(403);
+  });
+
+  it('GET /users/workers should return 403 for buyer', async () => {
+    const res = await request(app, 'GET', '/users/workers', null, { Authorization: `Bearer ${buyerToken}` });
+    expect(res.status).toBe(403);
   });
 });

@@ -100,4 +100,50 @@ describe('Auth Guards and Navigation', () => {
       cy.url().should('include', '/dashboard');
     });
   });
+
+  describe('Buyer role', () => {
+    beforeEach(() => {
+      const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImJ1eWVyLWlkIiwicm9sZSI6ImJ1eWVyIiwiZXhwIjo5OTk5OTk5OTk5fQ.fake';
+      const fakeUser = { id: 'buyer-id', email: 'buyer@test.com', username: 'buyer', fullname: 'Buyer User', role: 'buyer' };
+      window.localStorage.setItem('pc_token', fakeToken);
+      window.localStorage.setItem('token', fakeToken);
+      window.localStorage.setItem('user', JSON.stringify(fakeUser));
+      window.localStorage.setItem('pc_remember', 'true');
+    });
+
+    it('should allow access to /dashboard for buyer', () => {
+      cy.visit('/dashboard');
+      cy.url().should('include', '/dashboard');
+    });
+
+    it('should allow access to /products for buyer', () => {
+      cy.visit('/products');
+      cy.url().should('include', '/products');
+    });
+
+    it('should allow access to /orders for buyer', () => {
+      cy.visit('/orders');
+      cy.url().should('include', '/orders');
+    });
+
+    it('should redirect /analytics to /dashboard for buyer (StaffGuard)', () => {
+      cy.visit('/analytics');
+      cy.url().should('include', '/dashboard');
+    });
+
+    it('should redirect /admin/sessions to /dashboard for buyer', () => {
+      cy.visit('/admin/sessions');
+      cy.url().should('include', '/dashboard');
+    });
+
+    it('should redirect /admin/audit to /dashboard for buyer', () => {
+      cy.visit('/admin/audit');
+      cy.url().should('include', '/dashboard');
+    });
+
+    it('should allow access to /profile for buyer', () => {
+      cy.visit('/profile');
+      cy.url().should('include', '/profile');
+    });
+  });
 });

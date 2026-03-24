@@ -36,4 +36,14 @@ describe('Register Page', () => {
   it('should have link back to login', () => {
     cy.contains(/login|sign in/i).should('be.visible');
   });
+
+  it('should display the buyer role option', () => {
+    // The first step should show 3 role options including buyer
+    cy.contains(/buyer|vásárló/i).should('be.visible');
+  });
+
+  it('should have three role selection buttons', () => {
+    // Admin, Worker, and Buyer
+    cy.get('button').filter(':contains("Admin"), :contains("Worker"), :contains("Buyer"), :contains("admin"), :contains("worker"), :contains("buyer")').should('have.length.at.least', 3);
+  });
 });

@@ -121,4 +121,52 @@ describe('requireRole', () => {
     requireRole('admin')(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
   });
+
+  // ── Multi-role (buyer feature) ──
+
+  it('should allow access when user matches one of multiple roles', () => {
+    const req = { user: { role: 'buyer' }, lang: 'en' };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    requireRole('admin', 'buyer')(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should allow admin when multiple roles are accepted', () => {
+    const req = { user: { role: 'admin' }, lang: 'en' };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    requireRole('admin', 'buyer')(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should reject worker when only admin and buyer are accepted', () => {
+    const req = { user: { role: 'worker' }, lang: 'en' };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    requireRole('admin', 'buyer')(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should reject buyer when only admin is accepted', () => {
+    const req = { user: { role: 'buyer' }, lang: 'en' };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    requireRole('admin')(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
 });

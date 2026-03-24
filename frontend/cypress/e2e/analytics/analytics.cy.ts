@@ -37,3 +37,20 @@ describe('Analytics Page', () => {
     cy.get('button').filter(':contains("Export"), :contains("export"), :contains("Report"), :contains("report")').should('exist');
   });
 });
+
+describe('Analytics Page (Buyer - blocked by StaffGuard)', () => {
+  beforeEach(() => {
+    cy.stubBackendApi();
+    const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImJ1eWVyLWlkIiwicm9sZSI6ImJ1eWVyIiwiZXhwIjo5OTk5OTk5OTk5fQ.fake';
+    const fakeUser = { id: 'buyer-id', email: 'buyer@test.com', username: 'buyer', fullname: 'Buyer User', role: 'buyer' };
+    window.localStorage.setItem('pc_token', fakeToken);
+    window.localStorage.setItem('token', fakeToken);
+    window.localStorage.setItem('user', JSON.stringify(fakeUser));
+    window.localStorage.setItem('pc_remember', 'true');
+  });
+
+  it('should redirect buyer away from /analytics to /dashboard', () => {
+    cy.visit('/analytics');
+    cy.url().should('include', '/dashboard');
+  });
+});
