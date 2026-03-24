@@ -52,9 +52,12 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadUserProfile();
-    this.loadSessions();
-    this.loadAvatar();
+    // Wait for auth to be ready (token refresh may be in progress after page reload)
+    this.auth.authReady.then(() => {
+      this.loadUserProfile();
+      this.loadSessions();
+      this.loadAvatar();
+    });
   }
 
   loadUserProfile(): void {

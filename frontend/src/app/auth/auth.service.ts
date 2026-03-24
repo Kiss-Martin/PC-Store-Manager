@@ -22,20 +22,26 @@ export class AuthService {
   token = signal<string | null>(null);
   private refreshing$: Observable<AuthResponse> | null = null;
   private logoutInProgress = false;
+  /** Resolves once the initial auth state (token restore / refresh) is settled. */
+  readonly authReady: Promise<void>;
+  private resolveAuthReady!: () => void;
 
   constructor(
     private api: ApiService,
     private router: Router,
     private i18n: I18nService,
   ) {
+    this.authReady = new Promise<void>((resolve) => { this.resolveAuthReady = resolve; });
     this.loadFromStorage();
     // Only restore after reopen when the user explicitly chose to remain signed in
     if (!this.token() && this.shouldRestoreSession()) {
-      // attempt refresh but don't block startup; subscribing ensures token/user get set if valid
+      // attempt refresh; once settled the auth state is ready
       this.refresh().subscribe({
-        next: () => {},
-        error: () => {},
+        next: () => { this.resolveAuthReady(); },
+        error: () => { this.resolveAuthReady(); },
       });
+    } else {
+      this.resolveAuthReady();
     }
   }
 
@@ -45,7 +51,9 @@ export class AuthService {
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
 
     if (token && this.isTokenExpired(token)) {
-      this.clearStoredAuth();
+      // Token expired – clear auth data but KEEP the rememberKey so
+      // the constructor can still attempt a refresh via the httpOnly cookie.
+      this.clearStoredAuth(/* preserveRemember */ true);
       return;
     }
 
@@ -143,14 +151,14 @@ export class AuthService {
     }
   }
 
-  private clearStoredAuth(): void {
+  private clearStoredAuth(preserveRemember = false): void {
     this.token.set(null);
     this.user.set(null);
     this.refreshing$ = null;
     localStorage.removeItem('token');
     localStorage.removeItem('pc_token');
     localStorage.removeItem('user');
-    localStorage.removeItem(this.rememberKey);
+    if (!preserveRemember) localStorage.removeItem(this.rememberKey);
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('pc_token');
     sessionStorage.removeItem('user');

@@ -1,21 +1,60 @@
+###############################################################################
+#  PC Store Manager — API Test Collection
+#  For VS Code REST Client extension (humao.rest-client)
+#
+#  Usage:
+#    1. Start the backend:  cd backend && npm run dev
+#    2. Run requests top-to-bottom: register → login → copy token → test
+#    3. Replace placeholder IDs (CATEGORY_ID, BRAND_ID, etc.) from your DB
+#
+#  Variables — paste real values after running login:
+###############################################################################
+
 @BASE_URL = http://localhost:3000
 @ADMIN_TOKEN =
-@USER_TOKEN =
-# Set these manually from your DB:
+@WORKER_TOKEN =
 @CATEGORY_ID =
 @BRAND_ID =
+@ITEM_ID =
+@CUSTOMER_ID =
+@ORDER_ID =
 
-### Quick notes
-# - Use the Register/Login requests to obtain an access token and paste it into `@ADMIN_TOKEN`.
-# - Some endpoints require `Authorization: Bearer {{ADMIN_TOKEN}}` (admin only).
+###############################################################################
+#  Health & Meta
+###############################################################################
 
-### 1) Health
+### Root — API metadata
+GET {{BASE_URL}}/
+
+### Health — liveness + DB reachability
 GET {{BASE_URL}}/health
 
-### 2) Docs (Swagger UI)
-GET {{BASE_URL}}/docs
+### Readiness probe
+GET {{BASE_URL}}/health/ready
 
-### 3) Register (invalid) - should return 400
+### Swagger UI (open in browser)
+# GET {{BASE_URL}}/docs
+
+### OpenAPI JSON spec
+GET {{BASE_URL}}/docs.json
+
+###############################################################################
+#  Auth — Registration & Login
+###############################################################################
+
+### Register admin (valid)
+POST {{BASE_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "username": "adminuser",
+  "password": "StrongPass123!",
+  "fullname": "Admin User",
+  "role": "admin"
+}
+
+### Register admin (invalid — should return 400)
 POST {{BASE_URL}}/auth/register
 Content-Type: application/json
 
@@ -25,100 +64,67 @@ Content-Type: application/json
   "password": "123"
 }
 
-### 4) Register admin (valid)
+### Register worker
 POST {{BASE_URL}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin-test+rest@example.com",
-  "username": "admintest",
+  "email": "worker@example.com",
+  "username": "workeruser",
   "password": "StrongPass123!",
-  "fullname": "Admin Test",
-  "role": "admin"
+  "fullname": "Worker User",
+  "role": "worker"
 }
 
-# After successful registration, call Login and copy the `token` value into @ADMIN_TOKEN
-
-### 5) Login admin (get token)
+### Login as admin → copy "token" value into @ADMIN_TOKEN
 POST {{BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin-test+rest@example.com",
+  "email": "admin@example.com",
   "password": "StrongPass123!"
 }
 
-### 6) Get current user (requires token)
-GET {{BASE_URL}}/me
-Authorization: Bearer {{ADMIN_TOKEN}}
-
-
-# Your API does not support creating brands or categories via HTTP.
-# Set @BRAND_ID and @CATEGORY_ID manually from your database for item creation.
-
-
-### 7) Create item (admin)
-POST {{BASE_URL}}/items
-Authorization: Bearer {{ADMIN_TOKEN}}
+### Login as worker → copy "token" value into @WORKER_TOKEN
+POST {{BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "name": "Laptop X",
-  "price": 1299.99,
-  "amount": 5,
-  "category_id": "{{CATEGORY_ID}}",
-  "brand_id": "{{BRAND_ID}}",
-  "model": "X1000",
-  "specs": "16GB RAM, 512GB SSD",
-  "warranty": "2 years"
+  "email": "worker@example.com",
+  "password": "StrongPass123!"
 }
 
+###############################################################################
+#  Auth — Session Management
+###############################################################################
 
-### 8) List items (admin)
-GET {{BASE_URL}}/items
-Authorization: Bearer {{ADMIN_TOKEN}}
-
-
-### 9) Create customer (admin)
-POST {{BASE_URL}}/customers
-Authorization: Bearer {{ADMIN_TOKEN}}
+### Refresh access token (uses httpOnly cookie)
+POST {{BASE_URL}}/auth/refresh
 Content-Type: application/json
 
-{
-  "name": "John Doe",
-  "email": "johndoe@example.com",
-  "phone": "+36701234567"
-}
+{}
 
-
-### 10) Create manual order (admin)
-POST {{BASE_URL}}/orders
-Authorization: Bearer {{ADMIN_TOKEN}}
-Content-Type: application/json
-
-{
-  "item_id": "<REPLACE_WITH_ITEM_ID>",
-  "customer_id": "<REPLACE_WITH_CUSTOMER_ID>",
-  "quantity": 1,
-  "status": "completed"
-}
-
-
-### 11) Export orders CSV (admin)
-GET {{BASE_URL}}/orders/export?status=all
+### List my active sessions
+GET {{BASE_URL}}/auth/tokens
 Authorization: Bearer {{ADMIN_TOKEN}}
 
+### Logout (revokes refresh token + clears cookie)
+POST {{BASE_URL}}/auth/logout
+Authorization: Bearer {{ADMIN_TOKEN}}
 
-### 12) Forgot password (initiates reset)
+###############################################################################
+#  Auth — Password Reset
+###############################################################################
+
+### Forgot password (initiates reset email)
 POST {{BASE_URL}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "johndoe@example.com"
+  "email": "admin@example.com"
 }
 
-
-### 13) Reset password (use token from DB or logs)
+### Reset password (paste token from email/logs)
 POST {{BASE_URL}}/auth/reset-password
 Content-Type: application/json
 
@@ -127,6 +133,278 @@ Content-Type: application/json
   "newPassword": "NewStrongPass123!"
 }
 
+###############################################################################
+#  Auth — Admin: Sessions & Approvals
+###############################################################################
 
-### 14) Negative: access protected route without token (should return 401)
+### List all sessions (admin, paginated)
+GET {{BASE_URL}}/auth/admin/sessions?page=1&limit=25
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List all sessions — filtered by email
+GET {{BASE_URL}}/auth/admin/sessions?email=worker@example.com
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List audit logs (admin, paginated)
+GET {{BASE_URL}}/auth/admin/audit?page=1&limit=25
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List pending admin registrations
+GET {{BASE_URL}}/auth/admin/pending-admins
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Approve a pending admin (replace :id)
+# POST {{BASE_URL}}/auth/admin/pending-admins/<PENDING_ADMIN_ID>/approve
+# Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Reject a pending admin (replace :id)
+# POST {{BASE_URL}}/auth/admin/pending-admins/<PENDING_ADMIN_ID>/reject
+# Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Cleanup expired revoked tokens
+DELETE {{BASE_URL}}/auth/admin/revoked/cleanup
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###############################################################################
+#  Users — Profile & Avatar
+###############################################################################
+
+### Get current user profile
 GET {{BASE_URL}}/users/me
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Update profile
+PATCH {{BASE_URL}}/users/me
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "username": "adminuser_updated",
+  "fullname": "Admin User Updated"
+}
+
+### Change password
+PATCH {{BASE_URL}}/users/me/password
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "currentPassword": "StrongPass123!",
+  "newPassword": "EvenStronger456!"
+}
+
+### Upload avatar (use file path on your system)
+# POST {{BASE_URL}}/users/me/avatar
+# Authorization: Bearer {{ADMIN_TOKEN}}
+# Content-Type: multipart/form-data; boundary=AvatarBoundary
+#
+# --AvatarBoundary
+# Content-Disposition: form-data; name="avatar"; filename="avatar.png"
+# Content-Type: image/png
+#
+# < ./path/to/avatar.png
+# --AvatarBoundary--
+
+### Get my avatar (binary response)
+GET {{BASE_URL}}/users/me/avatar
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Delete my avatar
+DELETE {{BASE_URL}}/users/me/avatar
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List workers (admin only)
+GET {{BASE_URL}}/users/workers
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###############################################################################
+#  Items / Inventory
+###############################################################################
+
+### List all items
+GET {{BASE_URL}}/items
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List categories
+GET {{BASE_URL}}/items/categories
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### List brands
+GET {{BASE_URL}}/items/brands
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Create item (admin) — set CATEGORY_ID and BRAND_ID first
+POST {{BASE_URL}}/items
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Gaming Laptop Pro",
+  "price": 1599.99,
+  "amount": 10,
+  "category_id": "{{CATEGORY_ID}}",
+  "brand_id": "{{BRAND_ID}}",
+  "model": "GL-2026",
+  "specs": "32GB RAM, 1TB NVMe SSD, RTX 4080",
+  "warranty": "3 years"
+}
+
+### Update item (admin) — set ITEM_ID first
+PATCH {{BASE_URL}}/items/{{ITEM_ID}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "price": 1499.99,
+  "amount": 8
+}
+
+### Delete item (admin)
+# DELETE {{BASE_URL}}/items/{{ITEM_ID}}
+# Authorization: Bearer {{ADMIN_TOKEN}}
+
+###############################################################################
+#  Customers
+###############################################################################
+
+### List all customers
+GET {{BASE_URL}}/customers
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Create customer (admin)
+POST {{BASE_URL}}/customers
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+36201234567"
+}
+
+###############################################################################
+#  Orders
+###############################################################################
+
+### List orders (admin sees all; worker sees only assigned)
+GET {{BASE_URL}}/orders
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Create order (admin) — set ITEM_ID and CUSTOMER_ID first
+POST {{BASE_URL}}/orders
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "item_id": "{{ITEM_ID}}",
+  "customer_id": "{{CUSTOMER_ID}}",
+  "quantity": 2,
+  "status": "pending"
+}
+
+### Update order status (admin) — set ORDER_ID first
+PATCH {{BASE_URL}}/orders/{{ORDER_ID}}/status
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "status": "processing"
+}
+
+### Assign order to worker (admin)
+# PATCH {{BASE_URL}}/orders/{{ORDER_ID}}/assign
+# Authorization: Bearer {{ADMIN_TOKEN}}
+# Content-Type: application/json
+#
+# {
+#   "userId": "<WORKER_USER_ID>"
+# }
+
+### Delete order (admin)
+# DELETE {{BASE_URL}}/orders/{{ORDER_ID}}
+# Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Export orders as CSV (admin)
+GET {{BASE_URL}}/orders/export?status=all&format=csv
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Export orders as PDF (admin)
+GET {{BASE_URL}}/orders/export?status=all&format=pdf
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###############################################################################
+#  Analytics & Dashboard
+###############################################################################
+
+### Analytics — last 7 days
+GET {{BASE_URL}}/analytics?period=7days
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Analytics — last 30 days
+GET {{BASE_URL}}/analytics?period=30days
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Analytics — last 90 days
+GET {{BASE_URL}}/analytics?period=90days
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Export analytics CSV (admin)
+GET {{BASE_URL}}/analytics/export?period=30days&format=csv
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Export analytics PDF (admin)
+GET {{BASE_URL}}/analytics/export?period=30days&format=pdf
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### Dashboard summary
+GET {{BASE_URL}}/dashboard
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###############################################################################
+#  Support
+###############################################################################
+
+### Send support/contact message (public, rate-limited)
+POST {{BASE_URL}}/support/contact
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "subject": "Question about order",
+  "message": "Hello, I have a question about my recent order. Can you help?"
+}
+
+###############################################################################
+#  Negative / Edge-case Tests
+###############################################################################
+
+### Access protected route without token (expect 401)
+GET {{BASE_URL}}/users/me
+
+### Access admin route as worker (expect 403)
+GET {{BASE_URL}}/users/workers
+Authorization: Bearer {{WORKER_TOKEN}}
+
+### Create item with missing fields (expect 400)
+POST {{BASE_URL}}/items
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Incomplete Item"
+}
+
+### Register with weak password (expect 400)
+POST {{BASE_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "weak@example.com",
+  "username": "weakuser",
+  "password": "123"
+}
+
+### Hungarian language — error messages
+GET {{BASE_URL}}/users/me
+Accept-Language: hu

@@ -1,238 +1,343 @@
-
 # Backend Documentation
 
-Last updated: March 19, 2026
+Last updated: March 24, 2026
 
 ## 1) Overview
 
-The backend is an Express 5 API (ES modules) with Supabase/PostgreSQL persistence, JWT auth, refresh-token session management, localization (`en`/`hu`), CSV/PDF exports, and SMTP-based email flows.
+The backend is an Express 5 API (ES modules) with Supabase/PostgreSQL persistence, JWT authentication, refresh-token session management, bilingual localization (`en`/`hu`), CSV/PDF exports, avatar file uploads, and SMTP-based email flows.
 
 Core stack:
-- Node.js + Express 5
-- Supabase JS client (`users`, `items`, `logs`, `orders_status`, etc.)
-- JWT access tokens + DB-backed refresh tokens
-- `bcryptjs` for password hashing
-- `zod` for request validation
-- `helmet`, rate limiting, and payload sanitization
-- `nodemailer` for password reset/support/admin approval emails
-- Swagger UI at `/docs` (minimal generated spec)
 
-## 2) Project structure (backend)
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js + Express 5 (ES modules) |
+| Database | Supabase (PostgreSQL) via `@supabase/supabase-js` |
+| Auth | JWT access tokens + DB-backed refresh tokens (httpOnly cookie) |
+| Password hashing | `bcryptjs` |
+| Validation | `zod` schemas |
+| Security | `helmet`, `express-rate-limit`, custom payload sanitization |
+| Email | `nodemailer` (password reset, support forms, admin approval emails) |
+| File uploads | `multer` (avatar images, stored on disk) |
+| PDF generation | `pdfkit` |
+| Realtime | `socket.io` (initialized, not actively used yet) |
+| API docs | `swagger-ui-express` + `swagger-jsdoc` (minimal spec at `/docs`) |
 
-- `src/index.js` — app bootstrap, middleware stack, route mounting, HTTP server, Socket.IO, startup logging
-- `src/routes/*` — endpoint definitions and access guards
-- `src/controllers/*` — request/response orchestration
-- `src/services/*` — data/business logic
-- `src/middlewares/*` — auth, language, sanitization, error handling
-- `src/utils/*` — i18n, CSV/PDF generators, scrubbing, async wrapper, token hashing
-- `src/validators.js` — Zod schemas
-- `test.http` — manual API request collection
+## 2) Project structure
 
-## 3) Runtime and middleware pipeline
+```
+backend/
+├── src/
+│   ├── index.js                   # App bootstrap, middleware stack, route mounting, server start
+│   ├── db.js                      # Supabase client singleton
+│   ├── validators.js              # Zod schemas for request validation
+│   ├── controllers/
+│   │   ├── analytics.controller.js
+│   │   ├── auth.controller.js
+│   │   ├── customer.controller.js
+│   │   ├── dashboard.controller.js
+│   │   ├── health.controller.js
+│   │   ├── item.controller.js
+│   │   ├── order.controller.js
+│   │   ├── support.controller.js
+│   │   └── user.controller.js
+│   ├── middlewares/
+│   │   ├── auth.middleware.js      # JWT verification + role guard
+│   │   ├── error.middleware.js     # Centralized error handler
+│   │   ├── language.middleware.js  # Accept-Language → req.lang
+│   │   └── sanitize.middleware.js  # HTML-encodes angle brackets, strips null bytes
+│   ├── routes/
+│   │   ├── analytics.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── customer.routes.js
+│   │   ├── dashboard.routes.js
+│   │   ├── health.routes.js
+│   │   ├── item.routes.js
+│   │   ├── order.routes.js
+│   │   ├── support.routes.js
+│   │   └── user.routes.js
+│   ├── services/
+│   │   ├── analytics.service.js
+│   │   ├── auth.service.js
+│   │   ├── customer.service.js
+│   │   ├── item.service.js
+│   │   ├── order.service.js
+│   │   └── user.service.js
+│   └── utils/
+│       ├── async.util.js           # asyncWrap helper for Express 5
+│       ├── constants.js
+│       ├── csv.util.js             # CSV report generation
+│       ├── email.template.js       # HTML email templates
+│       ├── i18n.util.js            # Backend translation dictionary (en/hu)
+│       ├── pdf.util.js             # PDFKit report generation
+│       ├── scrub.util.js           # Response scrubbing middleware
+│       ├── supabase.util.js        # Supabase query wrapper
+│       └── token.util.js           # HMAC-SHA256 token hashing, JTI generation
+├── uploads/
+│   └── avatars/                    # User avatar images (per-user file naming)
+├── scripts/                        # Utility/dev scripts (migrations, JWT generation, etc.)
+├── test.http                       # Manual HTTP request collection (VS Code REST Client)
+└── package.json
+```
 
-Global middleware in order:
-1. CORS (frontend production URL + localhost:4200, credentials enabled)
-2. JSON body parser
-3. Cookie parser
-4. `helmet`
-5. Global rate limiter (`200` requests / `15 min` / IP)
-6. Request sanitizer (`sanitizeMiddleware`)
-7. Language resolver (`Accept-Language` → `req.lang`)
-8. Response scrubbing middleware
-9. Route handlers
-10. Centralized `errorHandler`
+## 3) Middleware pipeline
 
-`trust proxy` is configurable through `TRUST_PROXY`; defaults to `1` in production, otherwise `false`.
+Global middleware is applied in this order:
+
+1. **CORS** — Allows `https://pc-store-manager-frontend.onrender.com` and `http://localhost:4200`, credentials enabled
+2. **JSON body parser** — `express.json()`
+3. **Cookie parser** — `cookie-parser`
+4. **Helmet** — Security headers (cross-origin resource/opener policies relaxed for API use)
+5. **Global rate limiter** — `200` requests / `15 min` / IP
+6. **Sanitization** — HTML-encodes `<` and `>` in request body strings, strips null bytes. Does **not** strip `$` or `;` (legitimate in product specs, prices, etc.)
+7. **Language resolver** — Reads `Accept-Language` header → sets `req.lang` (`en` fallback)
+8. **Response scrubbing** — Removes sensitive fields from outgoing JSON
+9. **Route handlers**
+10. **Centralized error handler** — Catches unhandled errors and returns consistent JSON error responses
+
+`trust proxy` is configurable via the `TRUST_PROXY` env var; defaults to `1` in production, `false` otherwise.
 
 ## 4) Environment variables
 
-Required:
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-- `JWT_SECRET`
+### Required
 
-Common optional:
-- `PORT` (default `3000`)
-- `NODE_ENV`
-- `FRONTEND_URL` (used in links and redirects)
-- `BACKEND_URL` (used for one-click admin action email links)
-- `TRUST_PROXY`
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_KEY` | Supabase service-role key |
+| `JWT_SECRET` | Secret for signing JWTs. **Must not be the default** in production (server exits on startup if detected) |
 
-SMTP / mail:
-- `SMTP_HOST`
-- `SMTP_PORT` (default `587`)
-- `SMTP_SECURE` (`true` / `false`)
-- `SMTP_USER`
-- `SMTP_PASS`
-- `SMTP_FROM`
-- `SUPPORT_EMAIL` (fallback inbox for support form)
+### Optional
 
-If SMTP is not fully configured, email flows fall back to logging to server output where applicable.
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PORT` | `3000` | Server listen port |
+| `NODE_ENV` | `development` | Controls trust proxy default, cookie security, and secret enforcement |
+| `FRONTEND_URL` | — | Used in email links and redirects |
+| `BACKEND_URL` | — | Used in one-click admin action email links |
+| `TRUST_PROXY` | `1` in prod, `false` in dev | Express trust proxy setting (numeric, boolean, and string values accepted) |
+
+### SMTP / Email
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SMTP_HOST` | — | Mail server host |
+| `SMTP_PORT` | `587` | Mail server port |
+| `SMTP_SECURE` | `false` | Use TLS |
+| `SMTP_USER` | — | SMTP auth username |
+| `SMTP_PASS` | — | SMTP auth password |
+| `SMTP_FROM` | — | Sender address |
+| `SUPPORT_EMAIL` | — | Fallback inbox for support form submissions |
+
+If SMTP is not fully configured, email flows fall back to logging the message content to the server console.
 
 ## 5) Authentication and session model
 
 ### Access token
-- Signed JWT (`~1 hour` expiry)
-- Includes user id, role, and `jti`
+
+- Signed JWT with `~1 hour` expiry
+- Payload includes user `id`, `role`, and unique `jti` (JWT ID)
 - Sent by client as `Authorization: Bearer <token>`
 
 ### Refresh token
-- Random opaque token persisted hashed in `refresh_tokens`
-- Stored in httpOnly cookie `refresh_token`
-- Optional remember cookie: `remember_session=1`
-- Rotated on `/auth/refresh`
-- Device metadata checks (`ip`, `user_agent`) on refresh
-- Max `5` refresh tokens retained per user
 
-### Revocation
-- Access token `jti` values can be invalidated via `revoked_tokens`
-- Logout and session revoke operations populate revocation entries
-- Cleanup runs at startup and hourly
+- Random opaque token, persisted **hashed** (HMAC-SHA256) in the `refresh_tokens` table
+- Delivered to the client in an httpOnly cookie (`refresh_token`)
+- Optional "remember me" cookie: `remember_session=1`
+- **Rotated** on every `/auth/refresh` call (old token invalidated, new one issued)
+- Device metadata (`ip`, `user_agent`) is checked on refresh for anomaly detection
+- Maximum **5** refresh tokens retained per user (oldest are pruned)
+
+### Token revocation
+
+- Access token `jti` values can be added to `revoked_tokens` for immediate invalidation
+- Logout and session-revoke operations populate revocation entries
+- Expired revocation entries are cleaned up at startup and then every hour via scheduled task
 
 ## 6) Role model
 
-Supported roles:
-- `admin`
-- `worker`
+Supported roles: **`admin`** and **`worker`**
 
 Admin-specific behavior:
-- New `admin` registrations are created with `admin_approved=false`
-- First ever admin auto-approves if no approved admin exists
-- Approved admins can approve/reject pending admin accounts
-- One-click approval/rejection links are signed JWT action tokens
+
+- New `admin` registrations are created with `admin_approved = false`
+- The very first admin is auto-approved if no approved admin exists in the database
+- Approved admins can approve or reject pending admin accounts
+- Approval/rejection emails include one-click action links (signed JWT action tokens)
 
 ## 7) API endpoints
 
 Base URL (local): `http://localhost:3000`
 
-### Health and meta
-- `GET /` — API metadata summary
-- `GET /health` — liveness + DB reachability info
-- `GET /health/ready` — readiness probe
+### Health & meta
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/` | — | API metadata summary |
+| `GET` | `/health` | — | Liveness check + DB reachability |
+| `GET` | `/health/ready` | — | Readiness probe |
 
 ### Auth
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh` (rate-limited)
-- `POST /auth/logout`
-- `POST /auth/forgot-password`
-- `POST /auth/reset-password`
-- `GET /auth/tokens` (auth)
-- `DELETE /auth/tokens/:id` (auth)
 
-Admin auth/session endpoints:
-- `GET /auth/admin/sessions` (admin)
-- `GET /auth/admin/audit` (admin)
-- `DELETE /auth/admin/revoked/cleanup` (admin)
-- `GET /auth/admin/pending-admins` (admin)
-- `POST /auth/admin/pending-admins/:id/approve` (admin)
-- `POST /auth/admin/pending-admins/:id/reject` (admin)
-- `GET /auth/admin/pending-admins/:id/approve/oneclick?token=...`
-- `GET /auth/admin/pending-admins/:id/reject/oneclick?token=...`
+| Method | Path | Auth | Rate limit | Notes |
+|--------|------|------|------------|-------|
+| `POST` | `/auth/register` | — | global | Creates user; admin role requires approval |
+| `POST` | `/auth/login` | — | global | Returns access token + sets refresh cookie |
+| `POST` | `/auth/refresh` | — | 10/min/IP | Rotates refresh token |
+| `POST` | `/auth/logout` | — | global | Revokes refresh token, clears cookie |
+| `POST` | `/auth/forgot-password` | — | global | Initiates password reset email |
+| `POST` | `/auth/reset-password` | — | global | Completes password reset with token |
+| `GET` | `/auth/tokens` | auth | global | List current user's active sessions |
+| `DELETE` | `/auth/tokens/:id` | auth | global | Revoke a specific session |
+
+### Auth — Admin
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/auth/admin/sessions` | admin | List all sessions (paginated, filterable by query/email/date) |
+| `GET` | `/auth/admin/audit` | admin | Paginated audit log entries |
+| `DELETE` | `/auth/admin/revoked/cleanup` | admin | Manual cleanup of expired revoked tokens |
+| `GET` | `/auth/admin/pending-admins` | admin | List pending admin registrations |
+| `POST` | `/auth/admin/pending-admins/:id/approve` | admin | Approve a pending admin |
+| `POST` | `/auth/admin/pending-admins/:id/reject` | admin | Reject and delete a pending admin |
+| `GET` | `/auth/admin/pending-admins/:id/approve/oneclick?token=` | — | One-click approval via email link |
+| `GET` | `/auth/admin/pending-admins/:id/reject/oneclick?token=` | — | One-click rejection via email link |
 
 ### Users
-- `GET /users/me` (auth)
-- `PATCH /users/me` (auth)
-- `PATCH /users/me/password` (auth)
-- `GET /users/workers` (admin)
 
-Avatar endpoints:
-- `POST /users/me/avatar` (multipart `avatar`, max 2MB, image only)
-- `GET /users/me/avatar`
-- `DELETE /users/me/avatar`
-- `GET /users/:id/avatar` (restricted: user can access own id only)
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/users/me` | auth | Current user profile |
+| `PATCH` | `/users/me` | auth | Update profile (email, username, fullname) |
+| `PATCH` | `/users/me/password` | auth | Change password |
+| `GET` | `/users/workers` | admin | List all worker accounts |
 
-### Items / inventory
-- `GET /items` (auth)
-- `GET /items/categories` (auth)
-- `GET /items/brands` (auth)
-- `POST /items` (admin)
-- `PATCH /items/:id` (admin)
-- `DELETE /items/:id` (admin)
+### Avatars
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `POST` | `/users/me/avatar` | auth | Upload avatar (multipart `avatar` field, max 2 MB, images only). Old files with different extensions are automatically cleaned up |
+| `GET` | `/users/me/avatar` | auth | Serve current user's avatar. Returns `Cache-Control: no-cache, no-store, must-revalidate` |
+| `DELETE` | `/users/me/avatar` | auth | Delete current user's avatar |
+| `GET` | `/users/:id/avatar` | auth | Serve another user's avatar (owner or admin only) |
+
+### Items / Inventory
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/items` | auth | List all items |
+| `GET` | `/items/categories` | auth | List categories |
+| `GET` | `/items/brands` | auth | List brands |
+| `POST` | `/items` | admin | Create item |
+| `PATCH` | `/items/:id` | admin | Update item |
+| `DELETE` | `/items/:id` | admin | Delete item |
 
 ### Customers
-- `GET /customers` (auth)
-- `POST /customers` (admin)
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/customers` | auth | List all customers |
+| `POST` | `/customers` | admin | Create customer |
 
 ### Orders
-- `GET /orders` (auth; non-admin only assigned orders)
-- `POST /orders` (admin)
-- `PATCH /orders/:id/status` (admin)
-- `PATCH /orders/:id/assign` (admin)
-- `DELETE /orders/:id` (admin)
-- `GET /orders/export?status=all|pending|processing|completed|cancelled&format=csv|pdf` (admin)
 
-### Analytics and dashboard
-- `GET /analytics?period=7days|30days|90days` (auth)
-- `GET /analytics/export?period=...&format=csv|pdf` (admin)
-- `GET /dashboard` (auth)
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/orders` | auth | List orders (non-admin sees only assigned orders) |
+| `POST` | `/orders` | admin | Create order |
+| `PATCH` | `/orders/:id/status` | admin | Update order status |
+| `PATCH` | `/orders/:id/assign` | admin | Assign order to worker |
+| `DELETE` | `/orders/:id` | admin | Delete order |
+| `GET` | `/orders/export` | admin | Export orders (`?status=all\|pending\|…&format=csv\|pdf`) |
+
+### Analytics & Dashboard
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/analytics` | auth | Analytics data (`?period=7days\|30days\|90days`) |
+| `GET` | `/analytics/export` | admin | Export analytics report (`?period=…&format=csv\|pdf`) |
+| `GET` | `/dashboard` | auth | Dashboard summary (stats + recent activity) |
 
 ### Support
-- `POST /support/contact` (public; strict rate-limit 5 requests / 15 min / IP)
 
-### Docs
-- `GET /docs`
-- `GET /docs.json`
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `POST` | `/support/contact` | — | Contact form submission. Rate-limited: **5 req / 15 min / IP** |
+
+### API Docs
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/docs` | Swagger UI |
+| `GET` | `/docs.json` | OpenAPI JSON spec |
 
 ## 8) Validation and localization
 
-Request payloads are validated with `zod` in controllers (`register`, `login`, `createItem`, `createOrder`, password reset, etc.).
+Request payloads are validated with **Zod** schemas in controllers (register, login, createItem, createOrder, password change, etc.). Invalid payloads return `400` with structured error details.
 
-Localization:
-- Backend uses `Accept-Language` (`en` fallback)
-- Translation dictionary in `src/utils/i18n.util.js`
-- Validation errors are mapped to localized user-facing text
+**Localization:**
 
-## 9) Data model assumptions
+- Backend reads `Accept-Language` header (`en` fallback)
+- Translation dictionary in `src/utils/i18n.util.js` provides `en` and `hu` strings
+- Validation and error messages are mapped to localized user-facing text
 
-The backend currently expects at least these tables:
-- `users`
-- `items`
-- `categories`
-- `brands`
-- `customers`
-- `logs`
-- `orders_status`
-- `refresh_tokens`
-- `revoked_tokens`
-- `password_resets`
-- `audit_logs`
+## 9) Data model (Supabase tables)
 
-Note: brands/categories are read-only via API and managed directly in DB.
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts (email, username, fullname, role, password hash, approval status) |
+| `items` | Product inventory |
+| `categories` | Product categories (managed directly in DB, read-only via API) |
+| `brands` | Product brands (managed directly in DB, read-only via API) |
+| `customers` | Customer records |
+| `orders_status` | Orders with status tracking |
+| `logs` | Activity/event logs |
+| `refresh_tokens` | Hashed refresh tokens with device metadata |
+| `revoked_tokens` | Revoked JWT `jti` entries (with expiry for automatic cleanup) |
+| `password_resets` | Password reset tokens |
+| `audit_logs` | Admin audit trail entries |
 
 ## 10) Reporting and exports
 
-- Orders export: CSV or PDF from order list and status filters
-- Analytics export: CSV or PDF sales report for selected period
+- **Orders export:** CSV or PDF filtered by status (`all`, `pending`, `processing`, `completed`, `cancelled`)
+- **Analytics export:** CSV or PDF sales report for a selected period (`7days`, `30days`, `90days`)
 - PDF generation uses `pdfkit`
-- CSV generation uses shared utility (`csv.util.js`)
+- CSV generation uses the shared utility in `src/utils/csv.util.js`
 
 ## 11) Security notes
 
-- Keep `JWT_SECRET` strong and private
-- Use service-role credentials responsibly (`SUPABASE_KEY`)
-- Set `TRUST_PROXY=1` behind reverse proxies (Render, etc.)
-- Prefer HTTPS in production for secure cookies (`sameSite='none'` in prod)
-- Monitor logs if SMTP is intentionally disabled (reset/support messages may be logged)
+- **JWT_SECRET** must be strong and kept private. The server will refuse to start if it detects the default placeholder secret in production.
+- Use Supabase service-role credentials responsibly (`SUPABASE_KEY`).
+- Set `TRUST_PROXY=1` when running behind a reverse proxy (Render, nginx, etc.).
+- Prefer HTTPS in production for secure cookie delivery (`sameSite='none'` in prod).
+- Sanitization middleware HTML-encodes `<` and `>` in request bodies. It does **not** strip `$` or `;` which are legitimate in product data.
+- Monitor server logs if SMTP is intentionally disabled — reset links and support messages will be logged instead of emailed.
 
 ## 12) Run and test
 
 ```bash
 cd backend
 npm install
-npm run dev
+npm run dev    # starts with --watch for auto-reload
 ```
 
-Manual API smoke tests:
-- `backend/test.http`
+Production:
 
-## 13) Deployment snapshot (Render)
+```bash
+npm start
+```
 
-Current repo includes a `render.yaml` defining:
-- Node web service for backend (`rootDir: backend`)
-- Static frontend service (`rootDir: frontend`)
+Manual API smoke tests are available in `backend/test.http` (VS Code REST Client format).
 
-Backend production config should include at minimum:
+## 13) Deployment (Render)
+
+The repository includes `render.yaml` defining:
+
+- **Web service** for the backend (`rootDir: backend`)
+- **Static site** for the frontend (`rootDir: frontend`)
+
+Backend production environment should include at minimum:
+
 - `NODE_ENV=production`
 - `TRUST_PROXY=1`
-- Supabase/JWT/SMTP values as applicable
+- `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET`
+- SMTP variables if email flows are needed

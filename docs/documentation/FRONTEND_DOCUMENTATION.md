@@ -1,262 +1,293 @@
 # Frontend Documentation
 
-Last updated: March 19, 2026
+Last updated: March 24, 2026
 
 ## 1) Overview
 
-The frontend is a standalone-component Angular application (Angular 21) for PC Store Manager. It includes authentication, inventory/order/customer workflows, analytics dashboards, profile/session management, admin moderation tools, localization, theming, and toast-based UX feedback.
+The frontend is a standalone-component Angular 21 application for PC Store Manager. It provides authentication, inventory/order/customer workflows, analytics dashboards with Chart.js, profile and session management, admin moderation tools, bilingual localization (English / Hungarian), dark/light theming, and toast/modal-based UX feedback.
 
-Key stack:
-- Angular 21 standalone API
-- Angular Router + functional guards
-- HttpClient + functional interceptor
-- `ng2-charts` + `chart.js` for analytics visuals
-- `lucide-angular` icons
-- Custom i18n service (`en` / `hu`)
+Core stack:
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Angular 21 (standalone components, signals) |
+| Routing | Angular Router + functional guards (`AuthGuard`, `AdminGuard`, `GuestGuard`) |
+| HTTP | `HttpClient` + functional interceptor (`authInterceptor`) |
+| Charts | `ng2-charts` + `chart.js` 4.x |
+| Icons | `lucide-angular` |
+| Styling | Custom CSS (light/dark themes via CSS custom properties) |
+| i18n | Custom signal-based service with `TranslatePipe` (`en` / `hu`) |
 
 ## 2) App architecture
 
-Root bootstrap:
+### Bootstrap
+
 - `src/main.ts` bootstraps `App` with `appConfig`
+- `app.config.ts` provides: router, global HTTP interceptor, Lucide icon set
 
-Configuration:
-- `app.config.ts` provides:
-  - router
-  - global HTTP interceptor (`authInterceptor`)
-  - Lucide icon provider
+### Root shell (`app.ts` / `app.html`)
 
-Main shell:
-- `app.ts` controls navbar visibility, mobile nav, theme toggle, language toggle
-- Navbar is shown only when authenticated and not on auth screens
+- Controls navbar visibility (hidden on auth screens)
+- Mobile hamburger menu with responsive navigation
+- Theme toggle (dark/light) and language toggle (EN/HU)
+- Profile link and logout button
+- Navbar visibility is determined by authentication state and current route
+
+### Environment configuration
+
+- `environment.ts` — Development: `production: false`, `apiUrl: http://localhost:3000`
+- `environment.prod.ts` — Production: `production: true`, `apiUrl` pointing to Render backend
 
 ## 3) Routing map
 
-Primary routes:
-- `/login` (guest-only)
-- `/register` (guest-only)
-- `/forgot` (guest-only)
-- `/reset-password` (guest-only)
-- `/dashboard` (auth)
-- `/products` (auth)
-- `/orders` (auth)
-- `/analytics` (auth)
-- `/profile` (auth)
-- `/admin/sessions` (auth + admin)
-- `/admin/audit` (auth + admin)
-- `/admin/action-result` (public result page for one-click admin actions)
+| Path | Component | Guard | Notes |
+|------|-----------|-------|-------|
+| `/` | — | — | Redirects to `/dashboard` |
+| `/login` | `LoginComponent` | `GuestGuard` | Email/password login with remember-me and support modal |
+| `/register` | `RegisterComponent` | `GuestGuard` | 4-step workflow with role selection |
+| `/forgot` | `ForgotComponent` | `GuestGuard` | Password reset request (non-disclosing) |
+| `/reset-password` | `ResetPasswordComponent` | `GuestGuard` | Token-based password reset |
+| `/dashboard` | `DashboardComponent` | `AuthGuard` | Stats, activity feed, quick actions, report download |
+| `/products` | `ProductsComponent` | `AuthGuard` | Product CRUD, search/filter, category/brand selection |
+| `/orders` | `OrdersComponent` | `AuthGuard` | Order list, status workflow, assignment, export |
+| `/analytics` | `AnalyticsComponent` | `AuthGuard` | Charts, summary cards, export |
+| `/profile` | `ProfileComponent` | `AuthGuard` | Profile edit, avatar, password change, sessions |
+| `/admin/sessions` | `AdminSessionsComponent` | `AuthGuard` + `AdminGuard` | All sessions, pending admin approvals |
+| `/admin/audit` | `AdminAuditComponent` | `AuthGuard` + `AdminGuard` | Paginated audit log |
+| `/admin/action-result` | `AdminActionResultComponent` | — | One-click email action result page |
+| `/admin/pending-admins` | — | — | Redirects to `/admin/sessions` |
+| `**` | — | — | Wildcard redirects to `/dashboard` |
 
-Default/fallback:
-- `/` redirects to `/dashboard`
-- unknown routes redirect to `/dashboard`
+## 4) Authentication and session management
 
-## 4) Auth/session behavior
+Implemented in `auth.service.ts`, route guards, and `auth.interceptor.ts`.
 
-Implemented in `auth.service.ts` + guards + interceptor.
+### Token storage
 
-### Token storage model
-- Access token + user are stored in:
-  - `localStorage` if “remember me” is enabled
-  - `sessionStorage` otherwise
-- Refresh token is stored in backend-issued httpOnly cookie
+- **Access token** + **user object** stored in:
+  - `localStorage` if "remember me" is enabled (persists across browser sessions)
+  - `sessionStorage` otherwise (cleared on tab close)
+- **Refresh token** stored in a backend-issued httpOnly cookie (not accessible to JS)
 
-### Automatic refresh flow
-- Interceptor attaches `Authorization` and `Accept-Language`
-- On `401` (non-auth endpoints), interceptor attempts `/auth/refresh`
-- If refresh succeeds, request is retried
-- If refresh fails, user is logged out with “session expired” state
+### Startup / page refresh flow
+
+1. `AuthService` constructor calls `loadFromStorage()` to restore token and user
+2. If token is expired, auth data is cleared but the "remember me" preference is **preserved**
+3. If remember-me is set and no valid token exists, `refresh()` is called automatically
+4. `authReady` promise resolves once the startup flow (restore or refresh) has settled
+5. Components that need auth data (e.g. `ProfileComponent`) await `authReady` before loading
+
+### Interceptor behavior
+
+- Attaches `Authorization: Bearer <token>` and `Accept-Language` headers to all outgoing requests
+- On `401` responses (non-auth endpoints), attempts a transparent token refresh
+- If refresh succeeds, the original request is retried with the new token
+- If refresh fails, the user is logged out with a "session expired" toast
 
 ### Guards
-- `AuthGuard`: allows route if authenticated; otherwise optionally attempts one-time refresh
-- `AdminGuard`: same as above, with role check
-- `GuestGuard`: blocks auth pages for already-authenticated users
+
+| Guard | Behavior |
+|-------|----------|
+| `AuthGuard` | Allows route if authenticated; may attempt one-time refresh |
+| `AdminGuard` | Same as `AuthGuard` + requires `admin` role |
+| `GuestGuard` | Blocks auth pages for already-authenticated users |
 
 ## 5) API integration layer
 
-`ApiService` centralizes URL building and request helpers:
-- standard JSON calls (`get`, `post`, `patch`, `delete`)
-- cookie-enabled variants (`getWithCredentials`, `postWithCredentials`, `deleteWithCredentials`)
-- blob download helper (`getBlob`)
+### `ApiService` (`services/api.service.ts`)
 
-Environment-based base URL:
-- `environment.apiUrl`
+Centralizes URL building and HTTP request helpers:
 
-## 6) Feature modules/components
+| Method | Purpose |
+|--------|---------|
+| `get<T>()` | Standard GET |
+| `post<T>()` | Standard POST |
+| `patch<T>()` | Standard PATCH |
+| `delete<T>()` | Standard DELETE |
+| `getWithCredentials<T>()` | GET with `withCredentials: true` (sends cookies) |
+| `postWithCredentials<T>()` | POST with cookies |
+| `deleteWithCredentials<T>()` | DELETE with cookies |
+| `postFormData<T>()` | POST multipart/form-data (avatar upload) |
+| `getBlob()` | GET that returns a `Blob` (file downloads, avatar fetch), sends cookies |
+
+Base URL is read from `environment.apiUrl`.
+
+### `AuthService` (`auth/auth.service.ts`)
+
+Acts as the primary API client for all feature endpoints. All methods return typed `Observable<T>` using interfaces from `api.models.ts`. Key method groups:
+
+- **Auth:** `login()`, `register()`, `refresh()`, `logout()`, `forgotPassword()`, `resetPassword()`
+- **Profile:** `getMe()`, `updateProfile()`, `changePassword()`
+- **Avatar:** `getMyAvatar()`, `uploadAvatar()`, `deleteAvatar()`
+- **Sessions:** `getSessions()`, `revokeSession()`
+- **Items:** `getItems()`, `createItem()`, `updateItem()`, `deleteItem()`, `getCategories()`, `getBrands()`
+- **Orders:** `getOrders()`, `createOrder()`, `updateOrderStatus()`, `assignOrder()`, `deleteOrder()`, `exportOrders()`
+- **Customers:** `getCustomers()`, `createCustomer()`
+- **Analytics:** `getAnalytics()`, `exportAnalytics()`
+- **Dashboard:** `getDashboard()`, `generateBusinessReport()`
+- **Admin:** `getAllSessionsPaged()`, `listPendingAdmins()`, `approveAdmin()`, `rejectAdmin()`, `revokeSessionByAdmin()`
+- **Workers:** `getWorkers()`
+
+## 6) Feature components
 
 ### Authentication
-- Login (`auth/login`)
-  - email/password login
-  - remember-me flag
-  - support contact modal (`/support/contact`)
-- Register (`auth/register`)
-  - 4-step workflow
-  - role selection (`admin` / `worker`)
-  - handles “awaiting admin approval” path
-- Forgot password (`auth/forgot`)
-  - generic non-disclosing reset messages
-- Reset password (`auth/reset-password`)
-  - token from query param
+
+- **Login** — Email/password, remember-me toggle, support contact modal
+- **Register** — 4-step form (role selection → credentials → personal info → confirmation), handles admin approval workflow
+- **Forgot password** — Generic non-disclosing success message
+- **Reset password** — Token-based, from query parameter
 
 ### Dashboard
-- Loads backend summary from `/dashboard`
-- Shows stats + activity list
-- Quick actions (new order, add product)
-- Business report download (`/analytics/export`) in CSV/PDF
+
+- Loads summary stats from `/dashboard` (total products, sales, active orders, customers)
+- Recent activity feed
+- Quick action buttons (new order, add product)
+- Business report download modal (period selector, CSV/PDF format)
+- Stats rebuild on language change via Angular `effect()`
 
 ### Products
-- CRUD on inventory via `/items`
-- Category/brand loading (`/items/categories`, `/items/brands`)
-- Search/filter UI
-- Shared confirmation modal for deletes
+
+- Full CRUD on inventory via `/items`
+- Category and brand dropdowns (loaded from API)
+- Search and filter UI
+- Confirmation modal for deletes
 
 ### Orders
-- Order listing/filtering/search
-- Order status updates
-- Create manual order (+ optional inline customer creation)
-- Worker assignment (admin)
-- Export orders (`/orders/export`) CSV/PDF
+
+- Order listing with search, status filter dropdown
+- Order status updates (pending → processing → completed / cancelled)
+- Manual order creation with inline customer creation option
+- Worker assignment (admin only)
+- Export orders as CSV/PDF
 
 ### Analytics
-- Pulls `/analytics?period=...`
-- Revenue line chart + category doughnut chart
-- Summary cards and top products
-- Recent transactions section for admins
-- Export analytics CSV/PDF
+
+- Revenue line chart and category doughnut chart (`ng2-charts` / `chart.js`)
+- Summary stat cards (revenue, orders, average order value, top product, low stock, growth)
+- Top products table with trend indicators
+- Recent transactions section (admin only)
+- Period selector (`7days` / `30days` / `90days`)
+- Export analytics as CSV/PDF
+- Charts auto-update colors on theme change
 
 ### Profile
-- View/update own profile
-- Change password
-- Avatar upload/reload
-- Active session listing + revoke own session
+
+- View and edit profile (email, username, fullname)
+- Avatar upload with immediate preview (blob URL)
+- Change password modal
+- Active session listing with revoke capability
+- Waits for `authReady` before loading data to prevent race conditions on page refresh
 
 ### Admin pages
-- Admin sessions (`/admin/sessions`)
-  - paginated session list
-  - filters by search/email/date range
-  - revoke sessions
-  - approve/reject pending admins
-- Audit logs (`/admin/audit`)
-  - paginated events from backend audit stream
-- Admin action result (`/admin/action-result`)
-  - displays result of one-click email approve/reject action
 
-### Shared UX
-- Toast service + toast component
-- Reusable confirmation modal component
+- **Admin Sessions** (`/admin/sessions`)
+  - Paginated session list with search, email filter, date range filter
+  - Session revocation with confirmation modal
+  - Pending admin approvals section with approve/reject confirmation modals
+- **Audit Logs** (`/admin/audit`)
+  - Paginated audit event stream
+- **Admin Action Result** (`/admin/action-result`)
+  - Displays result of one-click email approve/reject actions
 
-## 7) Internationalization and theme
+### Shared UX components
+
+- **ToastService** + **ToastComponent** — Non-blocking notifications (`info`, `success`, `error`, `warning`) with auto-dismiss
+- **ConfirmationModalComponent** — Reusable modal for destructive actions (replaces native `confirm()` dialogs)
+
+## 7) Internationalization and theming
 
 ### i18n
-- `i18n.service.ts` contains large in-app dictionary for `en` and `hu`
-- `TranslatePipe` (`t`) renders translated keys in templates
-- Interceptor sends current language in `Accept-Language`
+
+- `I18nService` contains an in-app dictionary with **450+ keys** for `en` and `hu`
+- `TranslatePipe` (`| t`) renders translated keys in templates
+- Current language stored in `localStorage` (`pc_language`)
+- Interceptor sends language via `Accept-Language` header
+- Language signal triggers reactive UI updates
 
 ### Theme
-- `theme.service.ts` toggles dark/light mode via `body` class
-- Choice persisted in `localStorage` (`pc_theme`)
 
-## 8) Data contracts (frontend models)
+- `ThemeService` toggles dark/light mode via `body` class (`dark-theme`)
+- Theme persisted in `localStorage` (`pc_theme`)
+- Charts dynamically update their color scheme on theme change
 
-`api.models.ts` defines:
-- `User`
-- `AuthResponse` (supports `token`, `accessToken`, `access_token` variants)
+## 8) Data contracts (`api.models.ts`)
 
-The frontend is defensive with backend token naming differences and supports all currently used response variants.
+The frontend defines shared TypeScript interfaces used across all services and components:
+
+| Interface | Purpose |
+|-----------|---------|
+| `User` | User profile (id, email, username, fullname, role) |
+| `AuthResponse` | Login/register response (supports `token`, `accessToken`, `access_token` variants) |
+| `Item` | Product/inventory item |
+| `Category` | Product category |
+| `Brand` | Product brand |
+| `Customer` | Customer record |
+| `OrderStatus` | Type alias: `'pending' \| 'processing' \| 'completed' \| 'cancelled'` |
+| `Order` | Order with product, customer, status, assignment |
+| `Session` | Active session / refresh token metadata |
+| `AnalyticsSummary` | Summary stats for analytics page |
+| `TopProduct` | Top-selling product entry |
+| `Transaction` | Recent transaction entry |
+| `DashboardStats` | Dashboard summary statistics |
+| `DashboardActivity` | Dashboard activity feed entry |
+| `AuditLog` | Admin audit log entry |
+| `PendingAdmin` | Pending admin registration |
 
 ## 9) Build and run
 
-From `frontend/`:
-
 ```bash
+cd frontend
 npm install
-npm start
+npm start        # Development server at http://localhost:4200
 ```
 
 Other scripts:
-- `npm run build`
-- `npm run watch`
-- `npm run test`
 
-Default dev app URL: `http://localhost:4200`
+| Script | Purpose |
+|--------|---------|
+| `npm run build` | Production build (output: `dist/frontend/browser`) |
+| `npm run watch` | Build in watch mode |
+| `npm run test` | Run unit tests (Karma + Jasmine) |
 
-## 10) Deployment notes
+## 10) Deployment (Render)
 
-Render static deployment is configured to publish:
-- `frontend/dist/frontend/browser`
+Render static site deployment publishes `frontend/dist/frontend/browser`.
 
-Backend API base URL comes from Angular environment files.
+Backend API base URL is configured via Angular environment files:
 
-Current repo state note:
-- `environment.prod.ts` points to Render backend URL
-- `environment.ts` also has `production: true` in current source; verify this behavior against desired dev/prod build expectations before release.
+- **Dev:** `http://localhost:3000` (in `environment.ts`)
+- **Prod:** Render backend URL (in `environment.prod.ts`)
 
-## 11) Dependencies (current major set)
+## 11) Dependencies
 
-- `@angular/*` 21.x
-- `rxjs` 7.8
-- `chart.js` 4.x
-- `ng2-charts` 8.x
-- `lucide-angular`
-- Tailwind packages are present in dependencies, while component styling remains primarily custom CSS.
+### Runtime
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `@angular/*` | 21.x | Core framework |
+| `rxjs` | 7.8.x | Reactive programming |
+| `chart.js` | 4.x | Chart rendering |
+| `ng2-charts` | 8.x | Angular Chart.js wrapper |
+| `lucide-angular` | 0.563.x | Icon library |
+| `zone.js` | 0.15.x | Change detection |
+
+### Dev
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `@angular/build` | 21.x | Build tooling |
+| `@angular/cli` | 21.x | CLI |
+| `typescript` | 5.9.x | TypeScript compiler |
+| `tailwindcss` | 4.x | Present in dependencies (styling is custom CSS) |
+| `karma` / `jasmine` | — | Test runner / assertion library |
 
 ## 12) Extension guidelines
 
 When adding features:
-1. Add new standalone component under `src/app/...`
-2. Add route in `app.routes.ts` with proper guard(s)
-3. Add API wrapper method in `auth.service.ts` or `api.service.ts`
-4. Add i18n keys in both `en` and `hu`
-5. Surface user feedback via toast or existing modal patterns
 
----
-
-## Installation & Running
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Build for production
-npm build
-```
-
-Visit `http://localhost:4200` to see the application.
-
----
-
-## Future Enhancements
-
-- [ ] Backend API integration
-- [ ] Authentication tokens (JWT)
-- [ ] Real database data
-- [ ] Charts/graphs on dashboard
-- [ ] User profile page
-- [ ] Settings management
-- [ ] Dark mode toggle
-- [ ] Internationalization (i18n)
-- [ ] Advanced search filters
-- [ ] Export/import features
-
----
-
-## Support & Troubleshooting
-
-**CSS not loading?**
-- Clear browser cache
-- Restart dev server
-
-**Forms not validating?**
-- Check browser console for errors
-- Verify FormsModule is imported
-
-**Navigation not working?**
-- Ensure routes are configured in `app.routes.ts`
-- Check Router injection in components
-
----
-
-**Version:** 1.0.0  
-**Created:** February 2026  
-**Framework:** Angular 20 with Pure CSS
+1. Create a new standalone component under `src/app/…`
+2. Add route in `app.routes.ts` with the appropriate guard(s)
+3. Add API wrapper method in `auth.service.ts` with proper return type from `api.models.ts`
+4. Add i18n keys in **both** `en` and `hu` sections of `i18n.service.ts`
+5. Surface user feedback via `ToastService` or `ConfirmationModalComponent`
+6. Use shared interfaces from `api.models.ts` — avoid `any` types in component properties
