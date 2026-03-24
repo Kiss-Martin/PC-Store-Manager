@@ -44,6 +44,8 @@ export class ProfileComponent implements OnInit {
   // Revoke session confirmation modal
   showRevokeConfirm = false;
   sessionToRevoke: string | null = null;
+  showDeleteConfirm = false;
+  isDeletingAccount = false;
 
   constructor(
     public auth: AuthService,
@@ -263,6 +265,33 @@ export class ProfileComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  requestDeleteProfile(): void {
+    this.showDeleteConfirm = true;
+    this.clearMessages();
+  }
+
+  cancelDeleteProfile(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  confirmDeleteProfile(): void {
+    if (this.isDeletingAccount) return;
+    this.isDeletingAccount = true;
+
+    this.auth.deleteMe().subscribe({
+      next: () => {
+        this.isDeletingAccount = false;
+        this.showDeleteConfirm = false;
+        this.auth.logout();
+      },
+      error: (err: any) => {
+        this.isDeletingAccount = false;
+        this.showDeleteConfirm = false;
+        this.showError(err?.error?.error || this.i18n.t('profile.error.deleteAccount'));
+      }
+    });
   }
 
   getRoleLabel(role: string | undefined): string {

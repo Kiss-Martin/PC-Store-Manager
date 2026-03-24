@@ -23,6 +23,19 @@ export const changePassword = async (req, res) => {
   res.json(result);
 };
 
+export const deleteProfile = async (req, res) => {
+  await UserService.deleteProfile(req.user.id, req.lang);
+  const userId = req.user.id;
+  const dir = path.join(process.cwd(), 'uploads', 'avatars');
+  try {
+    const files = fs.readdirSync(dir).filter((f) => f.startsWith(String(userId) + '.'));
+    for (const f of files) {
+      try { fs.unlinkSync(path.join(dir, f)); } catch (_e) { /* ignore */ }
+    }
+  } catch (_e) { /* ignore */ }
+  res.json({ success: true });
+};
+
 // Upload avatar (multipart/form-data 'avatar')
 export const uploadAvatar = async (req, res) => {
   try {

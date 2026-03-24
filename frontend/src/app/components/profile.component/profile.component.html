@@ -273,10 +273,16 @@
 
         <div class="flex items-center justify-between gap-4">
           <p class="text-sm m-0" [style.color]="'var(--color-muted)'">{{ 'profile.logoutInfo' | t }}</p>
-          <button class="inline-flex items-center gap-2 bg-red-500 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap" (click)="logout()">
-            <lucide-icon name="LogOut" [size]="18"></lucide-icon>
-            {{ 'profile.logout' | t }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button class="inline-flex items-center gap-2 bg-red-500 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap" (click)="logout()">
+              <lucide-icon name="LogOut" [size]="18"></lucide-icon>
+              {{ 'profile.logout' | t }}
+            </button>
+            <button class="inline-flex items-center gap-2 border border-red-500/40 text-red-500 bg-transparent px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-red-500/10 whitespace-nowrap" (click)="requestDeleteProfile()" [disabled]="isDeletingAccount">
+              <lucide-icon name="trash-2" [size]="18"></lucide-icon>
+              {{ 'profile.deleteAccount' | t }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -294,6 +300,18 @@
   icon="shield-alert"
   (confirm)="confirmRevokeSession()"
   (cancel)="cancelRevokeSession()">
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [show]="showDeleteConfirm"
+  [title]="'profile.deleteAccountTitle' | t"
+  [message]="'profile.confirmDeleteAccount' | t"
+  [confirmText]="'profile.deleteAccount' | t"
+  [cancelText]="'profile.cancel' | t"
+  confirmColor="danger"
+  icon="triangle-alert"
+  (confirm)="confirmDeleteProfile()"
+  (cancel)="cancelDeleteProfile()">
 </app-confirmation-modal>
 
 <!-- Change Password Modal -->

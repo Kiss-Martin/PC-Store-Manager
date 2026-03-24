@@ -302,6 +302,10 @@ export class AuthService {
     });
   }
 
+  deleteMe(): Observable<{ success: boolean }> {
+    return this.api.delete<{ success: boolean }>('/users/me');
+  }
+
   // Items/Products endpoints
   getItems(): Observable<{ items: Item[] }> {
     return this.api.get<{ items: Item[] }>('/items');

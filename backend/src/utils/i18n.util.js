@@ -28,6 +28,8 @@ const dictionaries = {
     'user.fetchFailed': 'Failed to fetch user',
     'user.currentPasswordIncorrect': 'Current password is incorrect',
     'user.passwordUpdated': 'Password updated successfully',
+    'user.deleted': 'Profile deleted successfully',
+    'user.deleteFailed': 'Failed to delete profile',
 
     'order.invalidStatus': 'Invalid status',
     'order.itemNotFound': 'Item not found',
@@ -141,6 +143,8 @@ const dictionaries = {
     'user.fetchFailed': 'Nem sikerült lekérni a felhasználót',
     'user.currentPasswordIncorrect': 'A jelenlegi jelszó hibás',
     'user.passwordUpdated': 'A jelszó sikeresen frissítve',
+    'user.deleted': 'A profil sikeresen törölve',
+    'user.deleteFailed': 'Nem sikerült törölni a profilt',
 
     'order.invalidStatus': 'Érvénytelen állapot',
     'order.itemNotFound': 'A termék nem található',
