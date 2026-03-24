@@ -99,7 +99,7 @@
 
     <div class="flex items-center gap-2">
       <lucide-icon name="sliders-horizontal" size="18" class="text-violet-600/50"></lucide-icon>
-      <div class="relative cursor-pointer" (click)="toggleStatusFilterDropdown()">
+      <div class="relative cursor-pointer custom-dropdown" (click)="toggleStatusFilterDropdown()">
         <div class="flex items-center gap-2 px-4 py-3 border rounded-xl min-w-44" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'" [style.color]="'var(--color-text)'">
           @if (selectedStatus !== 'all') {
             <lucide-icon [name]="getStatusIcon(selectedStatus)" size="16"></lucide-icon>
@@ -542,7 +542,7 @@
         <!-- Order Status -->
         <div class="flex flex-col gap-2">
           <label for="status" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.orderStatus' | t }}</label>
-          <div class="relative cursor-pointer" (click)="toggleOrderStatusDropdown()">
+          <div class="relative cursor-pointer custom-dropdown" (click)="toggleOrderStatusDropdown()">
             <div class="flex items-center gap-2 px-4 py-3 border rounded-lg" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'" [style.color]="'var(--color-text)'">
               <lucide-icon [name]="getStatusIcon(newOrder.status)" size="16"></lucide-icon>
               <span class="text-sm">{{ getStatusLabel(newOrder.status) }}</span>
