@@ -1,55 +1,56 @@
-<div class="profile-container">
-  <div class="profile-header">
-    <h1>
+<div class="p-8 max-w-4xl mx-auto animate-fade-in">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold flex items-center gap-3" [style.color]="'var(--color-text)'">
       <lucide-icon name="user" [size]="32"></lucide-icon>
       {{ 'profile.title' | t }}
     </h1>
-    <p>{{ 'profile.subtitle' | t }}</p>
+    <p class="text-sm mt-1" [style.color]="'var(--color-muted)'">{{ 'profile.subtitle' | t }}</p>
   </div>
 
   <!-- Loading State -->
   @if (isLoading) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <p>{{ 'profile.loading' | t }}</p>
+    <div class="flex flex-col items-center justify-center py-16 gap-3">
+      <div class="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm" [style.color]="'var(--color-muted)'">{{ 'profile.loading' | t }}</p>
     </div>
   }
 
   <!-- Profile Content -->
   @if (!isLoading && user) {
-    <div class="profile-content">
+    <div class="flex flex-col gap-6">
       <!-- Profile Overview Card -->
-      <div class="profile-card main-card">
-        <div class="profile-avatar-section">
-          <div class="profile-avatar">
+      <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+        <div class="flex items-center gap-6 flex-wrap">
+          <div class="flex flex-col items-center">
             @if (avatarUrl) {
-              <img [src]="avatarUrl" alt="avatar" style="width:80px;height:80px;border-radius:999px;object-fit:cover" />
+              <img [src]="avatarUrl" alt="avatar" class="w-20 h-20 rounded-full object-cover" />
             } @else {
-              <lucide-icon name="circle-user" [size]="80"></lucide-icon>
+              <lucide-icon name="circle-user" [size]="80" class="text-violet-600/50"></lucide-icon>
             }
-            <div style="margin-top:8px">
-              <label class="btn-secondary" style="cursor:pointer">
+            <div class="mt-2">
+              <label class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
                 {{ 'profile.uploadAvatar' | t }}
-                <input type="file" accept="image/*" (change)="onAvatarSelected($event)" style="display:none" />
+                <input type="file" accept="image/*" (change)="onAvatarSelected($event)" class="hidden" />
               </label>
             </div>
           </div>
-          <div class="profile-info">
-            <h2>{{ user.fullname || user.username }}</h2>
-            <p class="username">@{{ user.username }}</p>
-            <span class="role-badge" [class.admin]="user.role === 'admin'">
+          <div class="flex-1">
+            <h2 class="text-xl font-bold m-0" [style.color]="'var(--color-text)'">{{ user.fullname || user.username }}</h2>
+            <p class="text-sm mt-1 m-0" [style.color]="'var(--color-muted)'">@{{ user.username }}</p>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2"
+              [class]="user.role === 'admin' ? 'bg-violet-600/10 text-violet-600' : 'bg-blue-500/10 text-blue-500'">
               <lucide-icon name="shield" [size]="14"></lucide-icon>
               {{ getRoleLabel(user.role) }}
             </span>
           </div>
         </div>
 
-        <div class="profile-quick-actions">
-          <button class="btn-secondary" (click)="toggleEditMode()">
+        <div class="flex items-center gap-3 mt-6 pt-6 border-t flex-wrap" [style.border-color]="'var(--color-card-border)'">
+          <button class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleEditMode()">
             <lucide-icon [name]="isEditingProfile ? 'X' : 'pen'" [size]="18"></lucide-icon>
             {{ isEditingProfile ? ('profile.cancel' | t) : ('profile.editProfile' | t) }}
           </button>
-          <button class="btn-secondary" (click)="openPasswordModal()">
+          <button class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="openPasswordModal()">
             <lucide-icon name="key" [size]="18"></lucide-icon>
             {{ 'profile.changePassword' | t }}
           </button>
@@ -57,9 +58,9 @@
       </div>
 
       <!-- Profile Details / Edit Form -->
-      <div class="profile-card">
-        <div class="card-header">
-          <h3>
+      <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+        <div class="flex items-center gap-2 mb-6 pb-4 border-b" [style.border-color]="'var(--color-card-border)'">
+          <h3 class="text-base font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
             <lucide-icon name="user" [size]="20"></lucide-icon>
             {{ 'profile.profileInformation' | t }}
           </h3>
@@ -67,36 +68,36 @@
 
         @if (!isEditingProfile) {
           <!-- View Mode -->
-          <div class="profile-details">
-            <div class="detail-item">
-              <lucide-icon name="mail" [size]="20"></lucide-icon>
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-3 p-3 rounded-xl" [style.background]="'var(--color-bg)'">
+              <lucide-icon name="mail" [size]="20" class="text-violet-600/50"></lucide-icon>
               <div>
-                <label>{{ 'profile.emailAddress' | t }}</label>
-                <p>{{ user.email }}</p>
+                <label class="text-xs font-medium block" [style.color]="'var(--color-muted)'">{{ 'profile.emailAddress' | t }}</label>
+                <p class="text-sm font-medium m-0 mt-0.5" [style.color]="'var(--color-text)'">{{ user.email }}</p>
               </div>
             </div>
 
-            <div class="detail-item">
-              <lucide-icon name="user" [size]="20"></lucide-icon>
+            <div class="flex items-center gap-3 p-3 rounded-xl" [style.background]="'var(--color-bg)'">
+              <lucide-icon name="user" [size]="20" class="text-violet-600/50"></lucide-icon>
               <div>
-                <label>{{ 'register.username' | t }}</label>
-                <p>{{ user.username }}</p>
+                <label class="text-xs font-medium block" [style.color]="'var(--color-muted)'">{{ 'register.username' | t }}</label>
+                <p class="text-sm font-medium m-0 mt-0.5" [style.color]="'var(--color-text)'">{{ user.username }}</p>
               </div>
             </div>
 
-            <div class="detail-item">
-              <lucide-icon name="file-text" [size]="20"></lucide-icon>
+            <div class="flex items-center gap-3 p-3 rounded-xl" [style.background]="'var(--color-bg)'">
+              <lucide-icon name="file-text" [size]="20" class="text-violet-600/50"></lucide-icon>
               <div>
-                <label>{{ 'profile.fullName' | t }}</label>
-                <p>{{ user.fullname || ('profile.notSet' | t) }}</p>
+                <label class="text-xs font-medium block" [style.color]="'var(--color-muted)'">{{ 'profile.fullName' | t }}</label>
+                <p class="text-sm font-medium m-0 mt-0.5" [style.color]="'var(--color-text)'">{{ user.fullname || ('profile.notSet' | t) }}</p>
               </div>
             </div>
           </div>
         } @else {
           <!-- Edit Mode -->
-          <form (ngSubmit)="updateProfile()" class="profile-form">
-            <div class="form-group">
-              <label for="email">
+          <form (ngSubmit)="updateProfile()" class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label for="email" class="text-sm font-medium flex items-center gap-1.5" [style.color]="'var(--color-text)'">
                 <lucide-icon name="mail" [size]="16"></lucide-icon>
                 {{ 'profile.emailAddress' | t }} *
               </label>
@@ -105,14 +106,16 @@
                 id="email"
                 [(ngModel)]="profileForm.email"
                 name="email"
-                class="form-input"
+                class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                [style.color]="'var(--color-text)'"
+                [style.border-color]="'var(--color-card-border)'"
                 [placeholder]="'profile.enterEmail' | t"
                 required
               />
             </div>
 
-            <div class="form-group">
-              <label for="username">
+            <div class="flex flex-col gap-1.5">
+              <label for="username" class="text-sm font-medium flex items-center gap-1.5" [style.color]="'var(--color-text)'">
                 <lucide-icon name="user" [size]="16"></lucide-icon>
                 {{ 'register.username' | t }} *
               </label>
@@ -121,14 +124,16 @@
                 id="username"
                 [(ngModel)]="profileForm.username"
                 name="username"
-                class="form-input"
+                class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                [style.color]="'var(--color-text)'"
+                [style.border-color]="'var(--color-card-border)'"
                 [placeholder]="'profile.enterUsername' | t"
                 required
               />
             </div>
 
-            <div class="form-group">
-              <label for="fullname">
+            <div class="flex flex-col gap-1.5">
+              <label for="fullname" class="text-sm font-medium flex items-center gap-1.5" [style.color]="'var(--color-text)'">
                 <lucide-icon name="file-text" [size]="16"></lucide-icon>
                 {{ 'profile.fullName' | t }}
               </label>
@@ -137,18 +142,20 @@
                 id="fullname"
                 [(ngModel)]="profileForm.fullname"
                 name="fullname"
-                class="form-input"
+                class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                [style.color]="'var(--color-text)'"
+                [style.border-color]="'var(--color-card-border)'"
                 [placeholder]="'profile.enterFullName' | t"
               />
             </div>
 
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" (click)="toggleEditMode()">
+            <div class="flex items-center justify-end gap-3 mt-4">
+              <button type="button" class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleEditMode()">
                 {{ 'profile.cancel' | t }}
               </button>
-              <button type="submit" class="btn-primary" [disabled]="isSaving">
+              <button type="submit" class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" [disabled]="isSaving">
                 @if (isSaving) {
-                  <span class="spinner-small"></span>
+                  <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                   {{ 'profile.saving' | t }}
                 } @else {
                   <lucide-icon name="save" [size]="18"></lucide-icon>
@@ -161,56 +168,56 @@
       </div>
 
       <!-- Security & Preferences -->
-      <div class="profile-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Security Card -->
-        <div class="profile-card">
-          <div class="card-header">
-            <h3>
+        <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+          <div class="flex items-center gap-2 mb-6 pb-4 border-b" [style.border-color]="'var(--color-card-border)'">
+            <h3 class="text-base font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
               <lucide-icon name="Lock" [size]="20"></lucide-icon>
               {{ 'profile.security' | t }}
             </h3>
           </div>
 
-          <div class="security-content">
-            <div class="security-item">
-              <div class="security-icon">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-violet-600/10 text-violet-600 flex items-center justify-center">
                 <lucide-icon name="Key" [size]="24"></lucide-icon>
               </div>
-              <div class="security-info">
-                <h4>{{ 'profile.password' | t }}</h4>
-                <p>{{ 'profile.securityDescription' | t }}</p>
+              <div>
+                <h4 class="text-sm font-semibold m-0" [style.color]="'var(--color-text)'">{{ 'profile.password' | t }}</h4>
+                <p class="text-xs m-0 mt-0.5" [style.color]="'var(--color-muted)'">{{ 'profile.securityDescription' | t }}</p>
               </div>
             </div>
-            <button class="btn-outline" (click)="openPasswordModal()">
+            <button class="border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5 whitespace-nowrap" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="openPasswordModal()">
               {{ 'profile.change' | t }}
             </button>
           </div>
         </div>
 
         <!-- Appearance Card -->
-        <div class="profile-card">
-          <div class="card-header">
-            <h3>
+        <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+          <div class="flex items-center gap-2 mb-6 pb-4 border-b" [style.border-color]="'var(--color-card-border)'">
+            <h3 class="text-base font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
               <lucide-icon name="Palette" [size]="20"></lucide-icon>
               {{ 'profile.appearance' | t }}
             </h3>
           </div>
 
-          <div class="appearance-content">
-            <div class="appearance-item">
-              <div class="appearance-icon">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-violet-600/10 text-violet-600 flex items-center justify-center">
                 @if (theme.isDark()) {
                   <lucide-icon name="Moon" [size]="24"></lucide-icon>
                 } @else {
                   <lucide-icon name="Sun" [size]="24"></lucide-icon>
                 }
               </div>
-              <div class="appearance-info">
-                <h4>{{ 'profile.theme' | t }}</h4>
-                <p>{{ 'profile.mode' | t:{ mode: (theme.isDark() ? ('app.theme.dark' | t) : ('app.theme.light' | t)) } }}</p>
+              <div>
+                <h4 class="text-sm font-semibold m-0" [style.color]="'var(--color-text)'">{{ 'profile.theme' | t }}</h4>
+                <p class="text-xs m-0 mt-0.5" [style.color]="'var(--color-muted)'">{{ 'profile.mode' | t:{ mode: (theme.isDark() ? ('app.theme.dark' | t) : ('app.theme.light' | t)) } }}</p>
               </div>
             </div>
-            <button class="btn-outline" (click)="toggleTheme()">
+            <button class="border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5 whitespace-nowrap" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleTheme()">
               {{ 'profile.switch' | t }}
             </button>
           </div>
@@ -218,57 +225,55 @@
       </div>
 
       <!-- Sessions / Devices Card -->
-      <div class="profile-card">
-        <div class="card-header">
-          <h3>
+      <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+        <div class="flex items-center gap-2 mb-6 pb-4 border-b" [style.border-color]="'var(--color-card-border)'">
+          <h3 class="text-base font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
             <lucide-icon name="monitor" [size]="20"></lucide-icon>
             {{ 'profile.sessions' | t }}
           </h3>
         </div>
 
-        <div class="sessions-content">
+        <div>
           @if (sessionsLoading) {
-            <div class="loading-small">{{ 'profile.loading' | t }}</div>
+            <div class="text-sm text-center py-4" [style.color]="'var(--color-muted)'">{{ 'profile.loading' | t }}</div>
           } @else {
             @if (sessions && sessions.length) {
-              <ul class="sessions-list">
+              <ul class="list-none p-0 m-0 flex flex-col gap-3">
                 @for (s of sessions; track s.id) {
-                  <li class="session-item">
-                    <div class="session-info">
-                      <div class="session-meta">
-                        <strong>{{ s.ip || ('profile.unknown' | t) }}</strong>
-                        <span class="muted">{{ s.user_agent || ('profile.unknown' | t) }}</span>
+                  <li class="flex items-center justify-between p-4 rounded-xl border gap-4" [style.border-color]="'var(--color-card-border)'" [style.background]="'var(--color-bg)'">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <strong class="text-sm" [style.color]="'var(--color-text)'">{{ s.ip || ('profile.unknown' | t) }}</strong>
+                        <span class="text-xs truncate" [style.color]="'var(--color-muted)'">{{ s.user_agent || ('profile.unknown' | t) }}</span>
                       </div>
-                      <div class="session-times">
-                        <small>{{ 'profile.issued' | t }}: {{ s.created_at }}</small>
-                        <small>{{ 'profile.expires' | t }}: {{ s.expires_at }}</small>
+                      <div class="flex items-center gap-4 mt-1">
+                        <small class="text-xs" [style.color]="'var(--color-muted)'">{{ 'profile.issued' | t }}: {{ s.created_at }}</small>
+                        <small class="text-xs" [style.color]="'var(--color-muted)'">{{ 'profile.expires' | t }}: {{ s.expires_at }}</small>
                       </div>
                     </div>
-                    <div class="session-actions">
-                      <button class="btn-outline" (click)="requestRevokeSession(s.id)">{{ 'profile.revoke' | t }}</button>
-                    </div>
+                    <button class="border px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 whitespace-nowrap" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="requestRevokeSession(s.id)">{{ 'profile.revoke' | t }}</button>
                   </li>
                 }
               </ul>
             } @else {
-              <p class="muted">{{ 'profile.noSessions' | t }}</p>
+              <p class="text-sm text-center py-4" [style.color]="'var(--color-muted)'">{{ 'profile.noSessions' | t }}</p>
             }
           }
         </div>
       </div>
 
       <!-- Account Actions -->
-      <div class="profile-card danger-zone">
-        <div class="card-header">
-          <h3>
+      <div class="rounded-2xl border-2 border-red-500/30 p-6" [style.background]="'var(--color-card)'">
+        <div class="flex items-center gap-2 mb-6 pb-4 border-b border-red-500/20">
+          <h3 class="text-base font-bold m-0 flex items-center gap-2 text-red-500">
             <lucide-icon name="triangle-alert" [size]="20"></lucide-icon>
             {{ 'profile.accountActions' | t }}
           </h3>
         </div>
 
-        <div class="danger-content">
-          <p>{{ 'profile.logoutInfo' | t }}</p>
-          <button class="btn-danger" (click)="logout()">
+        <div class="flex items-center justify-between gap-4">
+          <p class="text-sm m-0" [style.color]="'var(--color-muted)'">{{ 'profile.logoutInfo' | t }}</p>
+          <button class="inline-flex items-center gap-2 bg-red-500 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap" (click)="logout()">
             <lucide-icon name="LogOut" [size]="18"></lucide-icon>
             {{ 'profile.logout' | t }}
           </button>
@@ -293,79 +298,85 @@
 
 <!-- Change Password Modal -->
 @if (showPasswordModal) {
-  <div class="modal-overlay" (click)="closePasswordModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-1000 flex items-center justify-center p-4 animate-fade-in" (click)="closePasswordModal()">
+    <div class="w-full max-w-md rounded-2xl border-2 p-0 animate-slide-up" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between p-6 border-b" [style.border-color]="'var(--color-card-border)'">
+        <h2 class="text-lg font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
           <lucide-icon name="Key" [size]="24"></lucide-icon>
           {{ 'profile.changePassword' | t }}
         </h2>
-        <button class="btn-close" (click)="closePasswordModal()">
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-colors hover:bg-red-500/10" [style.color]="'var(--color-muted)'" (click)="closePasswordModal()" title="Close">
           <lucide-icon name="X" [size]="24"></lucide-icon>
         </button>
       </div>
 
-      <form (ngSubmit)="changePassword()" class="modal-body">
+      <form (ngSubmit)="changePassword()" class="p-6 flex flex-col gap-4">
         @if (errorMessage) {
-          <div class="modal-alert modal-alert-error">
+          <div class="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 text-red-500 text-sm">
             <lucide-icon name="circle-alert" [size]="20"></lucide-icon>
             {{ errorMessage }}
           </div>
         }
 
         @if (successMessage) {
-          <div class="modal-alert modal-alert-success">
+          <div class="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 text-emerald-500 text-sm">
             <lucide-icon name="circle-check" [size]="20"></lucide-icon>
             {{ successMessage }}
           </div>
         }
 
-        <div class="form-group">
-          <label for="currentPassword">{{ 'profile.currentPassword' | t }}</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="currentPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.currentPassword' | t }}</label>
           <input
             type="password"
             id="currentPassword"
             [(ngModel)]="passwordForm.currentPassword"
             name="currentPassword"
-            class="form-input"
+            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+            [style.color]="'var(--color-text)'"
+            [style.border-color]="'var(--color-card-border)'"
             [placeholder]="'profile.currentPasswordPlaceholder' | t"
             required
           />
         </div>
 
-        <div class="form-group">
-          <label for="newPassword">{{ 'profile.newPassword' | t }}</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="newPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.newPassword' | t }}</label>
           <input
             type="password"
             id="newPassword"
             [(ngModel)]="passwordForm.newPassword"
             name="newPassword"
-            class="form-input"
+            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+            [style.color]="'var(--color-text)'"
+            [style.border-color]="'var(--color-card-border)'"
             [placeholder]="'profile.newPasswordPlaceholder' | t"
             required
           />
         </div>
 
-        <div class="form-group">
-          <label for="confirmPassword">{{ 'profile.confirmNewPassword' | t }}</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="confirmPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.confirmNewPassword' | t }}</label>
           <input
             type="password"
             id="confirmPassword"
             [(ngModel)]="passwordForm.confirmPassword"
             name="confirmPassword"
-            class="form-input"
+            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+            [style.color]="'var(--color-text)'"
+            [style.border-color]="'var(--color-card-border)'"
             [placeholder]="'profile.confirmNewPasswordPlaceholder' | t"
             required
           />
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" (click)="closePasswordModal()">
+        <div class="flex items-center justify-end gap-3 mt-2 pt-4 border-t" [style.border-color]="'var(--color-card-border)'">
+          <button type="button" class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closePasswordModal()">
             {{ 'profile.cancel' | t }}
           </button>
-          <button type="submit" class="btn-primary" [disabled]="isSaving">
+          <button type="submit" class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" [disabled]="isSaving">
             @if (isSaving) {
-              <span class="spinner-small"></span>
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               {{ 'profile.changing' | t }}
             } @else {
               <lucide-icon name="Check" [size]="18"></lucide-icon>

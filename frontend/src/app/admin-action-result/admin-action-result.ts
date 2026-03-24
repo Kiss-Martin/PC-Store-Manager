@@ -8,42 +8,13 @@ import { TranslatePipe } from '../translate.pipe';
   standalone: true,
   imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
-    <div class="result-container">
-      <h1 class="result-title">{{ titleKey | t }}</h1>
-      <p class="result-message">{{ messageKey | t }}</p>
-      <a class="result-link" [routerLink]="['/admin/pending-admins']">{{ 'adminResult.manage' | t }}</a>
+    <div class="max-w-xl mx-auto mt-24 p-8 text-center">
+      <h1 class="text-2xl font-bold mb-4" [style.color]="'var(--color-text)'">{{ titleKey | t }}</h1>
+      <p class="text-base mb-8" [style.color]="'var(--color-muted)'">{{ messageKey | t }}</p>
+      <a class="inline-block px-5 py-2.5 bg-violet-600 text-white rounded-xl no-underline font-medium transition-opacity hover:opacity-85" [routerLink]="['/admin/pending-admins']">{{ 'adminResult.manage' | t }}</a>
     </div>
   `,
-  styles: [`
-    .result-container {
-      max-width: 36rem;
-      margin: 6rem auto;
-      padding: 2rem;
-      text-align: center;
-    }
-    .result-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 1rem;
-    }
-    .result-message {
-      color: var(--muted);
-      font-size: 1rem;
-      margin-bottom: 2rem;
-    }
-    .result-link {
-      display: inline-block;
-      padding: 0.6rem 1.25rem;
-      background: var(--accent, #7c3aed);
-      color: #fff;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 500;
-      transition: opacity 0.2s;
-    }
-    .result-link:hover { opacity: 0.85; }
-  `],
+  styles: [],
 })
 export class AdminActionResultComponent {
   titleKey = 'adminResult.title';

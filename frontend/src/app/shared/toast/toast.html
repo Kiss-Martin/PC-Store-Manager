@@ -1,8 +1,9 @@
-<div class="toast-area" aria-live="polite">
+<div class="fixed top-6 right-6 z-1000 flex flex-col gap-3" aria-live="polite">
   @for (t of toasts; track t.id) {
-    <div class="toast" [class]="'toast-' + (t.type || 'info')">
-      <div class="toast-message">{{ t.message }}</div>
-      <button class="toast-close" (click)="dismiss(t.id)">×</button>
+    <div class="flex items-center gap-3 min-w-72 max-w-md px-5 py-3.5 rounded-xl shadow-lg text-white text-sm font-medium animate-slide-up"
+      [class]="t.type === 'success' ? 'bg-emerald-500' : t.type === 'error' ? 'bg-red-500' : t.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'">
+      <div class="flex-1">{{ t.message }}</div>
+      <button class="bg-transparent border-none text-white text-xl cursor-pointer opacity-80 hover:opacity-100 leading-none p-0" (click)="dismiss(t.id)">×</button>
     </div>
   }
 </div>

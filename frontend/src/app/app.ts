@@ -64,4 +64,8 @@ export class App {
     this.router.navigate([path]);
     this.isNavOpen = false;
   }
+
+  isMobile(): boolean {
+    return window.innerWidth < 768;
+  }
 }

@@ -33,6 +33,7 @@
     "lucide-angular": "^0.563.0",
     "ng2-charts": "^8.0.0",
     "pc-store-manager-monorepo": "file:..",
+    "postcss": "^8.5.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
