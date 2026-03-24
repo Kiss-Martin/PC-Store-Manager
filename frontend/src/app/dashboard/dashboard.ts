@@ -30,7 +30,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private auth: AuthService,
+    public auth: AuthService,
     public theme: ThemeService,
     public i18n: I18nService,
     private toast: ToastService,

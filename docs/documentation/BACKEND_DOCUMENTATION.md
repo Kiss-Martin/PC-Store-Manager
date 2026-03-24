@@ -155,7 +155,7 @@ If SMTP is not fully configured, email flows fall back to logging the message co
 
 ## 6) Role model
 
-Supported roles: **`admin`** and **`worker`**
+Supported roles: **`admin`**, **`worker`**, and **`buyer`**
 
 Admin-specific behavior:
 
@@ -163,6 +163,16 @@ Admin-specific behavior:
 - The very first admin is auto-approved if no approved admin exists in the database
 - Approved admins can approve or reject pending admin accounts
 - Approval/rejection emails include one-click action links (signed JWT action tokens)
+
+Buyer-specific behavior:
+
+- Buyers are auto-approved on registration (no admin approval required)
+- Can view products (read-only — no create/update/delete)
+- Can create orders and view their own order history (`user_id` filter)
+- Can cancel their own pending/processing orders (status change to `cancelled` only)
+- Can export/print their own orders (CSV/PDF)
+- Cannot access analytics, worker assignment, or admin features
+- The `requireRole()` middleware accepts multiple roles via rest parameters: `requireRole('admin', 'buyer')`
 
 ## 7) API endpoints
 
@@ -236,18 +246,18 @@ Base URL (local): `http://localhost:3000`
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | `GET` | `/customers` | auth | List all customers |
-| `POST` | `/customers` | admin | Create customer |
+| `POST` | `/customers` | admin, buyer | Create customer |
 
 ### Orders
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| `GET` | `/orders` | auth | List orders (non-admin sees only assigned orders) |
-| `POST` | `/orders` | admin | Create order |
-| `PATCH` | `/orders/:id/status` | admin | Update order status |
+| `GET` | `/orders` | auth | List orders (admin: all, worker: assigned, buyer: own) |
+| `POST` | `/orders` | admin, buyer | Create order |
+| `PATCH` | `/orders/:id/status` | admin, buyer | Update order status (buyer: cancel only) |
 | `PATCH` | `/orders/:id/assign` | admin | Assign order to worker |
 | `DELETE` | `/orders/:id` | admin | Delete order |
-| `GET` | `/orders/export` | admin | Export orders (`?status=all\|pending\|…&format=csv\|pdf`) |
+| `GET` | `/orders/export` | admin, buyer | Export orders (`?status=all|pending|…&format=csv|pdf`) |
 
 ### Analytics & Dashboard
 

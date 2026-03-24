@@ -19,6 +19,18 @@ export const createOrder = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
+  // Buyers can only cancel their own orders
+  if (req.user.role === 'buyer') {
+    if (req.body.status !== 'cancelled') {
+      return res.status(403).json({ error: t(req.lang, 'order.buyerCanOnlyCancel') });
+    }
+    // Verify order belongs to buyer
+    const orders = await OrderService.getOrders(req.user, req.lang);
+    const owns = orders.some(o => o.id === req.params.id);
+    if (!owns) {
+      return res.status(403).json({ error: t(req.lang, 'order.notFound') });
+    }
+  }
   const status = await OrderService.updateOrderStatus(req.params.id, req.body.status, req.user.id, req.lang);
   res.json({ success: true, status });
 };

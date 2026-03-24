@@ -81,6 +81,10 @@ export class AuthService {
     return this.user()?.role === 'admin';
   }
 
+  isBuyer(): boolean {
+    return this.user()?.role === 'buyer';
+  }
+
   shouldRestoreSession(): boolean {
     return localStorage.getItem(this.rememberKey) === 'true';
   }

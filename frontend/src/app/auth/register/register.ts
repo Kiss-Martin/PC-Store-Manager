@@ -102,9 +102,10 @@ export class RegisterComponent {
     this.formData.role = role;
     const roleIcons: { [key: string]: string } = {
       'admin': 'shield',
-      'worker': 'user'
+      'worker': 'user',
+      'buyer': 'shopping-bag'
     };
-    this.formData.icon = roleIcons[role];
+    this.formData.icon = roleIcons[role] || 'user';
   }
 
 submitRegistration() {
@@ -153,6 +154,8 @@ submitRegistration() {
   }
 
   getRoleLabel(role: string) {
-    return role === 'admin' ? this.i18n.t('role.admin') : this.i18n.t('role.worker');
+    if (role === 'admin') return this.i18n.t('role.admin');
+    if (role === 'buyer') return this.i18n.t('role.buyer');
+    return this.i18n.t('role.worker');
   }
 }

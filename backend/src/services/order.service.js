@@ -11,7 +11,9 @@ const OrderService = {
       .select(`id,item_id,customer_id,details,timestamp,assigned_to,items(name,price),customers(name,email)`)
       .eq('action', 'stock_out')
       .order('timestamp', { ascending: false });
-    if (user.role !== 'admin') {
+    if (user.role === 'buyer') {
+      query = query.eq('user_id', user.id);
+    } else if (user.role !== 'admin') {
       query = query.eq('assigned_to', user.id);
     }
     const data = await run(query);

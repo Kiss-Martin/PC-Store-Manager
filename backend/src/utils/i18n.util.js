@@ -55,6 +55,9 @@ const dictionaries = {
 
     'role.admin': 'Admin',
     'role.worker': 'Worker',
+    'role.buyer': 'Buyer',
+
+    'order.buyerCanOnlyCancel': 'Buyers can only cancel orders',
 
     'error.internalServerError': 'Internal Server Error',
 
@@ -165,6 +168,9 @@ const dictionaries = {
 
     'role.admin': 'adminisztrátor',
     'role.worker': 'dolgozó',
+    'role.buyer': 'vásárló',
+
+    'order.buyerCanOnlyCancel': 'A vásárlók csak lemondhatják a rendeléseket',
 
     'error.internalServerError': 'Belső szerverhiba',
 

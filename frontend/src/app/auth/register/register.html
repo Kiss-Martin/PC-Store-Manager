@@ -105,7 +105,7 @@
           <h2 class="text-lg font-bold m-0 mb-1" [style.color]="'var(--color-text)'">{{ 'register.role.selectTitle' | t }}</h2>
           <p class="text-sm m-0 mb-6" [style.color]="'var(--color-muted)'">{{ 'register.role.selectDescription' | t }}</p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Admin Role -->
             <button
               (click)="selectRole('admin')"
@@ -128,6 +128,18 @@
               <lucide-icon name="user" size="24" class="text-violet-600"></lucide-icon>
               <h3 class="text-sm font-bold m-0" [style.color]="'var(--color-text)'">{{ 'register.role.worker' | t }}</h3>
               <p class="text-xs m-0 text-center" [style.color]="'var(--color-muted)'">{{ 'register.role.workerDescription' | t }}</p>
+            </button>
+
+            <!-- Buyer Role -->
+            <button
+              (click)="selectRole('buyer')"
+              class="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-600/50"
+              [class]="formData.role === 'buyer' ? 'border-violet-600 bg-violet-600/5' : ''"
+              [style.border-color]="formData.role !== 'buyer' ? 'var(--color-card-border)' : ''"
+              >
+              <lucide-icon name="shopping-bag" size="24" class="text-violet-600"></lucide-icon>
+              <h3 class="text-sm font-bold m-0" [style.color]="'var(--color-text)'">{{ 'register.role.buyer' | t }}</h3>
+              <p class="text-xs m-0 text-center" [style.color]="'var(--color-muted)'">{{ 'register.role.buyerDescription' | t }}</p>
             </button>
           </div>
 

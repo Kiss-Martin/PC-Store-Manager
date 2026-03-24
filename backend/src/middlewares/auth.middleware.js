@@ -34,12 +34,12 @@ export async function authMiddleware(req, res, next) {
   }
 }
 
-// Middleware for role-based access
-export function requireRole(role) {
+// Middleware for role-based access — accepts a single role or multiple roles
+export function requireRole(...roles) {
   return (req, res, next) => {
-    if (!req.user || req.user.role !== role) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
-        error: t(req.lang, 'auth.roleOnly', { role: t(req.lang, `role.${role}`) }),
+        error: t(req.lang, 'auth.roleOnly', { role: roles.map(r => t(req.lang, `role.${r}`)).join(' / ') }),
       });
     }
     next();

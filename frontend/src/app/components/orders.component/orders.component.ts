@@ -103,7 +103,7 @@ export class OrdersComponent implements OnInit {
     }
 
     this.route.queryParams.subscribe(params => {
-      if (params['action'] === 'new' && this.auth.isAdmin()) {
+      if (params['action'] === 'new' && (this.auth.isAdmin() || this.auth.isBuyer())) {
         setTimeout(() => this.openAddOrderModal(), 200);
       }
     });
@@ -189,6 +189,9 @@ export class OrdersComponent implements OnInit {
     this.showAddOrderModal = true;
     this.showNewCustomerForm = false;
     this.resetOrderForm();
+    if (this.auth.isBuyer()) {
+      this.newOrder.status = 'pending';
+    }
     this.loadProducts();
     this.loadCustomers();
   }
@@ -386,6 +389,16 @@ export class OrdersComponent implements OnInit {
     this.showCancelConfirm = true;
   }
 
+  /** Buyer can cancel their own pending/processing orders */
+  canBuyerCancel(order: Order): boolean {
+    return this.auth.isBuyer() && (order.status === 'pending' || order.status === 'processing');
+  }
+
+  confirmBuyerCancel(order: Order) {
+    this.orderToCancel = order;
+    this.showCancelConfirm = true;
+  }
+
   cancelOrder() {
     if (!this.orderToCancel) return;
 
@@ -397,6 +410,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to cancel order:', err);
+        this.toast.show(this.i18n.t('orders.error.updateStatus'), { type: 'error' });
         this.showCancelConfirm = false;
       },
     });

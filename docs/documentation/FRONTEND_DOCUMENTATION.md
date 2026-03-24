@@ -50,7 +50,7 @@ Core stack:
 | `/dashboard` | `DashboardComponent` | `AuthGuard` | Stats, activity feed, quick actions, report download |
 | `/products` | `ProductsComponent` | `AuthGuard` | Product CRUD, search/filter, category/brand selection |
 | `/orders` | `OrdersComponent` | `AuthGuard` | Order list, status workflow, assignment, export |
-| `/analytics` | `AnalyticsComponent` | `AuthGuard` | Charts, summary cards, export |
+| `/analytics` | `AnalyticsComponent` | `AuthGuard` + `StaffGuard` | Charts, summary cards, export (hidden from buyers) |
 | `/profile` | `ProfileComponent` | `AuthGuard` | Profile edit, avatar, password change, sessions |
 | `/admin/sessions` | `AdminSessionsComponent` | `AuthGuard` + `AdminGuard` | All sessions, pending admin approvals |
 | `/admin/audit` | `AdminAuditComponent` | `AuthGuard` + `AdminGuard` | Paginated audit log |
@@ -90,6 +90,7 @@ Implemented in `auth.service.ts`, route guards, and `auth.interceptor.ts`.
 |-------|----------|
 | `AuthGuard` | Allows route if authenticated; may attempt one-time refresh |
 | `AdminGuard` | Same as `AuthGuard` + requires `admin` role |
+| `StaffGuard` | Same as `AuthGuard` + blocks `buyer` role (allows `admin` and `worker`) |
 | `GuestGuard` | Blocks auth pages for already-authenticated users |
 
 ## 5) API integration layer
@@ -133,7 +134,7 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 ### Authentication
 
 - **Login** — Email/password, remember-me toggle, support contact modal
-- **Register** — 4-step form (role selection → credentials → personal info → confirmation), handles admin approval workflow
+- **Register** — 4-step form (role selection → credentials → personal info → confirmation). Three role options: Admin, Worker, Buyer. Admin role requires approval; Worker and Buyer are auto-approved.
 - **Forgot password** — Generic non-disclosing success message
 - **Reset password** — Token-based, from query parameter
 
@@ -145,6 +146,7 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 - Business report download modal (period selector, CSV/PDF format)
 - **Print** button — opens the browser print dialog to print the current dashboard view
 - Stats rebuild on language change via Angular `effect()`
+- **Buyer view:** Report generation, print, and “Add Product” quick action are hidden. “Analytics” quick action is hidden. “New Order” button text changes to “Place Order”.
 
 ### Products
 
@@ -160,7 +162,8 @@ Acts as the primary API client for all feature endpoints. All methods return typ
 - Manual order creation with inline customer creation option
 - Worker assignment (admin only)
 - Export orders as CSV/PDF
-- **Print** button (admin only) — prints the current orders view via the browser print dialog
+- **Print** button (admin and buyer) — prints the current orders view via the browser print dialog
+- **Buyer view:** Sees own orders only. Can place new orders (status forced to “pending”), cancel pending/processing orders, export/print. Cannot edit status, assign workers, or delete orders. “Assigned To” column and admin action buttons are hidden; a cancel button is shown for cancellable orders.
 
 ### Analytics
 
@@ -307,3 +310,4 @@ When adding features:
 7. For printable views, add the `.no-print` class to elements that should be hidden when printing (buttons, controls, etc.).
    The existing `@media print` rules in `src/styles.css` automatically hide `nav`, `button`, `select`, `input`, and `.fixed` elements.
 8. Custom dropdowns must include the `custom-dropdown` CSS class on their wrapper div so the `HostListener`-based click-outside logic can distinguish internal clicks from document clicks.
+9. When adding buyer-visible features, use `auth.isBuyer()` to gate UI. Buyers should not see admin/worker-specific controls (analytics, worker assignment, product CRUD). Use `StaffGuard` on routes that should block buyers.

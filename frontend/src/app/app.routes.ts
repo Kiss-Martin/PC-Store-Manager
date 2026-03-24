@@ -12,6 +12,7 @@ import { ProfileComponent } from './components/profile.component/profile.compone
 import { AdminSessionsComponent } from './admin-sessions/admin-sessions';
 import { AdminAuditComponent } from './admin-audit/admin-audit';
 import { AdminGuard } from './auth/admin.guard';
+import { StaffGuard } from './auth/staff.guard';
 import { GuestGuard } from './auth/guest.guard';
 import { AdminActionResultComponent } from './admin-action-result/admin-action-result';
 
@@ -78,7 +79,7 @@ export const routes: Routes = [
   {
     path: 'analytics',
     component: AnalyticsComponent,
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, StaffGuard],
   },
   {
     path: 'profile',

@@ -6,14 +6,16 @@
       <p class="text-sm mt-1" [style.color]="'var(--color-muted)'">{{ 'dashboard.subtitle' | t }}</p>
     </div>
     <div class="flex items-center gap-2">
-      <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="generateReport()">
-        <lucide-icon name="file-text" size="18"></lucide-icon>
-        {{ 'dashboard.generateReport' | t }}
-      </button>
-      <button class="inline-flex items-center gap-2 border-2 bg-transparent px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:bg-violet-600/5 no-print" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="printCurrentView()">
-        <lucide-icon name="printer" size="18"></lucide-icon>
-        {{ 'common.print' | t }}
-      </button>
+      @if (!auth.isBuyer()) {
+        <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="generateReport()">
+          <lucide-icon name="file-text" size="18"></lucide-icon>
+          {{ 'dashboard.generateReport' | t }}
+        </button>
+        <button class="inline-flex items-center gap-2 border-2 bg-transparent px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:bg-violet-600/5 no-print" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="printCurrentView()">
+          <lucide-icon name="printer" size="18"></lucide-icon>
+          {{ 'common.print' | t }}
+        </button>
+      }
     </div>
   </div>
 
@@ -75,25 +77,29 @@
         <h2 class="text-lg font-bold m-0" [style.color]="'var(--color-text)'">{{ 'dashboard.quickActions' | t }}</h2>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="addNewProduct()">
-          <lucide-icon name="plus" class="text-violet-600" size="24"></lucide-icon>
-          <span class="text-xs font-medium">{{ 'dashboard.addProduct' | t }}</span>
-        </button>
+        @if (auth.isAdmin()) {
+          <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="addNewProduct()">
+            <lucide-icon name="plus" class="text-violet-600" size="24"></lucide-icon>
+            <span class="text-xs font-medium">{{ 'dashboard.addProduct' | t }}</span>
+          </button>
+        }
         <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="navigate('orders')">
           <lucide-icon name="shopping-cart" class="text-violet-600" size="24"></lucide-icon>
           <span class="text-xs font-medium">{{ 'dashboard.viewOrders' | t }}</span>
         </button>
-        <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="navigate('analytics')">
-          <lucide-icon name="chart-no-axes-combined" class="text-violet-600" size="24"></lucide-icon>
-          <span class="text-xs font-medium">{{ 'dashboard.reports' | t }}</span>
-        </button>
+        @if (!auth.isBuyer()) {
+          <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="navigate('analytics')">
+            <lucide-icon name="chart-no-axes-combined" class="text-violet-600" size="24"></lucide-icon>
+            <span class="text-xs font-medium">{{ 'dashboard.reports' | t }}</span>
+          </button>
+        }
         <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="navigate('profile')">
           <lucide-icon name="settings" class="text-violet-600" size="24"></lucide-icon>
           <span class="text-xs font-medium">{{ 'dashboard.settings' | t }}</span>
         </button>
         <button class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-600/20 col-span-2" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="navigateToNewOrder()">
           <lucide-icon name="logs" class="text-violet-600" size="24"></lucide-icon>
-          <span class="text-xs font-medium">{{ 'dashboard.newOrder' | t }}</span>
+          <span class="text-xs font-medium">{{ auth.isBuyer() ? ('dashboard.placeOrder' | t) : ('dashboard.newOrder' | t) }}</span>
         </button>
       </div>
     </div>

@@ -6,10 +6,10 @@
       <p class="text-sm mt-1" [style.color]="'var(--color-muted)'">{{ 'orders.subtitle' | t }}</p>
     </div>
     <div class="flex items-center gap-3 flex-wrap">
-      @if (auth.isAdmin()) {
+      @if (auth.isAdmin() || auth.isBuyer()) {
         <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="openAddOrderModal()">
           <lucide-icon name="circle-plus" size="20"></lucide-icon>
-          {{ 'orders.recordOrder' | t }}
+          {{ auth.isBuyer() ? ('orders.placeOrder' | t) : ('orders.recordOrder' | t) }}
         </button>
         <div class="flex items-center gap-2">
           <select [(ngModel)]="exportFormat" title="Export format" class="px-3 py-2 border rounded-lg text-sm bg-transparent focus:outline-none focus:border-violet-600 appearance-none" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" [attr.aria-label]="'orders.exportFormat' | t">
@@ -156,8 +156,10 @@
         <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.total' | t }}</th>
         <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.date' | t }}</th>
         <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.status' | t }}</th>
-        <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.assignedTo' | t }}</th>
-        @if (auth.isAdmin()) {
+        @if (!auth.isBuyer()) {
+          <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.assignedTo' | t }}</th>
+        }
+        @if (auth.isAdmin() || auth.isBuyer()) {
           <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.actions' | t }}</th>
         }
       </tr>
@@ -183,24 +185,26 @@
             </span>
           </td>
           <td class="py-4 px-5">
-            @if (auth.isAdmin()) {
-              <select
-                [(ngModel)]="order.assignedTo"
-                (ngModelChange)="assignOrderToWorker(order.id, $event)"
-                title="Assign worker"
-                class="px-2 py-1.5 border rounded-lg text-xs bg-transparent focus:outline-none focus:border-violet-600"
-                [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
-                [disabled]="assigningOrder === order.id"
-              >
-                <option [ngValue]="null">{{ 'orders.unassigned' | t }}</option>
-                @for (worker of workers; track worker.id) {
-                  <option [ngValue]="worker.id">
-                    {{ worker.username }}
-                  </option>
-                }
-              </select>
-            } @else {
-              <span class="inline-flex px-3 py-1 rounded-full text-xs bg-violet-600/10 text-violet-600">{{ getWorkerName(order.assignedTo) }}</span>
+            @if (!auth.isBuyer()) {
+              @if (auth.isAdmin()) {
+                <select
+                  [(ngModel)]="order.assignedTo"
+                  (ngModelChange)="assignOrderToWorker(order.id, $event)"
+                  title="Assign worker"
+                  class="px-2 py-1.5 border rounded-lg text-xs bg-transparent focus:outline-none focus:border-violet-600"
+                  [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
+                  [disabled]="assigningOrder === order.id"
+                >
+                  <option [ngValue]="null">{{ 'orders.unassigned' | t }}</option>
+                  @for (worker of workers; track worker.id) {
+                    <option [ngValue]="worker.id">
+                      {{ worker.username }}
+                    </option>
+                  }
+                </select>
+              } @else {
+                <span class="inline-flex px-3 py-1 rounded-full text-xs bg-violet-600/10 text-violet-600">{{ getWorkerName(order.assignedTo) }}</span>
+              }
             }
           </td>
           @if (auth.isAdmin()) {
@@ -215,13 +219,23 @@
               </div>
             </td>
           }
+          @if (auth.isBuyer()) {
+            <td class="py-4 px-5">
+              @if (canBuyerCancel(order)) {
+                <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-500 border-none cursor-pointer transition-colors hover:bg-red-500/20" (click)="confirmBuyerCancel(order)">
+                  <lucide-icon name="ban" size="14"></lucide-icon>
+                  {{ 'orders.cancelOrder' | t }}
+                </button>
+              }
+            </td>
+          }
         </tr>
       }
 
       <!-- Empty state in table -->
       @if (filteredOrders.length === 0) {
         <tr>
-          <td [attr.colspan]="auth.isAdmin() ? 9 : 8" class="py-16 text-center">
+          <td [attr.colspan]="auth.isBuyer() ? 8 : (auth.isAdmin() ? 9 : 8)" class="py-16 text-center">
             <lucide-icon name="inbox" size="48" class="text-violet-600/20 mx-auto"></lucide-icon>
             <p class="text-sm mt-2" [style.color]="'var(--color-muted)'">{{ 'orders.empty.title' | t }}</p>
           </td>
@@ -308,6 +322,12 @@
               {{ 'orders.updateStatus' | t }}
             </button>
           }
+          @if (canBuyerCancel(selectedOrder)) {
+            <button class="inline-flex items-center gap-2 bg-linear-to-br from-red-500 to-red-600 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="confirmBuyerCancel(selectedOrder); closeDetailsModal()">
+              <lucide-icon name="ban" size="16"></lucide-icon>
+              {{ 'orders.cancelOrder' | t }}
+            </button>
+          }
         </div>
       </div>
     </div>
@@ -373,13 +393,13 @@
   <!-- Cancel Confirmation Modal -->
   <app-confirmation-modal
     [show]="showCancelConfirm"
-    [title]="'orders.deleteTitle' | t"
+    [title]="auth.isBuyer() ? ('orders.cancelOrder' | t) : ('orders.deleteTitle' | t)"
     [message]="'orders.deleteMessage' | t:{ orderNumber: (orderToCancel?.orderNumber || '') }"
-    [confirmText]="'products.delete' | t"
+    [confirmText]="auth.isBuyer() ? ('orders.cancelOrder' | t) : ('products.delete' | t)"
     [cancelText]="'dashboard.cancel' | t"
     [confirmColor]="'danger'"
-    [icon]="'trash-2'"
-    (confirm)="deleteOrder()"
+    [icon]="auth.isBuyer() ? 'ban' : 'trash-2'"
+    (confirm)="auth.isBuyer() ? cancelOrder() : deleteOrder()"
     (cancel)="closeCancelConfirm()">
   </app-confirmation-modal>
 
@@ -540,6 +560,7 @@
         </div>
 
         <!-- Order Status -->
+        @if (!auth.isBuyer()) {
         <div class="flex flex-col gap-2">
           <label for="status" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.orderStatus' | t }}</label>
           <div class="relative cursor-pointer custom-dropdown" (click)="toggleOrderStatusDropdown()">
@@ -585,6 +606,7 @@
             {{ getStatusDescription(newOrder.status) }}
           </small>
         </div>
+        }
 
         <!-- Order Summary -->
         @if (newOrder.item_id && newOrder.quantity > 0) {
