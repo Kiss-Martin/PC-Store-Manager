@@ -1,6 +1,7 @@
 import crypto from 'crypto';
+import { JWT_SECRET } from './config.js';
 
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || 'change-this-secret';
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET;
 
 export function hashToken(token) {
   if (!token) return null;

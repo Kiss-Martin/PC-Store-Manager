@@ -1,293 +1,310 @@
-<div class="register-container">
-  <div class="register-wrapper">
+<div class="min-h-screen flex items-center justify-center p-4" [style.background]="'var(--color-bg)'">
+  <div class="w-full max-w-4xl animate-fade-in">
     <!-- Header -->
-    <div class="register-header">
-      <div class="logo-section">
-        <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
-        <span class="brand">PC Store</span>
-        <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
+    <div class="text-center mb-8">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <lucide-icon name="monitor" size="32" class="text-violet-600"></lucide-icon>
+        <span class="text-xl font-bold" [style.color]="'var(--color-text)'">PC Store</span>
+        <button type="button" class="ml-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-muted)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-          <span class="ml-8">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
+          <span>{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
         </button>
-        <button type="button" class="theme-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+        <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-muted)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
           {{ 'app.lang.toggle' | t }}
         </button>
       </div>
-      <h1 class="register-header">{{ 'register.title' | t }}</h1>
-      <p class="register-subtitle">{{ 'register.subtitle' | t }}</p>
+      <h1 class="text-2xl font-bold" [style.color]="'var(--color-text)'">{{ 'register.title' | t }}</h1>
+      <p class="text-sm mt-1" [style.color]="'var(--color-muted)'">{{ 'register.subtitle' | t }}</p>
     </div>
 
-    <div class="register-grid">
+    <div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
       <!-- Progress Sidebar -->
-      <div class="progress-sidebar">
+      <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
         <!-- Progress Bar -->
-        <div class="progress-bar-container">
-          <div class="progress-bar">
+        <div class="mb-6">
+          <div class="h-2 rounded-full overflow-hidden" [style.background]="'var(--color-bg)'">
             <div
-              class="progress-fill"
+              class="h-full rounded-full bg-violet-600 transition-all duration-300"
               [style.width.%]="progressPercentage"
             ></div>
           </div>
-          <p class="progress-text">
+          <p class="text-xs mt-2 text-center" [style.color]="'var(--color-muted)'">
             {{ 'register.progress.step' | t:{ current: currentStep, total: totalSteps } }}
           </p>
         </div>
 
         <!-- Steps -->
-        <div class="steps-list">
+        <div class="flex flex-col gap-4">
           <!-- Step 1 -->
-          <div
-            class="step-item"
-            [class.active]="currentStep >= 1"
-            [class.inactive]="currentStep < 1"
-            >
-            <div class="step-header">
-              <div
-                class="step-number"
-                [class.active]="currentStep >= 1"
-                [class.inactive]="currentStep < 1"
-                >
+          <div class="flex flex-col gap-1 p-3 rounded-xl transition-colors"
+            [class]="currentStep >= 1 ? 'bg-violet-600/5' : ''">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                [class]="currentStep >= 1 ? 'bg-violet-600 text-white' : 'border'"
+                [style.border-color]="currentStep < 1 ? 'var(--color-card-border)' : ''"
+                [style.color]="currentStep < 1 ? 'var(--color-muted)' : ''">
                 {{ currentStep > 1 ? '✓' : '1' }}
               </div>
-              <span class="step-title">{{ 'register.step.selectRole' | t }}</span>
+              <span class="text-sm font-medium" [style.color]="currentStep >= 1 ? 'var(--color-text)' : 'var(--color-muted)'">{{ 'register.step.selectRole' | t }}</span>
             </div>
-            <p class="step-description">{{ 'register.step.choosePosition' | t }}</p>
+            <p class="text-xs ml-10 m-0" [style.color]="'var(--color-muted)'">{{ 'register.step.choosePosition' | t }}</p>
           </div>
 
           <!-- Step 2 -->
-          <div
-            class="step-item"
-            [class.active]="currentStep >= 2"
-            [class.inactive]="currentStep < 2"
-            >
-            <div class="step-header">
-              <div
-                class="step-number"
-                [class.active]="currentStep >= 2"
-                [class.inactive]="currentStep < 2"
-                >
+          <div class="flex flex-col gap-1 p-3 rounded-xl transition-colors"
+            [class]="currentStep >= 2 ? 'bg-violet-600/5' : ''">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                [class]="currentStep >= 2 ? 'bg-violet-600 text-white' : 'border'"
+                [style.border-color]="currentStep < 2 ? 'var(--color-card-border)' : ''"
+                [style.color]="currentStep < 2 ? 'var(--color-muted)' : ''">
                 {{ currentStep > 2 ? '✓' : '2' }}
               </div>
-              <span class="step-title">{{ 'register.step.credentials' | t }}</span>
+              <span class="text-sm font-medium" [style.color]="currentStep >= 2 ? 'var(--color-text)' : 'var(--color-muted)'">{{ 'register.step.credentials' | t }}</span>
             </div>
-            <p class="step-description">{{ 'register.step.usernamePassword' | t }}</p>
+            <p class="text-xs ml-10 m-0" [style.color]="'var(--color-muted)'">{{ 'register.step.usernamePassword' | t }}</p>
           </div>
 
           <!-- Step 3 -->
-          <div
-            class="step-item"
-            [class.active]="currentStep >= 3"
-            [class.inactive]="currentStep < 3"
-            >
-            <div class="step-header">
-              <div
-                class="step-number"
-                [class.active]="currentStep >= 3"
-                [class.inactive]="currentStep < 3"
-                >
+          <div class="flex flex-col gap-1 p-3 rounded-xl transition-colors"
+            [class]="currentStep >= 3 ? 'bg-violet-600/5' : ''">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                [class]="currentStep >= 3 ? 'bg-violet-600 text-white' : 'border'"
+                [style.border-color]="currentStep < 3 ? 'var(--color-card-border)' : ''"
+                [style.color]="currentStep < 3 ? 'var(--color-muted)' : ''">
                 {{ currentStep > 3 ? '✓' : '3' }}
               </div>
-              <span class="step-title">{{ 'register.step.personalInfo' | t }}</span>
+              <span class="text-sm font-medium" [style.color]="currentStep >= 3 ? 'var(--color-text)' : 'var(--color-muted)'">{{ 'register.step.personalInfo' | t }}</span>
             </div>
-            <p class="step-description">{{ 'register.step.nameEmail' | t }}</p>
+            <p class="text-xs ml-10 m-0" [style.color]="'var(--color-muted)'">{{ 'register.step.nameEmail' | t }}</p>
           </div>
 
           <!-- Step 4 -->
-          <div
-            class="step-item"
-            [class.active]="currentStep >= 4"
-            [class.inactive]="currentStep < 4"
-            >
-            <div class="step-header">
-              <div
-                class="step-number"
-                [class.active]="currentStep >= 4"
-                [class.inactive]="currentStep < 4"
-                >
+          <div class="flex flex-col gap-1 p-3 rounded-xl transition-colors"
+            [class]="currentStep >= 4 ? 'bg-violet-600/5' : ''">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                [class]="currentStep >= 4 ? 'bg-violet-600 text-white' : 'border'"
+                [style.border-color]="currentStep < 4 ? 'var(--color-card-border)' : ''"
+                [style.color]="currentStep < 4 ? 'var(--color-muted)' : ''">
                 {{ currentStep > 4 ? '✓' : '4' }}
               </div>
-              <span class="step-title">{{ 'register.step.confirm' | t }}</span>
+              <span class="text-sm font-medium" [style.color]="currentStep >= 4 ? 'var(--color-text)' : 'var(--color-muted)'">{{ 'register.step.confirm' | t }}</span>
             </div>
-            <p class="step-description">{{ 'register.step.reviewSubmit' | t }}</p>
+            <p class="text-xs ml-10 m-0" [style.color]="'var(--color-muted)'">{{ 'register.step.reviewSubmit' | t }}</p>
           </div>
         </div>
       </div>
 
       <!-- Form Content -->
-      <div class="register-card">
+      <div class="rounded-2xl border-2 p-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
 
         <!-- Step 1: Select Role -->
-        <div class="step-content" [class.active]="currentStep === 1">
-          <h2 class="step-title-main">{{ 'register.role.selectTitle' | t }}</h2>
-          <p class="step-description-main">{{ 'register.role.selectDescription' | t }}</p>
+        <div [class.hidden]="currentStep !== 1">
+          <h2 class="text-lg font-bold m-0 mb-1" [style.color]="'var(--color-text)'">{{ 'register.role.selectTitle' | t }}</h2>
+          <p class="text-sm m-0 mb-6" [style.color]="'var(--color-muted)'">{{ 'register.role.selectDescription' | t }}</p>
 
-          <div class="role-grid">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- Admin Role -->
             <button
               (click)="selectRole('admin')"
-              class="role-button"
-              [class.active]="formData.role === 'admin'"
+              class="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-600/50"
+              [class]="formData.role === 'admin' ? 'border-violet-600 bg-violet-600/5' : ''"
+              [style.border-color]="formData.role !== 'admin' ? 'var(--color-card-border)' : ''"
               >
-              <lucide-icon name="shield" class="role-icon" size="24"></lucide-icon>
-              <h3 class="role-title">{{ 'register.role.administrator' | t }}</h3>
-              <p class="role-description">{{ 'register.role.administratorDescription' | t }}</p>
+              <lucide-icon name="shield" size="24" class="text-violet-600"></lucide-icon>
+              <h3 class="text-sm font-bold m-0" [style.color]="'var(--color-text)'">{{ 'register.role.administrator' | t }}</h3>
+              <p class="text-xs m-0 text-center" [style.color]="'var(--color-muted)'">{{ 'register.role.administratorDescription' | t }}</p>
             </button>
 
             <!-- Worker Role -->
             <button
               (click)="selectRole('worker')"
-              class="role-button"
-              [class.active]="formData.role === 'worker'"
+              class="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-600/50"
+              [class]="formData.role === 'worker' ? 'border-violet-600 bg-violet-600/5' : ''"
+              [style.border-color]="formData.role !== 'worker' ? 'var(--color-card-border)' : ''"
               >
-              <lucide-icon name="user" class="role-icon" size="24"></lucide-icon>
-              <h3 class="role-title">{{ 'register.role.worker' | t }}</h3>
-              <p class="role-description">{{ 'register.role.workerDescription' | t }}</p>
+              <lucide-icon name="user" size="24" class="text-violet-600"></lucide-icon>
+              <h3 class="text-sm font-bold m-0" [style.color]="'var(--color-text)'">{{ 'register.role.worker' | t }}</h3>
+              <p class="text-xs m-0 text-center" [style.color]="'var(--color-muted)'">{{ 'register.role.workerDescription' | t }}</p>
+            </button>
+
+            <!-- Buyer Role -->
+            <button
+              (click)="selectRole('buyer')"
+              class="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 bg-transparent cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-600/50"
+              [class]="formData.role === 'buyer' ? 'border-violet-600 bg-violet-600/5' : ''"
+              [style.border-color]="formData.role !== 'buyer' ? 'var(--color-card-border)' : ''"
+              >
+              <lucide-icon name="shopping-bag" size="24" class="text-violet-600"></lucide-icon>
+              <h3 class="text-sm font-bold m-0" [style.color]="'var(--color-text)'">{{ 'register.role.buyer' | t }}</h3>
+              <p class="text-xs m-0 text-center" [style.color]="'var(--color-muted)'">{{ 'register.role.buyerDescription' | t }}</p>
             </button>
           </div>
 
           @if (errors['role']) {
-            <div class="error-text">
+            <div class="text-sm text-red-500 mt-3">
               {{ errors['role'] }}
             </div>
           }
         </div>
 
         <!-- Step 2: Credentials -->
-        <div class="step-content" [class.active]="currentStep === 2">
-          <h2 class="step-title-main">{{ 'register.credentials.title' | t }}</h2>
-          <p class="step-description-main">{{ 'register.credentials.description' | t }}</p>
+        <div [class.hidden]="currentStep !== 2">
+          <h2 class="text-lg font-bold m-0 mb-1" [style.color]="'var(--color-text)'">{{ 'register.credentials.title' | t }}</h2>
+          <p class="text-sm m-0 mb-6" [style.color]="'var(--color-muted)'">{{ 'register.credentials.description' | t }}</p>
 
-          <div>
+          <div class="flex flex-col gap-4">
             <!-- Username -->
-            <div class="form-group">
-              <label class="form-label">{{ 'register.username' | t }}</label>
+            <div class="flex flex-col gap-1.5">
+              <label for="regUsername" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'register.username' | t }}</label>
               <input
                 type="text"
+                id="regUsername"
                 [(ngModel)]="formData.username"
                 [placeholder]="'register.usernamePlaceholder' | t"
-                class="form-input"
+                class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                [style.color]="'var(--color-text)'"
+                [style.border-color]="'var(--color-card-border)'"
                 />
                 @if (errors['username']) {
-                  <div class="error-text">{{ errors['username'] }}</div>
+                  <div class="text-xs text-red-500">{{ errors['username'] }}</div>
                 }
               </div>
 
               <!-- Password -->
-              <div class="form-group">
-                <label class="form-label">{{ 'register.password' | t }}</label>
+              <div class="flex flex-col gap-1.5">
+                <label for="regPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'register.password' | t }}</label>
                 <input
                   type="password"
+                  id="regPassword"
                   [(ngModel)]="formData.password"
                   [placeholder]="'register.passwordPlaceholder' | t"
-                  class="form-input"
+                  class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                  [style.color]="'var(--color-text)'"
+                  [style.border-color]="'var(--color-card-border)'"
                   />
                   @if (errors['password']) {
-                    <div class="error-text">{{ errors['password'] }}</div>
+                    <div class="text-xs text-red-500">{{ errors['password'] }}</div>
                   }
                 </div>
 
                 <!-- Confirm Password -->
-                <div class="form-group">
-                  <label class="form-label">{{ 'register.confirmPassword' | t }}</label>
+                <div class="flex flex-col gap-1.5">
+                  <label for="regConfirmPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'register.confirmPassword' | t }}</label>
                   <input
                     type="password"
+                    id="regConfirmPassword"
                     [(ngModel)]="formData.confirmPassword"
                     [placeholder]="'register.confirmPasswordPlaceholder' | t"
-                    class="form-input"
+                    class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                    [style.color]="'var(--color-text)'"
+                    [style.border-color]="'var(--color-card-border)'"
                     />
                     @if (errors['confirmPassword']) {
-                      <div class="error-text">{{ errors['confirmPassword'] }}</div>
+                      <div class="text-xs text-red-500">{{ errors['confirmPassword'] }}</div>
                     }
                   </div>
                 </div>
               </div>
 
               <!-- Step 3: Personal Info -->
-              <div class="step-content" [class.active]="currentStep === 3">
-                <h2 class="step-title-main">{{ 'register.personal.title' | t }}</h2>
-                <p class="step-description-main">{{ 'register.personal.description' | t }}</p>
+              <div [class.hidden]="currentStep !== 3">
+                <h2 class="text-lg font-bold m-0 mb-1" [style.color]="'var(--color-text)'">{{ 'register.personal.title' | t }}</h2>
+                <p class="text-sm m-0 mb-6" [style.color]="'var(--color-muted)'">{{ 'register.personal.description' | t }}</p>
 
-                <div>
+                <div class="flex flex-col gap-4">
                   <!-- Full Name -->
-                  <div class="form-group">
-                    <label class="form-label">{{ 'register.fullName' | t }}</label>
+                  <div class="flex flex-col gap-1.5">
+                    <label for="regFullName" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'register.fullName' | t }}</label>
                     <input
                       type="text"
+                      id="regFullName"
                       [(ngModel)]="formData.fullName"
                       [placeholder]="'register.fullNamePlaceholder' | t"
-                      class="form-input"
+                      class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                      [style.color]="'var(--color-text)'"
+                      [style.border-color]="'var(--color-card-border)'"
                       />
                       @if (errors['fullName']) {
-                        <div class="error-text">{{ errors['fullName'] }}</div>
+                        <div class="text-xs text-red-500">{{ errors['fullName'] }}</div>
                       }
                     </div>
 
                     <!-- Email -->
-                    <div class="form-group">
-                      <label class="form-label">{{ 'register.emailAddress' | t }}</label>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="regEmail" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'register.emailAddress' | t }}</label>
                       <input
                         type="email"
+                        id="regEmail"
                         [(ngModel)]="formData.email"
                         [placeholder]="'login.emailPlaceholder' | t"
-                        class="form-input"
+                        class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+                        [style.color]="'var(--color-text)'"
+                        [style.border-color]="'var(--color-card-border)'"
                         />
                         @if (errors['email']) {
-                          <div class="error-text">{{ errors['email'] }}</div>
+                          <div class="text-xs text-red-500">{{ errors['email'] }}</div>
                         }
                       </div>
                     </div>
                   </div>
 
                   <!-- Step 4: Review -->
-                  <div class="step-content" [class.active]="currentStep === 4">
-                    <h2 class="step-title-main">{{ 'register.review.title' | t }}</h2>
-                    <p class="step-description-main">{{ 'register.review.description' | t }}</p>
+                  <div [class.hidden]="currentStep !== 4">
+                    <h2 class="text-lg font-bold m-0 mb-1" [style.color]="'var(--color-text)'">{{ 'register.review.title' | t }}</h2>
+                    <p class="text-sm m-0 mb-6" [style.color]="'var(--color-muted)'">{{ 'register.review.description' | t }}</p>
 
-                    <div class="review-grid">
-                      <div class="review-item">
-                        <span class="review-label">{{ 'register.review.role' | t }}</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div class="flex flex-col gap-1 p-4 rounded-xl" [style.background]="'var(--color-bg)'">
+                        <span class="text-xs font-medium" [style.color]="'var(--color-muted)'">{{ 'register.review.role' | t }}</span>
+                        <div class="flex items-center gap-2">
                           <lucide-icon
                             [name]="formData.icon || 'user'"
-                            class="review-icon"
-                          size="20"></lucide-icon>
-                        <span class="review-value review-role">{{ getRoleLabel(formData.role) }}</span>
+                            size="20"
+                            class="text-violet-600"></lucide-icon>
+                          <span class="text-sm font-semibold text-violet-600">{{ getRoleLabel(formData.role) }}</span>
+                        </div>
                       </div>
-                      <div class="review-item">
-                        <span class="review-label">{{ 'register.review.username' | t }}</span>
-                        <span class="review-value">{{ formData.username }}</span>
+                      <div class="flex flex-col gap-1 p-4 rounded-xl" [style.background]="'var(--color-bg)'">
+                        <span class="text-xs font-medium" [style.color]="'var(--color-muted)'">{{ 'register.review.username' | t }}</span>
+                        <span class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ formData.username }}</span>
                       </div>
-                      <div class="review-item">
-                        <span class="review-label">{{ 'register.review.fullName' | t }}</span>
-                        <span class="review-value">{{ formData.fullName }}</span>
+                      <div class="flex flex-col gap-1 p-4 rounded-xl" [style.background]="'var(--color-bg)'">
+                        <span class="text-xs font-medium" [style.color]="'var(--color-muted)'">{{ 'register.review.fullName' | t }}</span>
+                        <span class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ formData.fullName }}</span>
                       </div>
-                      <div class="review-item">
-                        <span class="review-label">{{ 'register.review.email' | t }}</span>
-                        <span class="review-value">{{ formData.email }}</span>
+                      <div class="flex flex-col gap-1 p-4 rounded-xl" [style.background]="'var(--color-bg)'">
+                        <span class="text-xs font-medium" [style.color]="'var(--color-muted)'">{{ 'register.review.email' | t }}</span>
+                        <span class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ formData.email }}</span>
                       </div>
                     </div>
 
-                    <p class="review-note">
+                    <p class="text-xs mt-4" [style.color]="'var(--color-muted)'">
                       {{ 'register.review.note' | t }}
                     </p>
                   </div>
 
                   <!-- Navigation Buttons -->
-                  <div class="button-group">
+                  <div class="flex items-center justify-between mt-8 pt-6 border-t" [style.border-color]="'var(--color-card-border)'">
                     @if (currentStep > 1) {
                       <button
                         (click)="prevStep()"
-                        class="button-prev"
+                        class="inline-flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-violet-600/5 bg-transparent"
+                        [style.color]="'var(--color-text)'"
+                        [style.border-color]="'var(--color-card-border)'"
                         >
                         ← {{ 'register.previous' | t }}
                       </button>
                     }
 
-                    <div class="button-spacer"></div>
+                    <div class="flex-1"></div>
 
                     @if (currentStep < totalSteps) {
                       <button
                         (click)="nextStep()"
-                        class="button-next"
+                        class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                         >
                         {{ 'register.next' | t }} →
                       </button>
@@ -297,7 +314,7 @@
                       <button
                         (click)="submitRegistration()"
                         [disabled]="isLoading"
-                        class="button-submit"
+                        class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                         {{ isLoading ? ('register.creating' | t) : ('register.createAccount' | t) }}
                       </button>
@@ -305,10 +322,10 @@
                   </div>
 
                   <!-- Login Link -->
-                  <div class="register-footer">
-                    <p class="footer-text">
+                  <div class="text-center mt-6">
+                    <p class="text-sm" [style.color]="'var(--color-muted)'">
                       {{ 'register.alreadyHaveAccount' | t }}
-                      <button (click)="goToLogin()" class="button-next">
+                      <button (click)="goToLogin()" class="text-violet-600 font-medium bg-transparent border-none cursor-pointer hover:underline">
                         {{ 'register.signIn' | t }}
                       </button>
                     </p>
@@ -317,3 +334,4 @@
               </div>
             </div>
           </div>
+

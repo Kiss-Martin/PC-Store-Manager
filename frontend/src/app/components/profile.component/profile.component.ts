@@ -1,21 +1,23 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../auth/auth.service';
+import { UserService } from '../../services/user.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { User, Session } from '../../models/api.models';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe],
+  imports: [FormsModule, LucideAngularModule, TranslatePipe, ConfirmationModalComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css'],
 })
-export class ProfileComponent implements OnInit {
-  user: any = null;
+export class ProfileComponent implements OnInit, OnDestroy {
+  user: User | null = null;
   avatarUrl: string | null = null;
   isLoading = true;
   isEditingProfile = false;
@@ -36,24 +38,34 @@ export class ProfileComponent implements OnInit {
   isSaving = false;
   successMessage = '';
   errorMessage = '';
-  sessions: any[] = [];
+  sessions: Session[] = [];
   sessionsLoading = false;
+
+  // Revoke session confirmation modal
+  showRevokeConfirm = false;
+  sessionToRevoke: string | null = null;
+  showDeleteConfirm = false;
+  isDeletingAccount = false;
 
   constructor(
     public auth: AuthService,
+    private userService: UserService,
     public theme: ThemeService,
     public i18n: I18nService,
   ) {}
 
   ngOnInit(): void {
-    this.loadUserProfile();
-    this.loadSessions();
-    this.loadAvatar();
+    // Wait for auth to be ready (token refresh may be in progress after page reload)
+    this.auth.authReady.then(() => {
+      this.loadUserProfile();
+      this.loadSessions();
+      this.loadAvatar();
+    });
   }
 
   loadUserProfile(): void {
     this.isLoading = true;
-    this.auth.getMe().subscribe({
+    this.userService.getMe().subscribe({
       next: (res) => {
         this.user = res.user;
         this.profileForm = {
@@ -74,7 +86,7 @@ export class ProfileComponent implements OnInit {
   loadAvatar(): void {
     // revoke previous object URL if present
     if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) URL.revokeObjectURL(this.avatarUrl);
-    this.auth.getMyAvatar().subscribe({
+    this.userService.getMyAvatar().subscribe({
       next: (blob) => {
         this.avatarUrl = URL.createObjectURL(blob);
       },
@@ -92,7 +104,7 @@ export class ProfileComponent implements OnInit {
     this.avatarUrl = URL.createObjectURL(f);
     // upload
     this.isSaving = true;
-    this.auth.uploadAvatar(f).subscribe({
+    this.userService.uploadAvatar(f).subscribe({
       next: () => {
         this.isSaving = false;
         this.showSuccess(this.i18n.t('profile.success.avatarUploaded'));
@@ -120,8 +132,21 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  revokeSession(id: string): void {
-    if (!confirm(this.i18n.t('profile.confirmRevokeSession'))) return;
+  requestRevokeSession(id: string): void {
+    this.sessionToRevoke = id;
+    this.showRevokeConfirm = true;
+  }
+
+  cancelRevokeSession(): void {
+    this.showRevokeConfirm = false;
+    this.sessionToRevoke = null;
+  }
+
+  confirmRevokeSession(): void {
+    if (!this.sessionToRevoke) return;
+    const id = this.sessionToRevoke;
+    this.showRevokeConfirm = false;
+    this.sessionToRevoke = null;
     this.auth.revokeSession(id).subscribe({
       next: () => {
         this.showSuccess(this.i18n.t('profile.success.sessionRevoked'));
@@ -138,9 +163,9 @@ export class ProfileComponent implements OnInit {
     this.isEditingProfile = !this.isEditingProfile;
     if (!this.isEditingProfile) {
       this.profileForm = {
-        email: this.user.email || '',
-        username: this.user.username || '',
-        fullname: this.user.fullname || ''
+        email: this.user?.email || '',
+        username: this.user?.username || '',
+        fullname: this.user?.fullname || ''
       };
     }
     this.clearMessages();
@@ -150,9 +175,10 @@ export class ProfileComponent implements OnInit {
     this.isSaving = true;
     this.clearMessages();
 
-    this.auth.updateMe(this.profileForm).subscribe({
+    this.userService.updateMe(this.profileForm).subscribe({
       next: (res) => {
         this.user = res.user;
+        this.auth.setUser(res.user);
         this.isSaving = false;
         this.isEditingProfile = false;
         this.showSuccess(this.i18n.t('profile.success.updated'));
@@ -205,7 +231,7 @@ export class ProfileComponent implements OnInit {
 
     this.isSaving = true;
 
-    this.auth.changePassword(this.passwordForm.currentPassword, this.passwordForm.newPassword).subscribe({
+    this.userService.changePassword(this.passwordForm.currentPassword, this.passwordForm.newPassword).subscribe({
       next: () => {
         this.isSaving = false;
         this.showSuccess(this.i18n.t('profile.success.passwordChanged'));
@@ -243,9 +269,42 @@ export class ProfileComponent implements OnInit {
     this.auth.logout();
   }
 
+  requestDeleteProfile(): void {
+    this.showDeleteConfirm = true;
+    this.clearMessages();
+  }
+
+  cancelDeleteProfile(): void {
+    this.showDeleteConfirm = false;
+  }
+
+  confirmDeleteProfile(): void {
+    if (this.isDeletingAccount) return;
+    this.isDeletingAccount = true;
+
+    this.userService.deleteMe().subscribe({
+      next: () => {
+        this.isDeletingAccount = false;
+        this.showDeleteConfirm = false;
+        this.auth.logout();
+      },
+      error: (err: any) => {
+        this.isDeletingAccount = false;
+        this.showDeleteConfirm = false;
+        this.showError(err?.error?.error || this.i18n.t('profile.error.deleteAccount'));
+      }
+    });
+  }
+
   getRoleLabel(role: string | undefined): string {
     if (role === 'admin') return this.i18n.t('role.admin');
     if (role === 'worker') return this.i18n.t('role.worker');
     return this.i18n.t('role.user');
+  }
+
+  ngOnDestroy(): void {
+    if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.avatarUrl);
+    }
   }
 }

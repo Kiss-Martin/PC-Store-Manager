@@ -1,39 +1,28 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthService, ExportFormat } from '../../auth/auth.service';
+import { AuthService } from '../../auth/auth.service';
+import { OrderService, ExportFormat } from '../../services/order.service';
+import { ItemService } from '../../services/item.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { ActivatedRoute } from '@angular/router';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  product: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  totalAmount: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  customer: string;
-  date: string;
-  timestamp: string;
-  assignedTo?: string | null;
-}
+import { ToastService } from '../../shared/toast.service';
+import { Order, OrderStatus, Item, Customer, User } from '../../models/api.models';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
+  imports: [NgClass, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.css'],
 })
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];
-  workers: any[] = [];
+  workers: User[] = [];
   assigningOrder: string | null = null;
   filteredOrders: Order[] = [];
   isLoading = true;
@@ -46,7 +35,7 @@ export class OrdersComponent implements OnInit {
   // Status update modal
   showStatusModal = false;
   orderToUpdate: Order | null = null;
-  newStatus: 'pending' | 'processing' | 'completed' | 'cancelled' = 'pending';
+  newStatus: OrderStatus = 'pending';
 
   // Cancel confirmation
   showCancelConfirm = false;
@@ -63,14 +52,14 @@ export class OrdersComponent implements OnInit {
   showStatusFilterDropdown = false;
   showOrderStatusDropdown = false;
 
-  products: any[] = [];
-  customers: any[] = [];
+  products: Item[] = [];
+  customers: Customer[] = [];
 
   newOrder = {
     item_id: '',
     customer_id: '',
     quantity: 1,
-    status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
+    status: 'pending' as OrderStatus,
   };
 
   newCustomer = {
@@ -91,10 +80,13 @@ export class OrdersComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    private orderService: OrderService,
+    private itemService: ItemService,
     public theme: ThemeService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService,
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -109,37 +101,40 @@ export class OrdersComponent implements OnInit {
   ngOnInit() {
     this.loadOrders();
     this.loadProducts();
-    this.loadCustomers();
+    if (!this.auth.isBuyer()) {
+      this.loadCustomers();
+    }
     if (this.auth.isAdmin()) {
       this.loadWorkers();
     }
 
     this.route.queryParams.subscribe(params => {
-      if (params['action'] === 'new' && this.auth.isAdmin()) {
+      if (params['action'] === 'new' && (this.auth.isAdmin() || this.auth.isBuyer())) {
         setTimeout(() => this.openAddOrderModal(), 200);
       }
     });
   }
   loadWorkers() {
-    this.auth.getWorkers().subscribe({
-      next: (res: any) => {
+    this.orderService.getWorkers().subscribe({
+      next: (res) => {
         this.workers = res.users || [];
       },
-      error: (err: any) => console.error('Failed to load workers:', err)
+      error: (err) => console.error('Failed to load workers:', err)
     });
   }
 
-  assignOrderToWorker(orderId: string, userId: string) {
+  assignOrderToWorker(orderId: string, userId: string | null) {
     this.assigningOrder = orderId;
+    const assignTo = userId || null;
 
-    this.auth.assignOrder(orderId, userId || null).subscribe({
+    this.orderService.assignOrder(orderId, assignTo).subscribe({
       next: () => {
         this.assigningOrder = null;
         this.loadOrders();
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error('Failed to assign order:', err);
-        alert(this.i18n.t('orders.error.assign'));
+        this.toast.show(this.i18n.t('orders.error.assign'), { type: 'error' });
         this.assigningOrder = null;
       }
     });
@@ -153,9 +148,12 @@ export class OrdersComponent implements OnInit {
 
   loadOrders() {
     this.isLoading = true;
-    this.auth.getOrders().subscribe({
-      next: (res: any) => {
-        this.orders = res.orders || [];
+    this.orderService.getOrders().subscribe({
+      next: (res) => {
+        this.orders = (res.orders || []).map((o) => ({
+          ...o,
+          assignedTo: o.assignedTo || null,
+        }));
         this.filteredOrders = this.orders;
         this.calculateStats();
         this.filterOrders();
@@ -170,8 +168,8 @@ export class OrdersComponent implements OnInit {
   }
 
   loadProducts() {
-    this.auth.getItems().subscribe({
-      next: (res: any) => {
+    this.itemService.getItems().subscribe({
+      next: (res) => {
         this.products = res.items || [];
         this.cdr.detectChanges();
       },
@@ -182,8 +180,8 @@ export class OrdersComponent implements OnInit {
   }
 
   loadCustomers() {
-    this.auth.getCustomers().subscribe({
-      next: (res: any) => {
+    this.orderService.getCustomers().subscribe({
+      next: (res) => {
         this.customers = res.customers || [];
         this.cdr.detectChanges();
       },
@@ -197,8 +195,13 @@ export class OrdersComponent implements OnInit {
     this.showAddOrderModal = true;
     this.showNewCustomerForm = false;
     this.resetOrderForm();
+    if (this.auth.isBuyer()) {
+      this.newOrder.status = 'pending';
+    }
     this.loadProducts();
-    this.loadCustomers();
+    if (!this.auth.isBuyer()) {
+      this.loadCustomers();
+    }
   }
 
   closeAddOrderModal() {
@@ -212,7 +215,7 @@ export class OrdersComponent implements OnInit {
       item_id: '',
       customer_id: '',
       quantity: 1,
-      status: 'pending' as 'pending' | 'processing' | 'completed' | 'cancelled',
+      status: 'pending' as OrderStatus,
     };
     this.newCustomer = {
       name: '',
@@ -243,8 +246,8 @@ export class OrdersComponent implements OnInit {
     this.isSavingCustomer = true;
     this.orderError = '';
 
-    this.auth.createCustomer(this.newCustomer).subscribe({
-      next: (res: any) => {
+    this.orderService.createCustomer(this.newCustomer).subscribe({
+      next: (res) => {
         this.customers.push(res.customer);
         this.newOrder.customer_id = res.customer.id;
         this.showNewCustomerForm = false;
@@ -252,9 +255,9 @@ export class OrdersComponent implements OnInit {
         this.orderSuccess = this.i18n.t('orders.success.customerCreated');
         setTimeout(() => (this.orderSuccess = ''), 2000);
       },
-      error: (err: any) => {
+      error: (err) => {
         this.isSavingCustomer = false;
-        this.orderError = err.error?.error || this.i18n.t('orders.error.createCustomer');
+        this.orderError = (err as any).error?.error || this.i18n.t('orders.error.createCustomer');
       },
     });
   }
@@ -263,7 +266,7 @@ export class OrdersComponent implements OnInit {
     this.orderError = '';
     this.orderSuccess = '';
 
-    if (!this.newOrder.item_id || !this.newOrder.customer_id || !this.newOrder.quantity) {
+    if (!this.newOrder.item_id || !this.newOrder.quantity || (!this.auth.isBuyer() && !this.newOrder.customer_id)) {
       this.orderError = this.i18n.t('orders.error.requiredFields');
       return;
     }
@@ -283,7 +286,7 @@ export class OrdersComponent implements OnInit {
 
     this.isSavingOrder = true;
 
-    this.auth.createOrder(this.newOrder).subscribe({
+    this.orderService.createOrder(this.newOrder).subscribe({
       next: () => {
         this.isSavingOrder = false;
         this.orderSuccess = this.i18n.t('orders.success.recorded');
@@ -292,9 +295,9 @@ export class OrdersComponent implements OnInit {
           this.loadOrders();
         }, 1500);
       },
-      error: (err: any) => {
+      error: (err) => {
         this.isSavingOrder = false;
-        this.orderError = err.error?.error || this.i18n.t('orders.error.createOrder');
+        this.orderError = (err as any).error?.error || this.i18n.t('orders.error.createOrder');
       },
     });
   }
@@ -371,14 +374,14 @@ export class OrdersComponent implements OnInit {
   updateOrderStatus() {
     if (!this.orderToUpdate) return;
 
-    this.auth.updateOrderStatus(this.orderToUpdate.id, this.newStatus).subscribe({
+    this.orderService.updateOrderStatus(this.orderToUpdate.id, this.newStatus).subscribe({
       next: () => {
         this.loadOrders();
         this.closeStatusModal();
       },
       error: (err) => {
         console.error('Failed to update order status:', err);
-        alert(this.i18n.t('orders.error.updateStatus'));
+        this.toast.show(this.i18n.t('orders.error.updateStatus'), { type: 'error' });
       },
     });
   }
@@ -394,10 +397,20 @@ export class OrdersComponent implements OnInit {
     this.showCancelConfirm = true;
   }
 
+  /** Buyer can cancel their own pending/processing orders */
+  canBuyerCancel(order: Order): boolean {
+    return this.auth.isBuyer() && (order.status === 'pending' || order.status === 'processing');
+  }
+
+  confirmBuyerCancel(order: Order) {
+    this.orderToCancel = order;
+    this.showCancelConfirm = true;
+  }
+
   cancelOrder() {
     if (!this.orderToCancel) return;
 
-    this.auth.updateOrderStatus(this.orderToCancel.id, 'cancelled').subscribe({
+    this.orderService.updateOrderStatus(this.orderToCancel.id, 'cancelled').subscribe({
       next: () => {
         this.loadOrders();
         this.showCancelConfirm = false;
@@ -405,6 +418,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to cancel order:', err);
+        this.toast.show(this.i18n.t('orders.error.updateStatus'), { type: 'error' });
         this.showCancelConfirm = false;
       },
     });
@@ -413,7 +427,7 @@ export class OrdersComponent implements OnInit {
   deleteOrder() {
     if (!this.orderToCancel || !this.auth.isAdmin()) return;
 
-    this.auth.deleteOrder(this.orderToCancel.id).subscribe({
+    this.orderService.deleteOrder(this.orderToCancel.id).subscribe({
       next: () => {
         this.loadOrders();
         this.showCancelConfirm = false;
@@ -452,7 +466,7 @@ export class OrdersComponent implements OnInit {
     return icons[status] || 'clock';
   }
 
-  getStatusDescription(status: 'pending' | 'processing' | 'completed' | 'cancelled'): string {
+  getStatusDescription(status: OrderStatus): string {
     return this.i18n.t(`orders.statusDescription.${status}`);
   }
 
@@ -470,7 +484,7 @@ export class OrdersComponent implements OnInit {
     this.showOrderStatusDropdown = !this.showOrderStatusDropdown;
   }
 
-  selectOrderStatus(status: 'pending' | 'processing' | 'completed' | 'cancelled') {
+  selectOrderStatus(status: OrderStatus) {
     this.newOrder.status = status;
     this.showOrderStatusDropdown = false;
   }
@@ -488,7 +502,7 @@ export class OrdersComponent implements OnInit {
   }
 
   exportOrders() {
-    this.auth.exportOrders(this.selectedStatus, this.exportFormat).subscribe({
+    this.orderService.exportOrders(this.selectedStatus, this.exportFormat).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -501,9 +515,13 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to export orders:', err);
-        alert(this.i18n.t('orders.error.export'));
+        this.toast.show(this.i18n.t('orders.error.export'), { type: 'error' });
       },
     });
+  }
+
+  printCurrentView() {
+    window.print();
   }
 
   onProductChange() {

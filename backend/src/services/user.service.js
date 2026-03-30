@@ -44,6 +44,27 @@ const UserService = {
     await run(supabase.from('users').update({ password_hash: hashed }).eq('id', userId));
     return { success: true, message: t(lang, 'user.passwordUpdated') };
   },
+
+  async deleteProfile(userId, lang = 'en') {
+    const user = await run(supabase.from('users').select('id').eq('id', userId).single()).catch(() => null);
+    if (!user) throw new Error(t(lang, 'user.fetchFailed'));
+
+    await run(supabase.from('refresh_tokens').delete().eq('user_id', userId)).catch(() => null);
+    await run(supabase.from('password_resets').delete().eq('user_id', userId)).catch(() => null);
+
+    await run(supabase.from('logs').update({ user_id: null }).eq('user_id', userId)).catch(() => null);
+    await run(supabase.from('logs').update({ assigned_to: null }).eq('assigned_to', userId)).catch(() => null);
+    await run(supabase.from('orders_status').update({ updated_by: null }).eq('updated_by', userId)).catch(() => null);
+    await run(supabase.from('users').update({ admin_approved_by: null }).eq('admin_approved_by', userId)).catch(() => null);
+    await run(supabase.from('audit_logs').update({ actor_user_id: null }).eq('actor_user_id', userId)).catch(() => null);
+    await run(supabase.from('audit_logs').update({ target_user_id: null }).eq('target_user_id', userId)).catch(() => null);
+
+    const deleted = await run(supabase.from('users').delete().eq('id', userId).select('id')).catch(() => null);
+    if (!deleted || deleted.length === 0) {
+      throw new Error(t(lang, 'user.deleteFailed'));
+    }
+    return { success: true, message: t(lang, 'user.deleted') };
+  },
 };
 
 export default UserService;

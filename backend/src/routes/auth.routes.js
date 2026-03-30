@@ -8,6 +8,13 @@ import { authMiddleware, requireRole } from '../middlewares/auth.middleware.js';
 const router = Router();
 
 // Rate limiter for sensitive auth endpoints
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 15, // max 15 login/register attempts per 15 min per IP
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
 const refreshLimiter = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
 	max: 10, // max 10 refresh attempts per minute per IP
@@ -15,9 +22,9 @@ const refreshLimiter = rateLimit({
 	legacyHeaders: false,
 });
 
-router.post('/register', asyncWrap(AuthController.register));
-router.post('/login', asyncWrap(AuthController.login));
-router.post('/forgot-password', asyncWrap(AuthController.forgotPassword));
+router.post('/register', authLimiter, asyncWrap(AuthController.register));
+router.post('/login', authLimiter, asyncWrap(AuthController.login));
+router.post('/forgot-password', authLimiter, asyncWrap(AuthController.forgotPassword));
 router.post('/reset-password', asyncWrap(AuthController.resetPassword));
 // One-click approve/reject links (token-based)
 router.get('/admin/pending-admins/:id/approve/oneclick', asyncWrap(AuthController.approveAdminOneClick));

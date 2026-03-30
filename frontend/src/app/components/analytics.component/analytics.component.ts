@@ -1,45 +1,23 @@
 import { Component, OnInit, ViewChildren, QueryList, effect, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import { AuthService, ExportFormat } from '../../auth/auth.service';
+import { AuthService } from '../../auth/auth.service';
+import { DashboardService, ExportFormat } from '../../services/dashboard.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
+import { AnalyticsSummary, TopProduct, Transaction } from '../../models/api.models';
 
 Chart.register(...registerables);
-
-interface AnalyticsSummary {
-  totalRevenue: number;
-  totalOrders: number;
-  averageOrderValue: number;
-  topSellingProduct: string;
-  lowStockItems: number;
-  revenueGrowth: number;
-}
-
-interface TopProduct {
-  name: string;
-  sales: number;
-  revenue: number;
-  trend: string;
-}
-
-interface Transaction {
-  id: string;
-  product: string;
-  customer: string;
-  amount: number;
-  status: string;
-  date: string;
-}
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, BaseChartDirective, TranslatePipe],
+  imports: [NgClass, FormsModule, LucideAngularModule, BaseChartDirective, TranslatePipe],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
 })
@@ -172,9 +150,11 @@ export class AnalyticsComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    private dashboardService: DashboardService,
     public theme: ThemeService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {
     // Watch for theme changes
     effect(() => {
@@ -196,8 +176,8 @@ export class AnalyticsComponent implements OnInit {
     this.isLoading = true;
 
     // ✅ Call real API endpoint
-    this.auth.getAnalytics(this.selectedPeriod).subscribe({
-      next: (res: any) => {
+    this.dashboardService.getAnalytics(this.selectedPeriod).subscribe({
+      next: (res) => {
         // Summary stats
         this.summary = res.summary || {
           totalRevenue: 0,
@@ -281,7 +261,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   exportReport() {
-  this.auth.exportAnalytics(this.selectedPeriod, this.exportFormat).subscribe({
+  this.dashboardService.exportAnalytics(this.selectedPeriod, this.exportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -292,12 +272,16 @@ export class AnalyticsComponent implements OnInit {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     },
-    error: (err: any) => {
+    error: (err) => {
       console.error('Export failed:', err);
-      alert(this.i18n.t('analytics.error.export'));
+      this.toast.show(this.i18n.t('analytics.error.export'), { type: 'error' });
     }
   });
 }
+
+  printCurrentView() {
+    window.print();
+  }
 
   formatCurrency(value: number): string {
     return value.toLocaleString(this.i18n.locale(), {

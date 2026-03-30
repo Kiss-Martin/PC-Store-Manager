@@ -1,135 +1,126 @@
-<div class="login-container">
-  <div class="login-wrapper">
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
     <!-- Logo/Header -->
-    <div class="login-header">
-      <div class="logo-section">
-        <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
-        <span class="brand">PC Store</span>
-        <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
+    <div class="text-center mb-8">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <lucide-icon name="monitor" class="text-violet-600" size="32"></lucide-icon>
+        <span class="text-2xl font-bold" [style.color]="'var(--color-text)'">PC Store</span>
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-          <span class="ml-8">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
+          <span class="ml-2">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
         </button>
-        <button type="button" class="theme-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
           {{ 'app.lang.toggle' | t }}
         </button>
       </div>
-      <h1 class="login-title">{{ 'login.title' | t }}</h1>
-      <p class="login-subtitle">{{ 'login.subtitle' | t }}</p>
+      <h1 class="text-3xl font-bold mb-2" [style.color]="'var(--color-text)'">{{ 'login.title' | t }}</h1>
+      <p class="text-[0.95rem]" [style.color]="'var(--color-muted)'">{{ 'login.subtitle' | t }}</p>
     </div>
 
     <!-- Login Card -->
-    <div class="login-card">
+    <div class="rounded-3xl border p-8 shadow-sm" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
       <!-- Form -->
-      <form (ngSubmit)="login()" class="form">
+      <form (ngSubmit)="login()" class="flex flex-col gap-5">
         <!-- Email -->
-        <div class="form-group">
-          <label class="form-label">{{ 'login.email' | t }}</label>
-          <input
-            type="text"
-            [(ngModel)]="email"
-            name="email"
-            [placeholder]="'login.emailPlaceholder' | t"
-            class="form-input"
-            />
-          </div>
-
-          <!-- Password -->
-          <div class="form-group">
-            <label class="form-label">{{ 'login.password' | t }}</label>
-            <input
-              type="password"
-              [(ngModel)]="password"
-              name="password"
-              [placeholder]="'login.passwordPlaceholder' | t"
-              class="form-input"
-              />
-            </div>
-
-            <!-- Remember me -->
-            <div class="form-group remember">
-              <label class="checkbox-label">
-                <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
-                <span>{{ 'login.staySignedIn' | t }}</span>
-              </label>
-            </div>
-
-            <div class="form-row">
-              <button type="button" (click)="goToForgot()" class="forgot-button">{{ 'login.forgotPassword' | t }}</button>
-            </div>
-
-            <!-- Login Button -->
-            <button
-              type="submit"
-              [disabled]="isLoading"
-              class="login-button"
-              >
-              {{ isLoading ? ('login.signingIn' | t) : ('login.signIn' | t) }}
-            </button>
-          </form>
-
-          <!-- Divider -->
-          <div class="divider">
-            <div class="divider-line"></div>
-            <span class="divider-text">{{ 'login.or' | t }}</span>
-            <div class="divider-line"></div>
-          </div>
-
-          <!-- Register Link -->
-          <button
-            (click)="goToRegister()"
-            class="register-button"
-            >
-            {{ 'login.createAccount' | t }}
-          </button>
+        <div class="flex flex-col">
+          <label for="loginEmail" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'login.email' | t }}</label>
+          <input type="text" id="loginEmail" [(ngModel)]="email" name="email" [placeholder]="'login.emailPlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600 placeholder:opacity-100"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
+            [style.--tw-placeholder-color]="'var(--color-muted)'" />
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-          <p class="footer-text">
-            {{ 'login.needHelp' | t }} <button type="button" class="footer-link" (click)="openContactModal()">{{ 'login.contactSupport' | t }}</button>
-          </p>
+        <!-- Password -->
+        <div class="flex flex-col">
+          <label for="loginPassword" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'login.password' | t }}</label>
+          <input type="password" id="loginPassword" [(ngModel)]="password" name="password" [placeholder]="'login.passwordPlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600 placeholder:opacity-100"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" />
         </div>
+
+        <!-- Remember me -->
+        <div class="flex flex-col">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" />
+            <span>{{ 'login.staySignedIn' | t }}</span>
+          </label>
+        </div>
+
+        <div class="flex justify-end -mt-1">
+          <button type="button" (click)="goToForgot()" class="border-none bg-transparent p-0 text-violet-600 text-sm font-medium cursor-pointer hover:text-violet-700 transition-colors">{{ 'login.forgotPassword' | t }}</button>
+        </div>
+
+        <!-- Login Button -->
+        <button type="submit" [disabled]="isLoading"
+          class="mt-6 py-3 px-4 bg-violet-600 text-white border-none font-medium rounded-lg cursor-pointer transition-colors hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isLoading ? ('login.signingIn' | t) : ('login.signIn' | t) }}
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="my-6 flex items-center gap-3">
+        <div class="flex-1 h-px bg-slate-200"></div>
+        <span class="text-xs" [style.color]="'var(--color-muted)'">{{ 'login.or' | t }}</span>
+        <div class="flex-1 h-px bg-slate-200"></div>
       </div>
+
+      <!-- Register Link -->
+      <button (click)="goToRegister()"
+        class="w-full py-3 px-4 border border-violet-300 text-violet-600 bg-transparent font-medium rounded-lg cursor-pointer transition-colors hover:bg-violet-50">
+        {{ 'login.createAccount' | t }}
+      </button>
     </div>
 
-    <!-- Contact Support Modal -->
-    @if (showContactModal) {
-      <div class="modal-backdrop" (click)="closeContactModal()" role="dialog" aria-modal="true">
-        <div class="modal-card" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h2 class="modal-title">{{ 'login.contactModal.title' | t }}</h2>
-            <button type="button" class="modal-close" (click)="closeContactModal()" aria-label="Close">
-              <lucide-icon name="x" size="18"></lucide-icon>
-            </button>
-          </div>
-          <p class="modal-subtitle">{{ 'login.contactModal.subtitle' | t }}</p>
-          <form (ngSubmit)="submitContactSupport()" class="modal-form">
-            <div class="form-group">
-              <label class="form-label">{{ 'login.contactModal.name' | t }}</label>
-              <input type="text" [(ngModel)]="contactName" name="contactName"
-                [placeholder]="'login.contactModal.namePlaceholder' | t" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">{{ 'login.contactModal.email' | t }}</label>
-              <input type="email" [(ngModel)]="contactEmail" name="contactEmail"
-                [placeholder]="'login.contactModal.emailPlaceholder' | t" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">{{ 'login.contactModal.message' | t }}</label>
-              <textarea [(ngModel)]="contactMessage" name="contactMessage" rows="4"
-                [placeholder]="'login.contactModal.messagePlaceholder' | t"
-                class="form-input contact-textarea" required></textarea>
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="modal-btn-cancel" (click)="closeContactModal()" [disabled]="contactLoading">
-                {{ 'login.contactModal.cancel' | t }}
-              </button>
-              <button type="submit" class="modal-btn-send" [disabled]="contactLoading">
-                {{ contactLoading ? ('login.contactModal.sending' | t) : ('login.contactModal.send' | t) }}
-              </button>
-            </div>
-          </form>
-        </div>
+    <!-- Footer -->
+    <div class="text-center mt-6">
+      <p class="text-sm" [style.color]="'var(--color-muted)'">
+        {{ 'login.needHelp' | t }}
+        <button type="button" class="text-violet-600 no-underline font-medium bg-transparent border-none p-0 cursor-pointer hover:text-violet-700 hover:underline" (click)="openContactModal()">{{ 'login.contactSupport' | t }}</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Support Modal -->
+@if (showContactModal) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-1000 p-4 animate-fade-in" (click)="closeContactModal()" role="dialog" aria-modal="true">
+    <div class="rounded-2xl p-7 w-full max-w-104 shadow-2xl animate-slide-up border" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="text-lg font-bold m-0" [style.color]="'var(--color-text)'">{{ 'login.contactModal.title' | t }}</h2>
+        <button type="button" class="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center transition-colors hover:bg-black/5" [style.color]="'var(--color-muted)'" (click)="closeContactModal()" aria-label="Close">
+          <lucide-icon name="x" size="18"></lucide-icon>
+        </button>
       </div>
-    }
+      <p class="text-sm mb-5" [style.color]="'var(--color-muted)'">{{ 'login.contactModal.subtitle' | t }}</p>
+      <form (ngSubmit)="submitContactSupport()" class="flex flex-col gap-4">
+        <div class="flex flex-col">
+          <label for="contactName" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'login.contactModal.name' | t }}</label>
+          <input type="text" id="contactName" [(ngModel)]="contactName" name="contactName" [placeholder]="'login.contactModal.namePlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" />
+        </div>
+        <div class="flex flex-col">
+          <label for="contactEmail" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'login.contactModal.email' | t }}</label>
+          <input type="email" id="contactEmail" [(ngModel)]="contactEmail" name="contactEmail" [placeholder]="'login.contactModal.emailPlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" />
+        </div>
+        <div class="flex flex-col">
+          <label for="contactMessage" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'login.contactModal.message' | t }}</label>
+          <textarea id="contactMessage" [(ngModel)]="contactMessage" name="contactMessage" rows="4" [placeholder]="'login.contactModal.messagePlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600 resize-y min-h-22.5"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" required></textarea>
+        </div>
+        <div class="flex gap-3 justify-end mt-1">
+          <button type="button" class="py-2 px-4 rounded-[0.6rem] border bg-transparent cursor-pointer text-sm font-medium transition-colors hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closeContactModal()" [disabled]="contactLoading">
+            {{ 'login.contactModal.cancel' | t }}
+          </button>
+          <button type="submit" class="py-2 px-5 rounded-[0.6rem] border-none bg-violet-600 text-white cursor-pointer text-sm font-semibold transition-colors hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed" [disabled]="contactLoading">
+            {{ contactLoading ? ('login.contactModal.sending' | t) : ('login.contactModal.send' | t) }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
 

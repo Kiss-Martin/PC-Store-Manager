@@ -30,6 +30,8 @@ const dictionaries = {
     'user.passwordUpdated': 'Password updated successfully',
     'user.emailAlreadyExists': 'An account with this email address already exists. Please use a different email or log in.',
     'user.usernameAlreadyExists': 'This username is already taken. Please choose a different one.',
+    'user.deleted': 'Profile deleted successfully',
+    'user.deleteFailed': 'Failed to delete profile',
 
     'order.invalidStatus': 'Invalid status',
     'order.itemNotFound': 'Item not found',
@@ -63,6 +65,9 @@ const dictionaries = {
 
     'role.admin': 'Admin',
     'role.worker': 'Worker',
+    'role.buyer': 'Buyer',
+
+    'order.buyerCanOnlyCancel': 'Buyers can only cancel orders',
 
     'error.internalServerError': 'Internal Server Error',
 
@@ -148,6 +153,8 @@ const dictionaries = {
     'user.passwordUpdated': 'A jelszó sikeresen frissítve',
     'user.emailAlreadyExists': 'Ezzel az e-mail címmel már létezik fiók. Használj másik e-mailt, vagy jelentkezz be.',
     'user.usernameAlreadyExists': 'Ez a felhasználónév már foglalt. Kérjük, válassz másikat.',
+    'user.deleted': 'A profil sikeresen törölve',
+    'user.deleteFailed': 'Nem sikerült törölni a profilt',
 
     'order.invalidStatus': 'Érvénytelen állapot',
     'order.itemNotFound': 'A termék nem található',
@@ -181,6 +188,9 @@ const dictionaries = {
 
     'role.admin': 'adminisztrátor',
     'role.worker': 'dolgozó',
+    'role.buyer': 'vásárló',
+
+    'order.buyerCanOnlyCancel': 'A vásárlók csak lemondhatják a rendeléseket',
 
     'error.internalServerError': 'Belső szerverhiba',
 

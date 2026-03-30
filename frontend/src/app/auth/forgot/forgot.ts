@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth.service';
@@ -12,7 +11,7 @@ import { TranslatePipe } from '../../translate.pipe';
 @Component({
   selector: 'app-forgot',
   standalone: true,
-  imports: [FormsModule, CommonModule, LucideAngularModule, TranslatePipe],
+  imports: [FormsModule, LucideAngularModule, TranslatePipe],
   templateUrl: './forgot.html',
   styleUrls: ['./forgot.css'],
 })

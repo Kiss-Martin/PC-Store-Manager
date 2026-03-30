@@ -1,55 +1,51 @@
-<div class="forgot-container">
-  <div class="forgot-wrapper">
-    <div class="forgot-header">
-      <div class="logo-section">
-        <lucide-icon name="monitor" class="logo" size="32"></lucide-icon>
-        <span class="brand">PC Store</span>
-        <button type="button" class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <lucide-icon name="monitor" class="text-violet-600" size="32"></lucide-icon>
+        <span class="text-2xl font-bold" [style.color]="'var(--color-text)'">PC Store</span>
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
-          <span class="ml-8">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
+          <span class="ml-2">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
         </button>
-        <button type="button" class="theme-toggle" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
           {{ 'app.lang.toggle' | t }}
         </button>
       </div>
-      <h1 class="forgot-title">{{ 'forgot.title' | t }}</h1>
-      <p class="forgot-subtitle">{{ 'forgot.subtitle' | t }}</p>
+      <h1 class="text-3xl font-bold mb-2" [style.color]="'var(--color-text)'">{{ 'forgot.title' | t }}</h1>
+      <p class="text-[0.95rem]" [style.color]="'var(--color-muted)'">{{ 'forgot.subtitle' | t }}</p>
     </div>
 
-    <div class="forgot-card">
-      <form (ngSubmit)="sendReset()" class="form">
-        <div class="form-group">
-          <label for="email" class="form-label">{{ 'forgot.email' | t }}</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            [(ngModel)]="email"
-            required
-            [placeholder]="'forgot.emailPlaceholder' | t"
-            class="form-input"
-          />
+    <div class="rounded-3xl border p-8 shadow-sm" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+      <form (ngSubmit)="sendReset()" class="flex flex-col gap-5">
+        <div class="flex flex-col">
+          <label for="email" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'forgot.email' | t }}</label>
+          <input id="email" name="email" type="email" [(ngModel)]="email" required [placeholder]="'forgot.emailPlaceholder' | t"
+            class="w-full px-4 py-3 border rounded-lg text-base transition-all duration-200 focus:outline-none focus:border-violet-600"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" />
         </div>
 
-        <button type="submit" [disabled]="isLoading || sent" class="submit-button">
+        <button type="submit" [disabled]="isLoading || sent"
+          class="mt-6 py-3 px-4 bg-violet-600 text-white border-none font-medium rounded-lg cursor-pointer transition-colors hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed">
           {{ isLoading ? ('forgot.sending' | t) : (sent ? ('forgot.sent' | t) : ('forgot.sendResetLink' | t)) }}
         </button>
       </form>
 
-      <div class="divider">
-        <div class="divider-line"></div>
-        <span class="divider-text">{{ 'login.or' | t }}</span>
-        <div class="divider-line"></div>
+      <div class="my-6 flex items-center gap-3">
+        <div class="flex-1 h-px bg-slate-200"></div>
+        <span class="text-xs" [style.color]="'var(--color-muted)'">{{ 'login.or' | t }}</span>
+        <div class="flex-1 h-px bg-slate-200"></div>
       </div>
 
-      <button type="button" (click)="goToLogin()" class="secondary-button">
+      <button type="button" (click)="goToLogin()"
+        class="w-full py-3 px-4 border border-violet-300 text-violet-600 bg-transparent font-medium rounded-lg cursor-pointer transition-colors hover:bg-violet-50">
         {{ 'forgot.backToLogin' | t }}
       </button>
     </div>
 
-    <div class="footer">
-      <p class="footer-text">
-        {{ 'forgot.remembered' | t }} <button type="button" (click)="goToLogin()" class="footer-link">{{ 'register.signIn' | t }}</button>
+    <div class="text-center mt-6">
+      <p class="text-sm" [style.color]="'var(--color-muted)'">
+        {{ 'forgot.remembered' | t }} <button type="button" (click)="goToLogin()" class="text-violet-600 no-underline font-medium bg-transparent border-none p-0 cursor-pointer hover:text-violet-700">{{ 'register.signIn' | t }}</button>
       </p>
     </div>
   </div>

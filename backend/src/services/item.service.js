@@ -12,12 +12,11 @@ const ItemService = {
     }));
   },
 
-  async createItem({ name, model, specs, price, amount, warranty, category_id, brand_id }, userId) {
+  async createItem({ name, model, price, amount, warranty, category_id, brand_id }, userId) {
     const data = await run(
       supabase.from('items').insert({
         name,
         model,
-        specs,
         price,
         amount,
         warranty,
@@ -40,11 +39,27 @@ const ItemService = {
   },
 
   async updateItem(id, updates) {
-    const data = await run(supabase.from('items').update(updates).eq('id', id).select().single());
+    // Only pass known columns to Supabase; convert empty-string FKs to null
+    const allowed = ['name', 'model', 'price', 'amount', 'warranty', 'brand_id', 'category_id'];
+    const clean = {};
+    for (const key of allowed) {
+      if (key in updates) {
+        const val = updates[key];
+        // Convert empty strings to null for UUID foreign key columns
+        if ((key === 'brand_id' || key === 'category_id') && (val === '' || val === null)) {
+          clean[key] = null;
+        } else {
+          clean[key] = val;
+        }
+      }
+    }
+    const data = await run(supabase.from('items').update(clean).eq('id', id).select().single());
     return data;
   },
 
   async deleteItem(id) {
+    // Nullify logs referencing this item to avoid foreign key constraint violation
+    await run(supabase.from('logs').update({ item_id: null }).eq('item_id', id)).catch(() => null);
     await run(supabase.from('items').delete().eq('id', id));
   },
 

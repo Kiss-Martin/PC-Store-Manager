@@ -39,13 +39,22 @@ export const createItemSchema = z.object({
   brand_id: z.string().min(1),
   amount: z.number().int().nonnegative().optional(),
   model: z.string().optional(),
-  specs: z.string().optional(),
+  warranty: z.string().optional(),
+});
+
+export const updateItemSchema = z.object({
+  name: z.string().min(1).optional(),
+  price: z.number().nonnegative().optional(),
+  category_id: z.string().min(1).optional().nullable(),
+  brand_id: z.string().min(1).optional().nullable(),
+  amount: z.number().int().nonnegative().optional(),
+  model: z.string().optional(),
   warranty: z.string().optional(),
 });
 
 export const createOrderSchema = z.object({
   item_id: z.string().min(1),
-  customer_id: z.string().min(1),
+  customer_id: z.string().min(1).optional(),
   quantity: z.number().int().positive(),
   status: z.string().optional(),
 });
@@ -57,4 +66,10 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
   newPassword: strongPassword,
+});
+
+export const createCustomerSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().max(30).optional().or(z.literal('')),
 });

@@ -34,6 +34,17 @@ const emailStrings = {
       notProvided: 'not provided',
       footer: 'This message was sent automatically by the PC Store Manager application.',
     },
+    newOrder: {
+      heading: '&#128230; New Order Placed',
+      body: 'A new order has been placed in the PC Store Manager system.',
+      orderNumber: 'Order Number',
+      product: 'Product',
+      quantity: 'Quantity',
+      total: 'Total Amount',
+      customer: 'Customer',
+      status: 'Status',
+      footer: 'This notification was sent automatically by the PC Store Manager application.',
+    },
   },
   hu: {
     adminNotify: {
@@ -70,6 +81,17 @@ const emailStrings = {
       notProvided: 'nem adta meg',
       footer: 'Ezt az üzenetet automatikusan küldte a PC Store Manager alkalmazás.',
     },
+    newOrder: {
+      heading: '&#128230; Új rendelés érkezett',
+      body: 'Új rendelés érkezett a PC Store Manager rendszerben.',
+      orderNumber: 'Rendelés száma',
+      product: 'Termék',
+      quantity: 'Mennyiség',
+      total: 'Összeg',
+      customer: 'Ügyfél',
+      status: 'Státusz',
+      footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
+    },
   },
 };
 
@@ -77,23 +99,28 @@ function getEmailStrings(lang) {
   return emailStrings[lang === 'hu' ? 'hu' : 'en'];
 }
 
+/** Escape user-supplied values for safe HTML embedding */
+function safe(str = '') {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 export function renderAdminNotification({ lang = 'en', subject, email, username, fullname, approveUrl, rejectUrl, reviewLink }) {
   const s = getEmailStrings(lang);
   const plain = `${s.adminNotify.body}\n${s.adminNotify.email}: ${email}\n${s.adminNotify.username}: ${username}\n${s.adminNotify.fullname}: ${fullname}\n\n${s.adminNotify.review}: ${reviewLink}\n${s.adminNotify.approve}: ${approveUrl}\n${s.adminNotify.reject}: ${rejectUrl}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
-    <h2 style="color:#111827">${subject}</h2>
+    <h2 style="color:#111827">${safe(subject)}</h2>
     <p>${s.adminNotify.body}</p>
     <table style="width:100%;border-collapse:collapse;margin-top:8px">
-      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.email}</td><td style="padding:6px">${email}</td></tr>
-      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.username}</td><td style="padding:6px">${username}</td></tr>
-      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.fullname}</td><td style="padding:6px">${fullname}</td></tr>
+      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.email}</td><td style="padding:6px">${safe(email)}</td></tr>
+      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.username}</td><td style="padding:6px">${safe(username)}</td></tr>
+      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.fullname}</td><td style="padding:6px">${safe(fullname)}</td></tr>
     </table>
     <p style="margin-top:18px">
-      <a href="${approveUrl}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none;margin-right:8px">${s.adminNotify.approve}</a>
-      <a href="${rejectUrl}" style="display:inline-block;padding:10px 16px;background:#ef4444;color:#fff;border-radius:6px;text-decoration:none">${s.adminNotify.reject}</a>
+      <a href="${safe(approveUrl)}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none;margin-right:8px">${s.adminNotify.approve}</a>
+      <a href="${safe(rejectUrl)}" style="display:inline-block;padding:10px 16px;background:#ef4444;color:#fff;border-radius:6px;text-decoration:none">${s.adminNotify.reject}</a>
     </p>
-    <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.adminNotify.review} <a href="${reviewLink}">${reviewLink}</a></p>
+    <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.adminNotify.review} <a href="${safe(reviewLink)}">${safe(reviewLink)}</a></p>
   </div>
   `;
   return { subject, text: plain, html };
@@ -106,9 +133,9 @@ export function renderRegistrationConfirmation({ lang = 'en', subject, username,
     : `${s.registration.welcomeBody} (${username}) — ${link}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
-    <h2 style="color:#111827">${subject}</h2>
+    <h2 style="color:#111827">${safe(subject)}</h2>
     <p>${awaitingApproval ? s.registration.awaitingBody : s.registration.welcomeBody}</p>
-    ${awaitingApproval ? '' : `<p style="margin-top:18px"><a href="${link}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${s.registration.goToDashboard}</a></p>`}
+    ${awaitingApproval ? '' : `<p style="margin-top:18px"><a href="${safe(link)}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${s.registration.goToDashboard}</a></p>`}
     <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.registration.disclaimer}</p>
   </div>
   `;
@@ -120,10 +147,10 @@ export function renderPasswordReset({ lang = 'en', subject, resetLink }) {
   const text = `${s.passwordReset.body}: ${resetLink}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
-    <h2 style="color:#111827">${subject}</h2>
+    <h2 style="color:#111827">${safe(subject)}</h2>
     <p>${s.passwordReset.body}</p>
     <p style="margin-top:18px">
-      <a href="${resetLink}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${s.passwordReset.button}</a>
+      <a href="${safe(resetLink)}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${s.passwordReset.button}</a>
     </p>
     <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.passwordReset.disclaimer}</p>
   </div>
@@ -133,7 +160,6 @@ export function renderPasswordReset({ lang = 'en', subject, resetLink }) {
 
 export function renderSupportContact({ lang = 'en', senderName, senderEmail, message }) {
   const s = getEmailStrings(lang);
-  const safe = (str = '') => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const plain = `${s.support.heading}\n\n${s.support.name}: ${senderName || s.support.notProvided} <${senderEmail || s.support.notProvided}>\n\n${s.support.message}:\n${message}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
@@ -155,13 +181,36 @@ export function renderApprovalNotification({ lang = 'en', subject, username, log
   const plain = `${s.approval.body} (${username}) — ${loginLink}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
-    <h2 style="color:#111827">${subject}</h2>
+    <h2 style="color:#111827">${safe(subject)}</h2>
     <p>${s.approval.body}</p>
-    <p style="margin-top:18px"><a href="${loginLink}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none">${s.approval.goToDashboard}</a></p>
+    <p style="margin-top:18px"><a href="${safe(loginLink)}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none">${s.approval.goToDashboard}</a></p>
     <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.approval.disclaimer}</p>
   </div>
   `;
   return { subject, text: plain, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification };
+export function renderNewOrderNotification({ lang = 'en', orderNumber, product, quantity, totalAmount, customer, status }) {
+  const s = getEmailStrings(lang);
+  const n = s.newOrder;
+  const subject = `${n.heading} — ${orderNumber}`;
+  const plain = `${n.body}\n\n${n.orderNumber}: ${orderNumber}\n${n.product}: ${product}\n${n.quantity}: ${quantity}\n${n.total}: $${totalAmount}\n${n.customer}: ${customer}\n${n.status}: ${status}\n\n${n.footer}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${n.heading}</h2>
+    <p>${n.body}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:140px">${n.orderNumber}</td><td style="padding:10px 14px">${safe(orderNumber)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.product}</td><td style="padding:10px 14px">${safe(product)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.quantity}</td><td style="padding:10px 14px">${safe(quantity)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.total}</td><td style="padding:10px 14px">$${safe(totalAmount)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.customer}</td><td style="padding:10px 14px">${safe(customer)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.status}</td><td style="padding:10px 14px">${safe(status)}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">${n.footer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification };

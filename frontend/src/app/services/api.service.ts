@@ -50,6 +50,6 @@ export class ApiService {
 
   getBlob(path: string, params?: any): Observable<Blob> {
     // HttpClient's overload that returns Blob uses responseType: 'blob'
-    return this.http.get(this.build(path), { params, responseType: 'blob' }) as Observable<Blob>;
+    return this.http.get(this.build(path), { params, responseType: 'blob', withCredentials: true }) as Observable<Blob>;
   }
 }

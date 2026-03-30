@@ -36,6 +36,7 @@ router.get('/workers', authMiddleware, requireRole('admin'), asyncWrap(UserContr
 router.get('/me', authMiddleware, asyncWrap(UserController.getProfile));
 router.patch('/me', authMiddleware, asyncWrap(UserController.updateProfile));
 router.patch('/me/password', authMiddleware, asyncWrap(UserController.changePassword));
+router.delete('/me', authMiddleware, asyncWrap(UserController.deleteProfile));
 
 // Avatar endpoints: only accessible to authenticated users and scoped to owner
 router.post('/me/avatar', authMiddleware, upload.single('avatar'), asyncWrap(UserController.uploadAvatar));

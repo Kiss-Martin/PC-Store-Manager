@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { ItemService } from '../../services/item.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
+import { ToastService } from '../../shared/toast.service';
+import { Category, Brand } from '../../models/api.models';
 
 interface Product {
   id: string;
@@ -27,15 +29,15 @@ interface Product {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
+  imports: [FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css'],
 })
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
   filteredProducts: Product[] = [];
-  categories: any[] = [];
-  brands: any[] = [];
+  categories: Category[] = [];
+  brands: Brand[] = [];
   isLoading = true;
   searchTerm = '';
   showAddModal = false;
@@ -58,10 +60,12 @@ export class ProductsComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    private itemService: ItemService,
     public theme: ThemeService,
     public i18n: I18nService,
     private route: ActivatedRoute,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -84,11 +88,11 @@ export class ProductsComponent implements OnInit {
 
   loadProducts() {
     this.isLoading = true;
-    this.auth.getItems().subscribe({
-      next: (res: any) => {
-        this.products = (res.items || []).map((item: any) => ({
+    this.itemService.getItems().subscribe({
+      next: (res) => {
+        this.products = (res.items || []).map((item) => ({
           ...item,
-          specifications: item.specifications || item.specs || '',
+          specifications: (item as any).specifications || (item as any).specs || '',
         }));
         this.filteredProducts = this.products;
         this.isLoading = false;
@@ -101,8 +105,8 @@ export class ProductsComponent implements OnInit {
   }
 
   loadCategories() {
-    this.auth.getCategories().subscribe({
-      next: (res: any) => {
+    this.itemService.getCategories().subscribe({
+      next: (res) => {
         this.categories = res.categories || [];
       },
       error: (err) => console.error('Failed to load categories:', err),
@@ -110,8 +114,8 @@ export class ProductsComponent implements OnInit {
   }
 
   loadBrands() {
-    this.auth.getBrands().subscribe({
-      next: (res: any) => {
+    this.itemService.getBrands().subscribe({
+      next: (res) => {
         this.brands = res.brands || [];
       },
       error: (err) => console.error('Failed to load brands:', err),
@@ -170,24 +174,31 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct() {
-    console.log('Saving product:', this.newProduct);
     if (!this.newProduct.name) return;
 
     if (this.editingProduct) {
-      this.auth.updateItem(this.editingProduct.id, this.newProduct).subscribe({
+      this.itemService.updateItem(this.editingProduct.id, this.newProduct).subscribe({
         next: () => {
           this.loadProducts();
           this.closeModal();
+          this.toast.show(this.i18n.t('products.updateSuccess'), { type: 'success', timeout: 3000 });
         },
-        error: (err) => console.error('Failed to update product:', err),
+        error: (err) => {
+          console.error('Failed to update product:', err);
+          this.toast.show(err.error?.error || this.i18n.t('products.updateError'), { type: 'error', timeout: 4000 });
+        },
       });
     } else {
-      this.auth.createItem(this.newProduct).subscribe({
+      this.itemService.createItem(this.newProduct).subscribe({
         next: () => {
           this.loadProducts();
           this.closeModal();
+          this.toast.show(this.i18n.t('products.createSuccess'), { type: 'success', timeout: 3000 });
         },
-        error: (err) => console.error('Failed to create product:', err),
+        error: (err) => {
+          console.error('Failed to create product:', err);
+          this.toast.show(err.error?.error || this.i18n.t('products.createError'), { type: 'error', timeout: 4000 });
+        },
       });
     }
   }
@@ -202,14 +213,16 @@ export class ProductsComponent implements OnInit {
   deleteProduct() {
     if (!this.productToDelete) return;
 
-    this.auth.deleteItem(this.productToDelete.id).subscribe({
+    this.itemService.deleteItem(this.productToDelete.id).subscribe({
       next: () => {
         this.loadProducts();
         this.showDeleteConfirm = false;
         this.productToDelete = null;
+        this.toast.show(this.i18n.t('products.deleteSuccess'), { type: 'success', timeout: 3000 });
       },
       error: (err) => {
         console.error('Failed to delete product:', err);
+        this.toast.show(err.error?.error || this.i18n.t('products.deleteError'), { type: 'error', timeout: 4000 });
         this.showDeleteConfirm = false;
         this.productToDelete = null;
       },

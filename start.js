@@ -40,7 +40,7 @@ function waitForUrl(url, { interval = 1000, timeout = 120000 } = {}) {
         if (Date.now() - start > timeout) return reject(new Error(`Timeout waiting for ${url}`));
         setTimeout(check, interval);
       });
-      req.setTimeout(5000, () => req.abort());
+      req.setTimeout(5000, () => req.destroy());
     };
     check();
   });

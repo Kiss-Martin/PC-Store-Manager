@@ -1,88 +1,160 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ── Theme tokens (Tailwind v4) ─────────────────────────────── */
+@theme {
+  --color-bg: #fafbfc;
+  --color-card: #ffffff;
+  --color-text: #0f172a;
+  --color-muted: #64748b;
+  --color-card-border: #e2e8f0;
+  --color-purple: #7c3aed;
+  --color-purple-dark: #6d28d9;
+  --color-purple-darker: #5b21b6;
+  --color-purple-light: #a855f7;
+  --color-purple-lighter: #d8b4fe;
+  --color-purple-faint: rgba(124, 58, 237, 0.06);
+
+  --animate-spin: spin 1s linear infinite;
+  --animate-fade-in: fadeIn 0.2s ease;
+  --animate-slide-up: slideUp 0.3s ease;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: #fafbfc;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ========================================
-   CUSTOM SCROLLBAR - Modern Purple Theme
-   ======================================== */
-
-/* For Webkit browsers (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+/* ── Base resets ────────────────────────────────────────────── */
+@layer base {
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  .dark-theme {
+    --color-bg: #071226;
+    --color-card: #0f1724;
+    --color-text: #e6eef8;
+    --color-muted: rgba(230,238,248,0.6);
+    --color-card-border: rgba(255,255,255,0.04);
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(124, 58, 237, 0.05);
-  border-radius: 10px;
-}
-
+/* ── Custom scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: rgba(124,58,237,0.05); border-radius: 10px; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7c3aed 0%, #a855f7 100%);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg,#7c3aed 0%,#a855f7 100%);
+  border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;
 }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#6d28d9 0%,#9333ea 100%); }
+* { scrollbar-width: thin; scrollbar-color: #7c3aed rgba(124,58,237,0.05); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #6d28d9 0%, #9333ea 100%);
-  border: 2px solid rgba(124, 58, 237, 0.2);
-}
+/* ── Print styles ──────────────────────────────────────────── */
+@media print {
+  /* Force light background and black text for readability */
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
-::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, #5b21b6 0%, #7e22ce 100%);
-}
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
 
-/* For Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #7c3aed rgba(124, 58, 237, 0.05);
-}
+  /* Hide navigation bar, buttons, modals, selects, and interactive elements */
+  nav,
+  .no-print,
+  button,
+  select,
+  input,
+  .fixed,
+  .backdrop-blur-sm,
+  lucide-icon[name="printer"] {
+    display: none !important;
+  }
 
-/* Thin scrollbar for modals */
-.modal-content {
-  scrollbar-width: thin;
-}
+  /* Keep lucide-icons visible inside data areas (status icons etc.) */
+  td lucide-icon,
+  .rounded-2xl lucide-icon,
+  .status lucide-icon {
+    display: inline-flex !important;
+  }
 
-.modal-content::-webkit-scrollbar {
-  width: 8px;
-}
+  /* Reset layout — full width, no overflow clipping */
+  .max-w-7xl,
+  .max-w-350 {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
 
-.modal-content::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7c3aed 0%, #a855f7 100%);
-  border-radius: 6px;
-}
+  .overflow-x-auto,
+  .overflow-hidden,
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
 
-/* Global popup treatment.
-   Apply the same 0.8 overlay opacity and solid popup surface to every modal. */
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.8) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-  backdrop-filter: blur(4px) !important;
-}
+  /* Remove shadows, transforms, and hover effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transform: none !important;
+  }
 
-.modal-content,
-.confirmation-modal {
-  opacity: 1 !important;
-  background: var(--card-bg, #ffffff) !important;
-}
+  /* Cards: keep borders, remove background gradients */
+  .rounded-2xl {
+    break-inside: avoid;
+    border-color: #d1d5db !important;
+  }
 
-.dark-theme .modal-content,
-.dark-theme .confirmation-modal {
-  background: var(--card-bg, #0f1724) !important;
-}
+  /* Tables: clean readable print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 12px !important;
+    text-align: left !important;
+  }
+
+  thead tr {
+    background: #f3f4f6 !important;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Charts: keep visible and sized for print */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: landscape;
+    margin: 1.5cm;
+  }
+
+  /* Add a subtle title header for printed pages */
+  h1 {
+    font-size: 18pt !important;
+    margin-bottom: 12pt !important;
+  }
 }

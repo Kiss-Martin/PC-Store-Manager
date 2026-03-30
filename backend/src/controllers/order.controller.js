@@ -4,6 +4,8 @@ import { generateCsvFromObjects } from '../utils/csv.util.js';
 import { generatePdfReport } from '../utils/pdf.util.js';
 import { localizedStatus, localizeValidationErrors, t } from '../utils/i18n.util.js';
 import { createOrderSchema } from '../validators.js';
+import supabase from '../db.js';
+import { run } from '../utils/supabase.util.js';
 
 export const getOrders = async (req, res) => {
   const orders = await OrderService.getOrders(req.user, req.lang);
@@ -19,6 +21,19 @@ export const createOrder = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
+  // Buyers can only cancel their own orders
+  if (req.user.role === 'buyer') {
+    if (req.body.status !== 'cancelled') {
+      return res.status(403).json({ error: t(req.lang, 'order.buyerCanOnlyCancel') });
+    }
+    // Verify order belongs to buyer with a single targeted query
+    const ownOrder = await run(
+      supabase.from('logs').select('id').eq('id', req.params.id).eq('user_id', req.user.id).limit(1)
+    ).catch(() => []);
+    if (!ownOrder || ownOrder.length === 0) {
+      return res.status(403).json({ error: t(req.lang, 'order.notFound') });
+    }
+  }
   const status = await OrderService.updateOrderStatus(req.params.id, req.body.status, req.user.id, req.lang);
   res.json({ success: true, status });
 };

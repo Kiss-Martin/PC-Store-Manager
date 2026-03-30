@@ -1,12 +1,12 @@
-<div class="products-container">
+<div class="p-8 max-w-7xl mx-auto animate-fade-in">
   <!-- Header -->
-  <div class="products-header">
+  <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
     <div>
-      <h1>{{ 'products.title' | t }}</h1>
-      <p class="subtitle">{{ 'products.subtitle' | t }}</p>
+      <h1 class="text-2xl font-bold" [style.color]="'var(--color-text)'">{{ 'products.title' | t }}</h1>
+      <p class="text-sm mt-1" [style.color]="'var(--color-muted)'">{{ 'products.subtitle' | t }}</p>
     </div>
     @if (auth.isAdmin()) {
-      <button class="btn-primary" (click)="openAddModal()">
+      <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="openAddModal()">
         <lucide-icon name="plus" size="18"></lucide-icon>
         {{ 'products.addProduct' | t }}
       </button>
@@ -14,82 +14,89 @@
   </div>
 
   <!-- Search Bar -->
-  <div class="search-bar">
-    <lucide-icon name="search" size="20" class="search-icon"></lucide-icon>
+  <div class="flex items-center gap-2 px-4 py-3 border rounded-xl mb-6" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+    <lucide-icon name="search" size="20" class="text-violet-600/50"></lucide-icon>
     <input
       type="text"
       [placeholder]="'products.searchPlaceholder' | t"
       [(ngModel)]="searchTerm"
       (input)="filterProducts()"
-      class="search-input"
+      aria-label="Search products"
+      class="flex-1 border-none bg-transparent text-sm focus:outline-none"
+      [style.color]="'var(--color-text)'"
     >
   </div>
 
   <!-- Loading State -->
   @if (isLoading) {
-    <div class="loading">
-      <lucide-icon name="loader-circle" size="32" class="spin"></lucide-icon>
-      <p>{{ 'products.loading' | t }}</p>
+    <div class="flex flex-col items-center justify-center py-16 gap-3">
+      <lucide-icon name="loader-circle" size="32" class="text-violet-600 animate-spin"></lucide-icon>
+      <p class="text-sm" [style.color]="'var(--color-muted)'">{{ 'products.loading' | t }}</p>
     </div>
   }
 
   <!-- Products Table -->
   @if (!isLoading && filteredProducts.length > 0) {
-    <div class="table-container">
-      <table class="products-table">
+    <div class="rounded-2xl border-2 overflow-hidden" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+      <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm">
         <thead>
-          <tr>
-            <th>{{ 'products.table.productName' | t }}</th>
-            <th>{{ 'products.table.model' | t }}</th>
-            <th>{{ 'products.table.brand' | t }}</th>
-            <th>{{ 'products.table.category' | t }}</th>
-            <th>{{ 'products.table.price' | t }}</th>
-            <th>{{ 'products.table.stock' | t }}</th>
-            <th>{{ 'products.table.warranty' | t }}</th>
+          <tr class="bg-linear-to-r from-violet-600/8 to-violet-400/8">
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.productName' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.model' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.brand' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.category' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.price' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.stock' | t }}</th>
+            <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.warranty' | t }}</th>
             @if (auth.isAdmin()) {
-              <th>{{ 'products.table.actions' | t }}</th>
+              <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'products.table.actions' | t }}</th>
             }
           </tr>
         </thead>
         <tbody>
           @for (product of filteredProducts; track product.id) {
-            <tr>
-              <td class="product-name">{{ product.name }}</td>
-              <td>{{ product.model || ('products.na' | t) }}</td>
-              <td>{{ getBrandName(product) }}</td>
-              <td>{{ getCategoryName(product) }}</td>
-              <td class="price">${{ product.price }}</td>
-              <td>
-                <span class="stock-badge" [class.low-stock]="product.amount < 10">
+            <tr class="border-b transition-colors hover:bg-violet-600/3" [style.border-color]="'var(--color-card-border)'">
+              <td class="py-4 px-5 font-medium text-sm" [style.color]="'var(--color-text)'">{{ product.name }}</td>
+              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ product.model || ('products.na' | t) }}</td>
+              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-text)'">{{ getBrandName(product) }}</td>
+              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-text)'">{{ getCategoryName(product) }}</td>
+              <td class="py-4 px-5 font-semibold text-sm text-violet-600">${{ product.price }}</td>
+              <td class="py-4 px-5">
+                <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold"
+                  [class]="product.amount < 10 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-600'">
                   {{ product.amount }}
                 </span>
               </td>
-              <td>{{ product.warranty || ('products.na' | t) }}</td>
+              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ product.warranty || ('products.na' | t) }}</td>
               @if (auth.isAdmin()) {
-                <td class="actions">
-                  <button class="btn-icon btn-edit" (click)="openEditModal(product)" [title]="'products.edit' | t">
-                    <lucide-icon name="pencil" size="16"></lucide-icon>
-                  </button>
-                      <button class="btn-icon btn-delete" (click)="confirmDelete(product)" [title]="'products.delete' | t">
-                    <lucide-icon name="trash-2" size="16"></lucide-icon>
-                  </button>
+                <td class="py-4 px-5">
+                  <div class="flex items-center gap-2">
+                    <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-violet-600/10 text-violet-600" (click)="openEditModal(product)" [title]="'products.edit' | t" aria-label="Edit">
+                      <lucide-icon name="pencil" size="16"></lucide-icon>
+                    </button>
+                    <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-red-500/10 text-red-500" (click)="confirmDelete(product)" [title]="'products.delete' | t" aria-label="Delete">
+                      <lucide-icon name="trash-2" size="16"></lucide-icon>
+                    </button>
+                  </div>
                 </td>
               }
             </tr>
           }
         </tbody>
       </table>
+      </div>
     </div>
   }
 
   <!-- Empty State -->
   @if (!isLoading && filteredProducts.length === 0) {
-    <div class="empty-state">
-      <lucide-icon name="package-x" size="64" class="empty-icon"></lucide-icon>
-      <h3>{{ 'products.empty.title' | t }}</h3>
-      <p>{{ searchTerm ? ('products.empty.search' | t) : ('products.empty.initial' | t) }}</p>
+    <div class="flex flex-col items-center justify-center py-16 gap-3">
+      <lucide-icon name="package-x" size="64" class="text-violet-600/20"></lucide-icon>
+      <h3 class="text-lg font-bold" [style.color]="'var(--color-text)'">{{ 'products.empty.title' | t }}</h3>
+      <p class="text-sm" [style.color]="'var(--color-muted)'">{{ searchTerm ? ('products.empty.search' | t) : ('products.empty.initial' | t) }}</p>
       @if (auth.isAdmin() && !searchTerm) {
-        <button class="btn-primary" (click)="openAddModal()">
+        <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg mt-2" (click)="openAddModal()">
           <lucide-icon name="plus" size="18"></lucide-icon>
           {{ 'products.addProduct' | t }}
         </button>
@@ -99,78 +106,89 @@
 
   <!-- Add/Edit Modal -->
   @if (showAddModal) {
-    <div class="modal-overlay" (click)="closeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>{{ editingProduct ? ('products.modal.editTitle' | t) : ('products.modal.addTitle' | t) }}</h2>
-          <button [attr.aria-label]="'common.close' | t" class="btn-close" (click)="closeModal()">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-1000 animate-fade-in" (click)="closeModal()">
+      <div class="rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up" [style.background]="'var(--color-card)'" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between p-6 border-b sticky top-0 z-10" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+          <h2 class="text-lg font-bold m-0" [style.color]="'var(--color-text)'">{{ editingProduct ? ('products.modal.editTitle' | t) : ('products.modal.addTitle' | t) }}</h2>
+          <button [attr.aria-label]="'common.close' | t" title="Close" class="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="closeModal()">
             <lucide-icon name="x" size="24"></lucide-icon>
           </button>
         </div>
 
-        <div class="modal-body">
-          <div class="form-group">
-            <label>{{ 'products.form.productName' | t }}</label>
-            <input type="text" [(ngModel)]="newProduct.name" [placeholder]="'products.form.productNamePlaceholder' | t" class="form-input">
+        <div class="p-6 flex flex-col gap-5">
+          <div class="flex flex-col gap-2">
+            <label for="productName" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.productName' | t }}</label>
+            <input type="text" id="productName" [(ngModel)]="newProduct.name" [placeholder]="'products.form.productNamePlaceholder' | t"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
           </div>
 
-        <div class="form-group">
-          <label>{{ 'products.form.price' | t }}</label>
-          <input
-            type="number"
-            [(ngModel)]="newProduct.price"
-            min="0"
-            step="0.01"
-            class="form-input"
-            [placeholder]="'products.form.pricePlaceholder' | t">
-        </div>
+          <div class="flex flex-col gap-2">
+            <label for="productPrice" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.price' | t }}</label>
+            <input type="number" id="productPrice" [(ngModel)]="newProduct.price" min="0" step="0.01"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
+              [placeholder]="'products.form.pricePlaceholder' | t">
+          </div>
 
-        <div class="form-group">
-          <label>{{ 'products.form.category' | t }}</label>
-          <select aria-label="select" [(ngModel)]="newProduct.category_id" class="form-select">
-            <option value="">{{ 'products.form.selectCategory' | t }}</option>
-            @for (category of categories; track category.id) {
-              <option [value]="category.id">{{ category.name }}</option>
-            }
-          </select>
-        </div>
-
-          <div class="form-group">
-            <label>{{ 'products.form.brand' | t }}</label>
-            <select aria-label="brand" [(ngModel)]="newProduct.brand_id" class="form-select">
-            <option value="">{{ 'products.form.selectBrand' | t }}</option>
-                @for (brand of brands; track brand.id) {
-                  <option [value]="brand.id">{{ brand.name }}</option>
-                }
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.category' | t }}</label>
+            <select aria-label="select" [(ngModel)]="newProduct.category_id"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+              <option value="">{{ 'products.form.selectCategory' | t }}</option>
+              @for (category of categories; track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
             </select>
-            <small class="form-hint">{{ 'products.form.selectedId' | t:{ value: (newProduct.brand_id || ('products.form.none' | t)) } }}</small>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.brand' | t }}</label>
+            <select aria-label="brand" [(ngModel)]="newProduct.brand_id"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+              <option value="">{{ 'products.form.selectBrand' | t }}</option>
+              @for (brand of brands; track brand.id) {
+                <option [value]="brand.id">{{ brand.name }}</option>
+              }
+            </select>
+            <small class="text-xs" [style.color]="'var(--color-muted)'">{{ 'products.form.selectedId' | t:{ value: (newProduct.brand_id || ('products.form.none' | t)) } }}</small>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label for="productModel" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.model' | t }}</label>
+              <input type="text" id="productModel" [(ngModel)]="newProduct.model" [placeholder]="'products.form.modelPlaceholder' | t"
+                class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+                [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.stockAmount' | t }}</label>
+              <input type="number" [(ngModel)]="newProduct.amount" placeholder="0"
+                class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+                [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="productSpecs" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.specifications' | t }}</label>
+            <textarea id="productSpecs" [(ngModel)]="newProduct.specifications" [placeholder]="'products.form.specificationsPlaceholder' | t"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 resize-y"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" rows="3"></textarea>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="productWarranty" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.warranty' | t }}</label>
+            <input type="text" id="productWarranty" [(ngModel)]="newProduct.warranty" [placeholder]="'products.form.warrantyPlaceholder' | t"
+              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+          </div>
         </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'products.form.model' | t }}</label>
-              <input type="text" [(ngModel)]="newProduct.model" [placeholder]="'products.form.modelPlaceholder' | t" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>{{ 'products.form.stockAmount' | t }}</label>
-              <input type="number" [(ngModel)]="newProduct.amount" placeholder="0" class="form-input">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>{{ 'products.form.specifications' | t }}</label>
-            <textarea [(ngModel)]="newProduct.specifications" [placeholder]="'products.form.specificationsPlaceholder' | t" class="form-input" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>{{ 'products.form.warranty' | t }}</label>
-            <input type="text" [(ngModel)]="newProduct.warranty" [placeholder]="'products.form.warrantyPlaceholder' | t" class="form-input">
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeModal()">{{ 'products.cancel' | t }}</button>
-          <button class="btn-primary" (click)="saveProduct()">
+        <div class="flex items-center justify-end gap-3 p-6 border-t" [style.border-color]="'var(--color-card-border)'">
+          <button class="px-5 py-2.5 rounded-xl border-2 bg-transparent font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closeModal()">{{ 'products.cancel' | t }}</button>
+          <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="saveProduct()">
             {{ editingProduct ? ('products.update' | t) : ('products.create' | t) }}
           </button>
         </div>

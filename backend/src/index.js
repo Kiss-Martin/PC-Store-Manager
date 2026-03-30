@@ -14,7 +14,8 @@ import { sanitizeMiddleware } from './middlewares/sanitize.middleware.js';
 import { languageMiddleware } from './middlewares/language.middleware.js';
 import { scrubResponseMiddleware } from './utils/scrub.util.js';
 import { errorHandler } from './middlewares/error.middleware.js';
-import { getSmtpRuntimeStatus } from './services/auth.service.js';
+import { getSmtpRuntimeStatus } from './utils/mail.util.js';
+import { PORT, CORS_ORIGINS } from './utils/config.js';
 import authRoutes from './routes/auth.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import orderRoutes from './routes/order.routes.js';
@@ -50,18 +51,18 @@ app.set('trust proxy', trustProxySetting);
 
 app.use(
   cors({
-    origin: [
-      "https://pc-store-manager-frontend.onrender.com",
-      "http://localhost:4200",
-    ],
+    origin: CORS_ORIGINS,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Accept-Language"],
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+}));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -119,11 +120,10 @@ app.use(errorHandler);
 export default app;
 
 // Create HTTP server and attach socket.io
-const PORT = process.env.PORT || 3000;
 const server = createServer(app);
 let io = new IO(server, {
   cors: {
-    origin: ["https://pc-store-manager-frontend.onrender.com", "http://localhost:4200"],
+    origin: CORS_ORIGINS,
     methods: ["GET", "POST"],
   },
 });
@@ -154,7 +154,7 @@ const smtpSummary = smtpStatus.configured
     : `${bold}${red}disabled${reset} (reset links will be logged)`;
 
 console.log("\n" + cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + reset);
-console.log(`${bold}${green}   BACKEND SZERVER ELINDÍTVA ${reset}`);
+console.log(`${bold}${green}   BACKEND SERVER STARTED ${reset}`);
 console.log(cyan + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + reset);
 console.log(`   Port:        ${bold}${yellow}${PORT}${reset}`);
 console.log(

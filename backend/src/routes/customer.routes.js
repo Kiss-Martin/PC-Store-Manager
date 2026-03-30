@@ -8,6 +8,6 @@ import * as CustomerController from '../controllers/customer.controller.js';
 const router = Router();
 
 router.get('/', authMiddleware, asyncWrap(CustomerController.getCustomers));
-router.post('/', authMiddleware, requireRole('admin'), asyncWrap(CustomerController.createCustomer));
+router.post('/', authMiddleware, requireRole('admin', 'buyer'), asyncWrap(CustomerController.createCustomer));
 
 export default router;

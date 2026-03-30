@@ -1,12 +1,14 @@
 import { Component, OnInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthService, ExportFormat } from '../auth/auth.service';
+import { AuthService } from '../auth/auth.service';
+import { DashboardService, ExportFormat } from '../services/dashboard.service';
 import { ThemeService } from '../theme.service';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { I18nService } from '../i18n.service';
 import { TranslatePipe } from '../translate.pipe';
+import { ToastService } from '../shared/toast.service';
+import { DashboardStats, DashboardActivity } from '../models/api.models';
 
 interface DashboardCard {
   title: string;
@@ -15,29 +17,24 @@ interface DashboardCard {
   color: string;
 }
 
-interface Activity {
-  id: number;
-  description: string;
-  timestamp: string;
-  type: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [LucideAngularModule, FormsModule, CommonModule, TranslatePipe],
+  imports: [LucideAngularModule, FormsModule, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit {
-  private lastStats: any = {};
+  private lastStats: DashboardStats = {};
   private hadLoadError = false;
 
   constructor(
     private router: Router,
-    private auth: AuthService,
+    public auth: AuthService,
+    private dashboardService: DashboardService,
     public theme: ThemeService,
     public i18n: I18nService,
+    private toast: ToastService,
   ) {
     effect(() => {
       this.i18n.language();
@@ -48,7 +45,7 @@ export class DashboardComponent implements OnInit {
     });
   }
   stats: DashboardCard[] = [];
-  activities: Activity[] = [];
+  activities: DashboardActivity[] = [];
   isLoading = true;
   loadError = '';
 
@@ -71,7 +68,6 @@ export class DashboardComponent implements OnInit {
   }
 
   generateReport() {
-    console.log('🔵 Opening report modal...');
     this.showReportModal = true;
   }
 
@@ -88,7 +84,7 @@ export class DashboardComponent implements OnInit {
   downloadReport() {
   this.isGeneratingReport = true;
 
-  this.auth.generateBusinessReport(this.reportPeriod, this.reportFormat).subscribe({
+  this.dashboardService.generateBusinessReport(this.reportPeriod, this.reportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -101,15 +97,15 @@ export class DashboardComponent implements OnInit {
       this.isGeneratingReport = false;
       this.closeReportModal();
     },
-    error: (err: any) => {
+    error: (err) => {
       console.error('Report generation failed:', err);
-      alert(this.i18n.t('dashboard.error.generateReport'));
+      this.toast.show(this.i18n.t('dashboard.error.generateReport'), { type: 'error' });
       this.isGeneratingReport = false;
     }
   });
 }
 
-  private buildStats(stats: any) {
+  private buildStats(stats: DashboardStats) {
     return [
       {
         title: this.i18n.t('dashboard.stats.totalProducts'),
@@ -136,13 +132,13 @@ export class DashboardComponent implements OnInit {
   loadDashboardData() {
     this.loadError = '';
     this.hadLoadError = false;
-    this.auth.getDashboard().subscribe({
-      next: (res: any) => {
+    this.dashboardService.getDashboard().subscribe({
+      next: (res) => {
         const s = res?.stats || {};
         this.lastStats = s;
         this.stats = this.buildStats(s);
 
-        this.activities = (res?.activities || []).map((a: any) => ({
+        this.activities = (res?.activities || []).map((a: DashboardActivity) => ({
           id: a.id,
           description: a.description,
           timestamp: a.timestamp || '',
@@ -180,5 +176,9 @@ export class DashboardComponent implements OnInit {
 
   addNewProduct() {
     this.router.navigate(['products'], { queryParams: { action: 'add' } });
+  }
+
+  printCurrentView() {
+    window.print();
   }
 }
