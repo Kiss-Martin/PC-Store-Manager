@@ -1,8 +1,8 @@
 const dictionaries = {
   en: {
-    'auth.invalidCredentials': 'Invalid credentials',
-    'auth.missingToken': 'Missing token',
-    'auth.invalidToken': 'Invalid token',
+    'auth.invalidCredentials': 'The email/username or password you entered is incorrect. Please try again.',
+    'auth.missingToken': 'Authentication required. Please log in.',
+    'auth.invalidToken': 'Your session has expired or is invalid. Please log in again.',
     'auth.roleOnly': '{role} only',
     'auth.passwordResetSubject': 'Password reset',
     'auth.passwordResetText': 'Reset your password: {link}',
@@ -24,10 +24,12 @@ const dictionaries = {
 
     'user.noValidFields': 'No valid fields to update',
     'user.passwordRequired': 'Current password and new password required',
-    'user.passwordMinLength': 'New password must be at least 6 characters',
+    'user.passwordMinLength': 'New password must be at least 8 characters with uppercase, lowercase, number, and special character',
     'user.fetchFailed': 'Failed to fetch user',
-    'user.currentPasswordIncorrect': 'Current password is incorrect',
+    'user.currentPasswordIncorrect': 'The current password you entered is incorrect',
     'user.passwordUpdated': 'Password updated successfully',
+    'user.emailAlreadyExists': 'An account with this email address already exists. Please use a different email or log in.',
+    'user.usernameAlreadyExists': 'This username is already taken. Please choose a different one.',
 
     'order.invalidStatus': 'Invalid status',
     'order.itemNotFound': 'Item not found',
@@ -38,10 +40,15 @@ const dictionaries = {
 
     'validation.email': 'Please enter a valid email address',
     'validation.usernameMin': 'Username must be at least 3 characters',
+    'validation.usernameChars': 'Username can only contain letters, numbers, underscores, dots, and hyphens',
     'validation.passwordRequired': 'Password is required',
-    'validation.passwordMin': 'Password must be at least 6 characters',
+    'validation.passwordMin': 'Password must be at least 8 characters',
+    'validation.passwordUppercase': 'Password must contain at least one uppercase letter',
+    'validation.passwordLowercase': 'Password must contain at least one lowercase letter',
+    'validation.passwordDigit': 'Password must contain at least one number',
+    'validation.passwordSpecial': 'Password must contain at least one special character',
     'validation.currentPasswordRequired': 'Current password is required',
-    'validation.newPasswordMin': 'New password must be at least 6 characters',
+    'validation.newPasswordMin': 'New password must be at least 8 characters',
     'validation.itemNameRequired': 'Item name is required',
     'validation.priceNonNegative': 'Price must be zero or greater',
     'validation.categoryRequired': 'Category is required',
@@ -52,6 +59,7 @@ const dictionaries = {
     'validation.quantityPositive': 'Quantity must be at least 1',
     'validation.tokenRequired': 'Token is required',
     'validation.emailOrUsernameRequired': 'Email or username is required',
+    'validation.invalidRole': 'Invalid role. Must be admin or worker',
 
     'role.admin': 'Admin',
     'role.worker': 'Worker',
@@ -105,9 +113,9 @@ const dictionaries = {
     'support.emailSubject': 'Support Request — PC Store Manager',
   },
   hu: {
-    'auth.invalidCredentials': 'Érvénytelen bejelentkezési adatok',
-    'auth.missingToken': 'Hiányzó token',
-    'auth.invalidToken': 'Érvénytelen token',
+    'auth.invalidCredentials': 'A megadott e-mail/felhasználónév vagy jelszó helytelen. Kérjük, próbáld újra.',
+    'auth.missingToken': 'Hitelesítés szükséges. Kérjük, jelentkezz be.',
+    'auth.invalidToken': 'A munkameneted lejárt vagy érvénytelen. Kérjük, jelentkezz be újra.',
     'auth.roleOnly': 'Csak {role} számára',
     'auth.passwordResetSubject': 'Jelszó visszaállítása',
     'auth.passwordResetText': 'A jelszó visszaállítása: {link}',
@@ -134,10 +142,12 @@ const dictionaries = {
 
     'user.noValidFields': 'Nincs frissíthető mező',
     'user.passwordRequired': 'A jelenlegi és az új jelszó megadása kötelező',
-    'user.passwordMinLength': 'Az új jelszó legalább 6 karakter legyen',
+    'user.passwordMinLength': 'Az új jelszó legalább 8 karakter legyen, nagybetűvel, kisbetűvel, számmal és speciális karakterrel',
     'user.fetchFailed': 'Nem sikerült lekérni a felhasználót',
-    'user.currentPasswordIncorrect': 'A jelenlegi jelszó hibás',
+    'user.currentPasswordIncorrect': 'A megadott jelenlegi jelszó hibás',
     'user.passwordUpdated': 'A jelszó sikeresen frissítve',
+    'user.emailAlreadyExists': 'Ezzel az e-mail címmel már létezik fiók. Használj másik e-mailt, vagy jelentkezz be.',
+    'user.usernameAlreadyExists': 'Ez a felhasználónév már foglalt. Kérjük, válassz másikat.',
 
     'order.invalidStatus': 'Érvénytelen állapot',
     'order.itemNotFound': 'A termék nem található',
@@ -148,10 +158,15 @@ const dictionaries = {
 
     'validation.email': 'Adj meg egy érvényes e-mail címet',
     'validation.usernameMin': 'A felhasználónév legalább 3 karakter legyen',
+    'validation.usernameChars': 'A felhasználónév csak betűket, számokat, aláhúzást, pontot és kötőjelet tartalmazhat',
     'validation.passwordRequired': 'A jelszó megadása kötelező',
-    'validation.passwordMin': 'A jelszó legalább 6 karakter legyen',
+    'validation.passwordMin': 'A jelszó legalább 8 karakter legyen',
+    'validation.passwordUppercase': 'A jelszónak tartalmaznia kell legalább egy nagybetűt',
+    'validation.passwordLowercase': 'A jelszónak tartalmaznia kell legalább egy kisbetűt',
+    'validation.passwordDigit': 'A jelszónak tartalmaznia kell legalább egy számot',
+    'validation.passwordSpecial': 'A jelszónak tartalmaznia kell legalább egy speciális karaktert',
     'validation.currentPasswordRequired': 'A jelenlegi jelszó megadása kötelező',
-    'validation.newPasswordMin': 'Az új jelszó legalább 6 karakter legyen',
+    'validation.newPasswordMin': 'Az új jelszó legalább 8 karakter legyen',
     'validation.itemNameRequired': 'A termék neve kötelező',
     'validation.priceNonNegative': 'Az ár nem lehet negatív',
     'validation.categoryRequired': 'A kategória megadása kötelező',
@@ -162,6 +177,7 @@ const dictionaries = {
     'validation.quantityPositive': 'A mennyiség legalább 1 legyen',
     'validation.tokenRequired': 'A token megadása kötelező',
     'validation.emailOrUsernameRequired': 'E-mail vagy felhasználónév megadása kötelező',
+    'validation.invalidRole': 'Érvénytelen szerepkör. Admin vagy dolgozó lehet',
 
     'role.admin': 'adminisztrátor',
     'role.worker': 'dolgozó',
@@ -242,8 +258,23 @@ export function localizeValidationErrors(lang, issues = []) {
       return t(lang, 'validation.emailOrUsernameRequired');
     }
 
+    // Handle regex-based custom messages (password complexity, username chars)
+    if (issue.code === 'invalid_string' && issue.validation === 'regex') {
+      const msg = issue.message;
+      if (msg === 'passwordUppercase') return t(lang, 'validation.passwordUppercase');
+      if (msg === 'passwordLowercase') return t(lang, 'validation.passwordLowercase');
+      if (msg === 'passwordDigit') return t(lang, 'validation.passwordDigit');
+      if (msg === 'passwordSpecial') return t(lang, 'validation.passwordSpecial');
+      if (msg === 'usernameChars') return t(lang, 'validation.usernameChars');
+    }
+
     if ((issue.validation === 'email' || issue.code === 'invalid_string') && field === 'email') {
       return t(lang, 'validation.email');
+    }
+
+    // Handle invalid_enum_value for role field
+    if (issue.code === 'invalid_enum_value' && field === 'role') {
+      return t(lang, 'validation.invalidRole');
     }
 
     if (issue.code === 'too_small' || issue.code === 'invalid_type') {

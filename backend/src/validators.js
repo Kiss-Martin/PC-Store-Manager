@@ -1,11 +1,21 @@
 import { z } from "zod";
 
+// Reusable strong-password rule: min 8 chars, uppercase, lowercase, digit, special character
+const strongPassword = z.string()
+  .min(8)
+  .regex(/[A-Z]/, 'passwordUppercase')
+  .regex(/[a-z]/, 'passwordLowercase')
+  .regex(/[0-9]/, 'passwordDigit')
+  .regex(/[^A-Za-z0-9]/, 'passwordSpecial');
+
 export const registerSchema = z.object({
   email: z.string().email(),
-  username: z.string().min(3).max(32),
-  password: z.string().min(6),
+  username: z.string()
+    .min(3).max(32)
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'usernameChars'),
+  password: strongPassword,
   fullname: z.string().max(128).optional(),
-  role: z.string().optional(),
+  role: z.enum(['admin', 'worker']).optional(),
 });
 
 export const loginSchema = z.object({
@@ -19,7 +29,7 @@ export const loginSchema = z.object({
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(6),
+  newPassword: strongPassword,
 });
 
 export const createItemSchema = z.object({
@@ -46,5 +56,5 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  newPassword: z.string().min(6),
+  newPassword: strongPassword,
 });

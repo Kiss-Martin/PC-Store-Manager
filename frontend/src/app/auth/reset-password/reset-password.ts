@@ -41,10 +41,15 @@ export class ResetPasswordComponent implements OnInit {
 
   submit(): void {
     this.error = '';
-    if (!this.newPassword || this.newPassword.length < 6) {
+    if (!this.newPassword || this.newPassword.length < 8) {
       this.error = this.i18n.t('resetPassword.error.passwordLength');
       return;
     }
+    const pw = this.newPassword;
+    if (!/[A-Z]/.test(pw)) { this.error = this.i18n.t('register.error.passwordUppercase'); return; }
+    if (!/[a-z]/.test(pw)) { this.error = this.i18n.t('register.error.passwordLowercase'); return; }
+    if (!/[0-9]/.test(pw)) { this.error = this.i18n.t('register.error.passwordDigit'); return; }
+    if (!/[^A-Za-z0-9]/.test(pw)) { this.error = this.i18n.t('register.error.passwordSpecial'); return; }
     if (this.newPassword !== this.confirmPassword) {
       this.error = this.i18n.t('resetPassword.error.passwordMismatch');
       return;

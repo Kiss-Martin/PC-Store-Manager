@@ -3,6 +3,7 @@ import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { ORDER_STATUSES } from '../utils/constants.js';
 import { t } from '../utils/i18n.util.js';
+import { getIO } from '../utils/socket.util.js';
 
 const OrderService = {
   async getOrders(user, lang = 'en') {
@@ -112,6 +113,21 @@ const OrderService = {
 
   async assignOrder(id, assigned_to) {
     await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
+    // Emit real-time notification to the assigned worker
+    if (assigned_to) {
+      const io = getIO();
+      if (io) {
+        // Fetch order details for the notification payload
+        const log = await run(
+          supabase.from('logs').select('id,details,items(name)').eq('id', id).single()
+        ).catch(() => null);
+        io.to(`user:${assigned_to}`).emit('order:assigned', {
+          orderId: id,
+          product: log?.items?.name || null,
+          details: log?.details || null,
+        });
+      }
+    }
   },
 
   async deleteOrder(id, lang = 'en') {

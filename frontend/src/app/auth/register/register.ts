@@ -58,9 +58,17 @@ export class RegisterComponent {
     } else if (step === 2) {
       if (!this.formData.username || this.formData.username.length < 3) {
         this.errors['username'] = this.i18n.t('register.error.usernameLength');
+      } else if (!/^[a-zA-Z0-9_.\-]+$/.test(this.formData.username)) {
+        this.errors['username'] = this.i18n.t('register.error.usernameChars');
       }
-      if (!this.formData.password || this.formData.password.length < 6) {
+      if (!this.formData.password || this.formData.password.length < 8) {
         this.errors['password'] = this.i18n.t('register.error.passwordLength');
+      } else {
+        const pw = this.formData.password;
+        if (!/[A-Z]/.test(pw)) this.errors['password'] = this.i18n.t('register.error.passwordUppercase');
+        else if (!/[a-z]/.test(pw)) this.errors['password'] = this.i18n.t('register.error.passwordLowercase');
+        else if (!/[0-9]/.test(pw)) this.errors['password'] = this.i18n.t('register.error.passwordDigit');
+        else if (!/[^A-Za-z0-9]/.test(pw)) this.errors['password'] = this.i18n.t('register.error.passwordSpecial');
       }
       if (this.formData.password !== this.formData.confirmPassword) {
         this.errors['confirmPassword'] = this.i18n.t('register.error.passwordMismatch');
@@ -134,7 +142,17 @@ submitRegistration() {
       });
     },
     error: (err: any) => {
-      this.toast.show(err.error?.error || err.error?.message || this.i18n.t('register.error.failed'), { type: 'error', timeout: 3500 });
+      this.isLoading = false;
+      // Handle field-level errors from the backend (e.g., duplicate email/username)
+      const field = err.error?.field;
+      const message = err.error?.error || err.error?.message || this.i18n.t('register.error.failed');
+      if (field === 'email' || field === 'username') {
+        this.errors[field] = message;
+        // Navigate back to the step where the field is displayed
+        this.currentStep = field === 'username' ? 2 : 3;
+      } else {
+        this.toast.show(message, { type: 'error', timeout: 3500 });
+      }
       this.isLoading = false;
     }
   });

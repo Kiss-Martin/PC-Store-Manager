@@ -32,12 +32,15 @@ const UserService = {
 
   async changePassword(userId, { currentPassword, newPassword }, lang = 'en') {
     if (!currentPassword || !newPassword) throw new Error(t(lang, 'user.passwordRequired'));
-    if (newPassword.length < 6) throw new Error(t(lang, 'user.passwordMinLength'));
+    if (newPassword.length < 8) throw new Error(t(lang, 'user.passwordMinLength'));
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      throw new Error(t(lang, 'user.passwordMinLength'));
+    }
     const user = await run(supabase.from('users').select('password_hash').eq('id', userId).single());
     if (!user) throw new Error(t(lang, 'user.fetchFailed'));
     const isValid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isValid) throw new Error(t(lang, 'user.currentPasswordIncorrect'));
-    const hashed = await bcrypt.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 12);
     await run(supabase.from('users').update({ password_hash: hashed }).eq('id', userId));
     return { success: true, message: t(lang, 'user.passwordUpdated') };
   },

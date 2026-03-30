@@ -92,18 +92,43 @@ function isMetadataMismatch(refreshTokenRow, metadata = {}) {
 const AuthService = {
   async register({ email, username, password, fullname, role }, metadata = {}, lang = 'en') {
     const sessionMetadata = normalizeMetadata(metadata);
-    const hashed = await bcrypt.hash(password, 10);
-    const data = await run(
-      supabase.from('users').insert({
-        email,
-        username,
-        fullname: fullname || null,
-        password_hash: hashed,
-        role: role || 'worker',
-        // if creating an admin, require approval by another admin
-        admin_approved: role === 'admin' ? false : true,
-      }).select('id,email,username,fullname,role,admin_approved').single()
-    );
+    const hashed = await bcrypt.hash(password, 12);
+    let data;
+    try {
+      data = await run(
+        supabase.from('users').insert({
+          email,
+          username,
+          fullname: fullname || null,
+          password_hash: hashed,
+          role: role || 'worker',
+          // if creating an admin, require approval by another admin
+          admin_approved: role === 'admin' ? false : true,
+        }).select('id,email,username,fullname,role,admin_approved').single()
+      );
+    } catch (e) {
+      // Detect unique constraint violations and return field-level errors
+      if (e.code === '23505') {
+        const detail = (e.details || e.message || '').toLowerCase();
+        if (detail.includes('email')) {
+          const err = new Error(t(lang, 'user.emailAlreadyExists'));
+          err.statusCode = 409;
+          err.field = 'email';
+          throw err;
+        }
+        if (detail.includes('username')) {
+          const err = new Error(t(lang, 'user.usernameAlreadyExists'));
+          err.statusCode = 409;
+          err.field = 'username';
+          throw err;
+        }
+        // Generic duplicate
+        const err = new Error(t(lang, 'user.emailAlreadyExists'));
+        err.statusCode = 409;
+        throw err;
+      }
+      throw e;
+    }
     // Auto-approve the first admin if no other approved admins exist
     if (data.role === 'admin' && !data.admin_approved) {
       const existingAdmins = await run(supabase.from('users').select('id').eq('role', 'admin').eq('admin_approved', true));
@@ -448,7 +473,7 @@ const AuthService = {
     const pr = await run(supabase.from('password_resets').select('id,user_id,expires_at').eq('token', token).single()).catch(() => null);
     if (!pr) throw new Error(t(lang, 'auth.invalidOrExpiredToken'));
     if (new Date(pr.expires_at) < new Date()) throw new Error(t(lang, 'auth.tokenExpired'));
-    const hashed = await bcrypt.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 12);
     await run(supabase.from('users').update({ password_hash: hashed }).eq('id', pr.user_id));
     await run(supabase.from('password_resets').delete().eq('id', pr.id));
   },

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server as IO } from 'socket.io';
+import { setIO } from './utils/socket.util.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { sanitizeMiddleware } from './middlewares/sanitize.middleware.js';
@@ -126,9 +127,14 @@ let io = new IO(server, {
     methods: ["GET", "POST"],
   },
 });
+setIO(io);
 
 io.on('connection', (socket) => {
   console.log('Websocket connected:', socket.id);
+  // Allow clients to join a user-specific room for targeted notifications
+  socket.on('join', (userId) => {
+    if (userId) socket.join(`user:${userId}`);
+  });
   socket.on('disconnect', () => console.log('Socket disconnected', socket.id));
 });
 
