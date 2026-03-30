@@ -1,8 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, HostListener, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 
 import { filter } from 'rxjs/operators';
-import { LucideAngularModule, Monitor } from "lucide-angular";
+import { LucideAngularModule } from "lucide-angular";
 import { ToastComponent } from './shared/toast/toast';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './theme.service';
@@ -16,12 +16,23 @@ import { TranslatePipe } from './translate.pipe';
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class App {
+export class App implements OnInit {
   protected readonly title = signal('PC Store Manager');
   isNavOpen = false;
   showNavbar = false;
+  isMobile = signal(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
-  constructor(public router: Router, public auth: AuthService, public theme: ThemeService, public i18n: I18nService) {
+  constructor(public router: Router, public auth: AuthService, public theme: ThemeService, public i18n: I18nService) {}
+
+  @HostListener('window:resize')
+  onResize() {
+    this.isMobile.set(window.innerWidth < 768);
+    if (!this.isMobile()) {
+      this.isNavOpen = false;
+    }
+  }
+
+  ngOnInit() {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -29,9 +40,6 @@ export class App {
       });
 
     this.updateNavbarVisibility(this.router.url);
-
-    // apply admin background when appropriate
-    document.body.classList.toggle('admin-bg', this.auth.isAdmin());
   }
 
   private updateNavbarVisibility(url: string) {
@@ -63,9 +71,5 @@ export class App {
   navigate(path: string) {
     this.router.navigate([path]);
     this.isNavOpen = false;
-  }
-
-  isMobile(): boolean {
-    return window.innerWidth < 768;
   }
 }

@@ -1,10 +1,10 @@
 import { Component, OnInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { AuthService, ExportFormat } from '../auth/auth.service';
+import { AuthService } from '../auth/auth.service';
+import { DashboardService, ExportFormat } from '../services/dashboard.service';
 import { ThemeService } from '../theme.service';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { I18nService } from '../i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { ToastService } from '../shared/toast.service';
@@ -20,7 +20,7 @@ interface DashboardCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [LucideAngularModule, FormsModule, CommonModule, TranslatePipe],
+  imports: [LucideAngularModule, FormsModule, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
@@ -31,6 +31,7 @@ export class DashboardComponent implements OnInit {
   constructor(
     private router: Router,
     public auth: AuthService,
+    private dashboardService: DashboardService,
     public theme: ThemeService,
     public i18n: I18nService,
     private toast: ToastService,
@@ -67,7 +68,6 @@ export class DashboardComponent implements OnInit {
   }
 
   generateReport() {
-    console.log('🔵 Opening report modal...');
     this.showReportModal = true;
   }
 
@@ -84,7 +84,7 @@ export class DashboardComponent implements OnInit {
   downloadReport() {
   this.isGeneratingReport = true;
 
-  this.auth.generateBusinessReport(this.reportPeriod, this.reportFormat).subscribe({
+  this.dashboardService.generateBusinessReport(this.reportPeriod, this.reportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -132,7 +132,7 @@ export class DashboardComponent implements OnInit {
   loadDashboardData() {
     this.loadError = '';
     this.hadLoadError = false;
-    this.auth.getDashboard().subscribe({
+    this.dashboardService.getDashboard().subscribe({
       next: (res) => {
         const s = res?.stats || {};
         this.lastStats = s;

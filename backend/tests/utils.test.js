@@ -26,10 +26,10 @@ describe('sanitizeMiddleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should HTML-encode angle brackets', () => {
+  it('should HTML-encode angle brackets and quotes', () => {
     const req = { body: { note: '<script>alert("xss")</script>' } };
     sanitizeMiddleware(req, {}, next);
-    expect(req.body.note).toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
+    expect(req.body.note).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
     expect(next).toHaveBeenCalled();
   });
 

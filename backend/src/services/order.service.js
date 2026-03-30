@@ -1,9 +1,10 @@
 // OrderService: handles business logic for orders
+import crypto from 'crypto';
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { ORDER_STATUSES } from '../utils/constants.js';
 import { t } from '../utils/i18n.util.js';
-import { mailTransporter, smtpConfig } from './auth.service.js';
+import { mailTransporter, smtpConfig } from '../utils/mail.util.js';
 import { renderNewOrderNotification } from '../utils/email.template.js';
 
 const OrderService = {
@@ -65,7 +66,7 @@ const OrderService = {
     const item = await run(supabase.from('items').select('id, name, price, amount').eq('id', item_id).single()).catch(() => null);
     if (!item) throw new Error(t(lang, 'order.itemNotFound'));
     if (item.amount < quantity) throw new Error(t(lang, 'order.insufficientStock', { count: item.amount }));
-    const orderNumber = Math.floor(1000 + Math.random() * 9000);
+    const orderNumber = crypto.randomInt(100000, 999999);
     if (status === 'completed' || status === 'processing') {
       await run(supabase.from('items').update({ amount: item.amount - quantity }).eq('id', item_id));
     }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { JsonPipe, DatePipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { ApiService } from '../services/api.service';
 import { I18nService } from '../i18n.service';
@@ -9,7 +9,7 @@ import { TranslatePipe } from '../translate.pipe';
 @Component({
   selector: 'app-admin-audit',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslatePipe],
+  imports: [LucideAngularModule, TranslatePipe, JsonPipe, DatePipe],
   templateUrl: './admin-audit.html',
   styleUrls: ['./admin-audit.css'],
 })

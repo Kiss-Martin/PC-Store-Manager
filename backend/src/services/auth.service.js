@@ -2,66 +2,15 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
 import { hashToken } from '../utils/token.util.js';
+import { JWT_SECRET, FRONTEND_URL, BACKEND_URL } from '../utils/config.js';
+import { mailTransporter, smtpConfig, getSmtpRuntimeStatus } from '../utils/mail.util.js';
 import { renderAdminNotification, renderPasswordReset, renderRegistrationConfirmation, renderApprovalNotification } from '../utils/email.template.js';
 import { t } from '../utils/i18n.util.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
-if (process.env.NODE_ENV === 'production' && JWT_SECRET === 'change-this-secret') {
-  console.error('FATAL: JWT_SECRET must be set in production. Using the default is insecure.');
-  process.exit(1);
-}
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
-
-const smtpConfig = {
-  host: process.env.SMTP_HOST?.trim(),
-  port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-  secure: process.env.SMTP_SECURE === 'true',
-  user: process.env.SMTP_USER?.trim(),
-  pass: process.env.SMTP_PASS,
-  from: process.env.SMTP_FROM?.trim() || 'noreply@pcstore.local',
-};
-
-const requiredSmtpFields = ['host', 'user', 'pass'];
-const missingSmtpFields = requiredSmtpFields.filter((field) => !smtpConfig[field]);
-const hasAnySmtpConfig = requiredSmtpFields.some((field) => Boolean(smtpConfig[field]));
-const hasCompleteSmtpConfig = missingSmtpFields.length === 0;
-
-export function getSmtpRuntimeStatus() {
-  return {
-    configured: hasCompleteSmtpConfig,
-    partiallyConfigured: hasAnySmtpConfig && !hasCompleteSmtpConfig,
-    missingFields: missingSmtpFields,
-    host: smtpConfig.host || null,
-    port: smtpConfig.port,
-    secure: smtpConfig.secure,
-    from: smtpConfig.from,
-  };
-}
-
-let mailTransporter = null;
-if (hasCompleteSmtpConfig) {
-  mailTransporter = nodemailer.createTransport({
-    host: smtpConfig.host,
-    port: smtpConfig.port,
-    secure: smtpConfig.secure,
-    auth: {
-      user: smtpConfig.user,
-      pass: smtpConfig.pass,
-    },
-  });
-
-  // Verify transporter connectivity at startup; log result but do not throw.
-  mailTransporter.verify()
-    .then(() => console.log('SMTP transporter verified'))
-    .catch((err) => console.warn('SMTP transporter verification failed:', err && err.message ? err.message : err));
-} else if (hasAnySmtpConfig) {
-  console.warn(`SMTP configuration is incomplete. Missing: ${missingSmtpFields.join(', ')}. Password reset emails will be logged instead of sent.`);
-}
+export { getSmtpRuntimeStatus };
 
 // No DB-backed email queue required — emails are sent immediately using templates.
 
@@ -94,6 +43,19 @@ function isMetadataMismatch(refreshTokenRow, metadata = {}) {
 }
 
 const AuthService = {
+  // Shared helper: keep at most `maxTokens` refresh tokens per user
+  async _cleanupOldTokens(userId, maxTokens = 5) {
+    try {
+      const tokens = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', userId).order('created_at', { ascending: false }));
+      if (tokens && tokens.length > maxTokens) {
+        const toRemove = tokens.slice(maxTokens).map((r) => r.id);
+        await run(supabase.from('refresh_tokens').delete().in('id', toRemove)).catch(() => null);
+      }
+    } catch (e) {
+      // non-critical
+    }
+  },
+
   async register({ email, username, password, fullname, role }, metadata = {}, lang = 'en') {
     const sessionMetadata = normalizeMetadata(metadata);
     const hashed = await bcrypt.hash(password, 10);
@@ -187,13 +149,7 @@ const AuthService = {
     try {
       const tokenHash = hashToken(refreshToken);
       await run(supabase.from('refresh_tokens').insert({ user_id: data.id, token_hash: tokenHash, expires_at: refreshExpires, ip: sessionMetadata.ip, user_agent: sessionMetadata.userAgent, access_jti: accessJti }).select().single());
-      // cleanup old tokens for this user (keep max 5)
-      const tokens = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
-      const maxTokens = 5;
-      if (tokens && tokens.length > maxTokens) {
-        const toRemove = tokens.slice(maxTokens).map((r) => r.id);
-        await run(supabase.from('refresh_tokens').delete().in('id', toRemove)).catch(() => null);
-      }
+      await this._cleanupOldTokens(data.id);
     } catch (e) {
       console.warn('Could not persist refresh token (refresh_tokens table missing?). Continuing.');
     }
@@ -244,20 +200,21 @@ const AuthService = {
       err.statusCode = 401;
       throw err;
     }
+    // Block unapproved admin accounts from logging in
+    if (data.role === 'admin' && !data.admin_approved) {
+      const err = new Error(t(lang, 'auth.awaitingApproval'));
+      err.statusCode = 403;
+      throw err;
+    }
     // Issue short-lived access token and a refresh token (persisted)
     const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
     const refreshToken = generateRefreshTokenStr();
     const refreshExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // keep up to max tokens per user (append new and cleanup older)
-    const maxTokens = 5;
     try {
       const tokenHash = hashToken(refreshToken);
       await run(supabase.from('refresh_tokens').insert({ user_id: data.id, token_hash: tokenHash, expires_at: refreshExpires, ip: sessionMetadata.ip, user_agent: sessionMetadata.userAgent, access_jti: accessJti }).select().single());
-      const tokens = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', data.id).order('created_at', { ascending: false }));
-      if (tokens && tokens.length > maxTokens) {
-        const toRemove = tokens.slice(maxTokens).map((r) => r.id);
-        await run(supabase.from('refresh_tokens').delete().in('id', toRemove)).catch(() => null);
-      }
+      await this._cleanupOldTokens(data.id);
     } catch (e) {
       console.warn('Could not persist refresh token (refresh_tokens table missing?). Continuing.');
     }
@@ -301,13 +258,7 @@ const AuthService = {
       await run(supabase.from('refresh_tokens').delete().eq('id', rt.id));
       const newHash = hashToken(newRefresh);
       await run(supabase.from('refresh_tokens').insert({ user_id: user.id, token_hash: newHash, expires_at: newExpires, ip: rt.ip || null, user_agent: rt.user_agent || null, access_jti: accessJti }).select().single());
-      // cleanup old tokens
-      const { data: tokens } = await run(supabase.from('refresh_tokens').select('id,created_at').eq('user_id', user.id).order('created_at', { ascending: false }));
-      const maxTokens = 5;
-      if (tokens && tokens.length > maxTokens) {
-        const toRemove = tokens.slice(maxTokens).map((r) => r.id);
-        await run(supabase.from('refresh_tokens').delete().in('id', toRemove)).catch(() => null);
-      }
+      await this._cleanupOldTokens(user.id);
     } catch (e) {
       console.warn('Could not rotate refresh token (refresh_tokens table missing?). Continuing.');
     }
@@ -419,11 +370,12 @@ const AuthService = {
     const user = await run(supabase.from('users').select('id,email').eq('email', email).single()).catch(() => null);
     if (!user) return; // don't reveal existence
     const token = crypto.randomBytes(24).toString('hex');
+    const tokenHash = hashToken(token);
     const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // Remove any existing reset tokens for this user, then attempt to insert a new one
     await run(supabase.from('password_resets').delete().eq('user_id', user.id)).catch(() => null);
     try {
-      await run(supabase.from('password_resets').insert({ user_id: user.id, token, expires_at }).select().single());
+      await run(supabase.from('password_resets').insert({ user_id: user.id, token_hash: tokenHash, expires_at }).select().single());
     } catch (e) {
       // If the table doesn't exist or insert fails, warn but continue so we still surface the token
       console.warn('Could not persist password reset token (password_resets table missing?). Continuing.');
@@ -457,7 +409,8 @@ const AuthService = {
   },
 
   async resetPassword({ token, newPassword }, lang = 'en') {
-    const pr = await run(supabase.from('password_resets').select('id,user_id,expires_at').eq('token', token).single()).catch(() => null);
+    const tokenHash = hashToken(token);
+    const pr = await run(supabase.from('password_resets').select('id,user_id,expires_at').eq('token_hash', tokenHash).single()).catch(() => null);
     if (!pr) throw new Error(t(lang, 'auth.invalidOrExpiredToken'));
     if (new Date(pr.expires_at) < new Date()) throw new Error(t(lang, 'auth.tokenExpired'));
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -466,5 +419,5 @@ const AuthService = {
   },
 };
 
-export { mailTransporter, smtpConfig };
+export { mailTransporter, smtpConfig } from '../utils/mail.util.js';
 export default AuthService;

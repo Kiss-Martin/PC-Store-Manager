@@ -1,10 +1,9 @@
 // Middleware for authentication (JWT)
 import jwt from 'jsonwebtoken';
 import { t } from '../utils/i18n.util.js';
+import { JWT_SECRET } from '../utils/config.js';
 import supabase from '../db.js';
 import { run } from '../utils/supabase.util.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 
 export async function authMiddleware(req, res, next) {
   const auth = req.headers.authorization;

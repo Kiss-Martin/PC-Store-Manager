@@ -35,6 +35,7 @@ export const routes: Routes = [
   {
     path: 'admin/action-result',
     component: AdminActionResultComponent,
+    canActivate: [AuthGuard, AdminGuard],
   },
   {
     path: 'admin/sessions',

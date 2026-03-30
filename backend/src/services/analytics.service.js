@@ -20,10 +20,6 @@ const AnalyticsService = {
    * - Uses logs and items tables for real sales data.
    */
   async getAnalytics(user, { period = '7days' }) {
-    // TODO: Port full logic from original endpoint here.
-    // Example: Fetch items, logs, calculate revenue, group by period, etc.
-    // See original /analytics endpoint for reference.
-    // Add comments to each calculation step for maintainability.
       // Calculate date range based on period
       let daysAgo = 7;
       if (period === '30days') daysAgo = 30;

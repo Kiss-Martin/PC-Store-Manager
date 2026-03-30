@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChildren, QueryList, effect, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import { AuthService, ExportFormat } from '../../auth/auth.service';
+import { AuthService } from '../../auth/auth.service';
+import { DashboardService, ExportFormat } from '../../services/dashboard.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
@@ -16,7 +17,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, BaseChartDirective, TranslatePipe],
+  imports: [NgClass, FormsModule, LucideAngularModule, BaseChartDirective, TranslatePipe],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.css'],
 })
@@ -149,6 +150,7 @@ export class AnalyticsComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    private dashboardService: DashboardService,
     public theme: ThemeService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
@@ -174,7 +176,7 @@ export class AnalyticsComponent implements OnInit {
     this.isLoading = true;
 
     // ✅ Call real API endpoint
-    this.auth.getAnalytics(this.selectedPeriod).subscribe({
+    this.dashboardService.getAnalytics(this.selectedPeriod).subscribe({
       next: (res) => {
         // Summary stats
         this.summary = res.summary || {
@@ -259,7 +261,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   exportReport() {
-  this.auth.exportAnalytics(this.selectedPeriod, this.exportFormat).subscribe({
+  this.dashboardService.exportAnalytics(this.selectedPeriod, this.exportFormat).subscribe({
     next: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { UpperCasePipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
@@ -11,7 +11,7 @@ import { Session, PendingAdmin } from '../models/api.models';
 @Component({
   selector: 'app-admin-sessions',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, ConfirmationModalComponent],
+  imports: [FormsModule, LucideAngularModule, TranslatePipe, ConfirmationModalComponent, UpperCasePipe, DatePipe],
   templateUrl: './admin-sessions.html',
   styleUrls: ['./admin-sessions.css'],
 })

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { ItemService } from '../../services/item.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { I18nService } from '../../i18n.service';
@@ -29,7 +29,7 @@ interface Product {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
+  imports: [FormsModule, LucideAngularModule, ConfirmationModalComponent, TranslatePipe],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css'],
 })
@@ -60,6 +60,7 @@ export class ProductsComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    private itemService: ItemService,
     public theme: ThemeService,
     public i18n: I18nService,
     private route: ActivatedRoute,
@@ -87,7 +88,7 @@ export class ProductsComponent implements OnInit {
 
   loadProducts() {
     this.isLoading = true;
-    this.auth.getItems().subscribe({
+    this.itemService.getItems().subscribe({
       next: (res) => {
         this.products = (res.items || []).map((item) => ({
           ...item,
@@ -104,7 +105,7 @@ export class ProductsComponent implements OnInit {
   }
 
   loadCategories() {
-    this.auth.getCategories().subscribe({
+    this.itemService.getCategories().subscribe({
       next: (res) => {
         this.categories = res.categories || [];
       },
@@ -113,7 +114,7 @@ export class ProductsComponent implements OnInit {
   }
 
   loadBrands() {
-    this.auth.getBrands().subscribe({
+    this.itemService.getBrands().subscribe({
       next: (res) => {
         this.brands = res.brands || [];
       },
@@ -173,11 +174,10 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct() {
-    console.log('Saving product:', this.newProduct);
     if (!this.newProduct.name) return;
 
     if (this.editingProduct) {
-      this.auth.updateItem(this.editingProduct.id, this.newProduct).subscribe({
+      this.itemService.updateItem(this.editingProduct.id, this.newProduct).subscribe({
         next: () => {
           this.loadProducts();
           this.closeModal();
@@ -189,7 +189,7 @@ export class ProductsComponent implements OnInit {
         },
       });
     } else {
-      this.auth.createItem(this.newProduct).subscribe({
+      this.itemService.createItem(this.newProduct).subscribe({
         next: () => {
           this.loadProducts();
           this.closeModal();
@@ -213,7 +213,7 @@ export class ProductsComponent implements OnInit {
   deleteProduct() {
     if (!this.productToDelete) return;
 
-    this.auth.deleteItem(this.productToDelete.id).subscribe({
+    this.itemService.deleteItem(this.productToDelete.id).subscribe({
       next: () => {
         this.loadProducts();
         this.showDeleteConfirm = false;

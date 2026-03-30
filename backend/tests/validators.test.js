@@ -311,12 +311,12 @@ describe('createOrderSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('should reject missing customer_id', () => {
+  it('should allow missing customer_id (optional for buyers)', () => {
     const result = createOrderSchema.safeParse({
       item_id: 'item-uuid-1',
       quantity: 1,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('should reject non-integer quantity', () => {
