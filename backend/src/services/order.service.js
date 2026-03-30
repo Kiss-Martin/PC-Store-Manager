@@ -195,7 +195,6 @@ const OrderService = {
   },
 
   async assignOrder(id, assigned_to) {
-    await run(supabase.from('logs').update({ assigned_to }).eq('id', id));
     // Emit real-time notification to the assigned worker
     if (assigned_to) {
       const io = getIO();
