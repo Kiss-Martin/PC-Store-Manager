@@ -402,6 +402,12 @@ export class OrdersComponent implements OnInit {
     return this.auth.isBuyer() && (order.status === 'pending' || order.status === 'processing');
   }
 
+  /** Worker can update status of orders assigned to them */
+  canWorkerUpdateStatus(order: Order): boolean {
+    return this.auth.isWorker() && order.assignedTo === this.auth.user()?.id
+      && order.status !== 'cancelled' && order.status !== 'completed';
+  }
+
   confirmBuyerCancel(order: Order) {
     this.orderToCancel = order;
     this.showCancelConfirm = true;

@@ -68,6 +68,7 @@ const dictionaries = {
     'role.buyer': 'Buyer',
 
     'order.buyerCanOnlyCancel': 'Buyers can only cancel orders',
+    'order.notAssignedToYou': 'You can only update orders assigned to you',
 
     'error.internalServerError': 'Internal Server Error',
 
@@ -191,6 +192,7 @@ const dictionaries = {
     'role.buyer': 'vásárló',
 
     'order.buyerCanOnlyCancel': 'A vásárlók csak lemondhatják a rendeléseket',
+    'order.notAssignedToYou': 'Csak a hozzád rendelt rendelések állapotát módosíthatod',
 
     'error.internalServerError': 'Belső szerverhiba',
 

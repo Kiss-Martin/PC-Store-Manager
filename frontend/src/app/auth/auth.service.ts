@@ -95,6 +95,10 @@ export class AuthService {
     return this.user()?.role === 'buyer';
   }
 
+  isWorker(): boolean {
+    return this.user()?.role === 'worker';
+  }
+
   shouldRestoreSession(): boolean {
     return checkRemember();
   }

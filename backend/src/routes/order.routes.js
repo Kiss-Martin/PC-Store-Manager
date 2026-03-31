@@ -10,7 +10,7 @@ const router = Router();
 router.get('/', authMiddleware, asyncWrap(OrderController.getOrders));
 router.get('/export', authMiddleware, requireRole('admin', 'buyer'), asyncWrap(OrderController.exportOrders));
 router.post('/', authMiddleware, requireRole('admin', 'buyer'), asyncWrap(OrderController.createOrder));
-router.patch('/:id/status', authMiddleware, requireRole('admin', 'buyer'), asyncWrap(OrderController.updateOrderStatus));
+router.patch('/:id/status', authMiddleware, requireRole('admin', 'worker', 'buyer'), asyncWrap(OrderController.updateOrderStatus));
 router.patch('/:id/assign', authMiddleware, requireRole('admin'), asyncWrap(OrderController.assignOrder));
 router.delete('/:id', authMiddleware, requireRole('admin'), asyncWrap(OrderController.deleteOrder));
 

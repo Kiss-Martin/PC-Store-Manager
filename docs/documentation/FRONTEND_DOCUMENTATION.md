@@ -1,313 +1,587 @@
 # Frontend Documentation
 
-Last updated: March 24, 2026
+Last updated: March 31, 2026
 
-## 1) Overview
+---
 
-The frontend is a standalone-component Angular 21 application for PC Store Manager. It provides authentication, inventory/order/customer workflows, analytics dashboards with Chart.js, profile and session management, admin moderation tools, bilingual localization (English / Hungarian), dark/light theming, and toast/modal-based UX feedback.
+## 1. Overview
 
-Core stack:
+The frontend is a standalone-component **Angular 21** application providing the complete UI for PC Store Manager. It features JWT authentication with automatic token refresh, role-based route access (`admin` / `worker` / `buyer`), inventory and order management, analytics dashboards with Chart.js, profile and session management, admin moderation tools, bilingual localization (English / Hungarian), dark/light theming, real-time WebSocket notifications, and CSV/PDF export with print support.
+
+### Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | Angular 21 (standalone components, signals) |
-| Routing | Angular Router + functional guards (`AuthGuard`, `AdminGuard`, `GuestGuard`) |
+|---|---|
+| Framework | Angular 21 (standalone components, signals, functional guards & interceptors) |
+| Routing | Angular Router with `AuthGuard`, `AdminGuard`, `StaffGuard`, `GuestGuard` |
 | HTTP | `HttpClient` + functional interceptor (`authInterceptor`) |
-| Charts | `ng2-charts` + `chart.js` 4.x |
-| Icons | `lucide-angular` |
-| Styling | Tailwind CSS 4 utility classes + custom CSS (light/dark themes via CSS custom properties) |
-| i18n | Custom signal-based service with `TranslatePipe` (`en` / `hu`) |
+| State | Angular signals (`signal()`, `computed()`, `effect()`) |
+| Charts | `ng2-charts` v8 + `chart.js` v4 |
+| Icons | `lucide-angular` (tree-shakeable selective imports) |
+| Styling | Tailwind CSS v4 + custom CSS variables (light/dark themes) |
+| i18n | Custom signal-based `I18nService` with `TranslatePipe` (`en` / `hu`, 450+ keys) |
+| Real-time | `socket.io-client` v4 |
 
-## 2) App architecture
+---
 
-### Bootstrap
+## 2. Project Structure
 
-- `src/main.ts` bootstraps `App` with `appConfig`
-- `app.config.ts` provides: router, global HTTP interceptor, Lucide icon set
+```
+frontend/
+├── src/
+│   ├── index.html
+│   ├── main.ts                          # Bootstrap: App + appConfig
+│   ├── styles.css                       # Global styles, theme variables, @media print rules
+│   ├── app/
+│   │   ├── app.config.ts                # Providers: router, HTTP interceptor, Lucide icons
+│   │   ├── app.routes.ts                # Route definitions with guards
+│   │   ├── app.ts                       # Root shell: navbar, theme/language toggles, WebSocket init
+│   │   ├── app.html                     # Root template
+│   │   ├── app.css                      # Root component styles
+│   │   ├── i18n.service.ts              # Translation dictionary (en/hu, 450+ keys), signal-based
+│   │   ├── theme.service.ts             # Dark/light theme toggle, localStorage persistence
+│   │   ├── translate.pipe.ts            # TranslatePipe (| t) for templates
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── auth.service.ts          # Auth state, login/register/refresh/logout, session management
+│   │   │   ├── auth.interceptor.ts      # Attaches Bearer token + Accept-Language, auto-refresh on 401
+│   │   │   ├── auth.guard.ts            # Requires authentication
+│   │   │   ├── admin.guard.ts           # Requires admin role
+│   │   │   ├── staff.guard.ts           # Blocks buyer role (allows admin + worker)
+│   │   │   ├── guest.guard.ts           # Blocks authenticated users from auth pages
+│   │   │   ├── login/                   # Login page component
+│   │   │   ├── register/               # Multi-step registration component
+│   │   │   ├── forgot/                 # Forgot password component
+│   │   │   └── reset-password/         # Reset password component
+│   │   │
+│   │   ├── services/
+│   │   │   ├── api.service.ts           # HTTP client wrapper (URL building, credentials, blob downloads)
+│   │   │   ├── dashboard.service.ts     # Dashboard + analytics API calls
+│   │   │   ├── item.service.ts          # Item CRUD + categories/brands
+│   │   │   ├── order.service.ts         # Order CRUD + customers + workers + export
+│   │   │   ├── user.service.ts          # Profile CRUD + avatar + password
+│   │   │   └── socket.service.ts        # Socket.io client: connect, join room, order:assigned events
+│   │   │
+│   │   ├── models/
+│   │   │   └── api.models.ts            # Shared TypeScript interfaces (User, Item, Order, Session, etc.)
+│   │   │
+│   │   ├── utils/
+│   │   │   └── token.util.ts            # Token storage: localStorage / sessionStorage, remember-me
+│   │   │
+│   │   ├── components/
+│   │   │   ├── analytics.component/     # Analytics page (charts, stats, export, print)
+│   │   │   ├── orders.component/        # Orders page (list, create, status, assign, export, print)
+│   │   │   ├── products.component/      # Products page (CRUD, search, category/brand dropdowns)
+│   │   │   ├── profile.component/       # Profile page (edit, avatar, password, sessions)
+│   │   │   └── confirmation-modal/      # Reusable confirmation modal component
+│   │   │
+│   │   ├── dashboard/                   # Dashboard page (stats, activity, quick actions, report)
+│   │   ├── admin-sessions/              # Admin sessions page (all sessions, pending admins)
+│   │   ├── admin-audit/                 # Admin audit log page
+│   │   ├── admin-action-result/         # One-click email action result page
+│   │   │
+│   │   └── shared/
+│   │       ├── toast.service.ts         # Toast notification service (BehaviorSubject)
+│   │       └── toast/                   # Toast display component
+│   │
+│   └── environments/
+│       ├── environment.ts               # Dev: apiUrl = http://localhost:3000
+│       └── environment.prod.ts          # Prod: apiUrl = https://pc-store-manager.onrender.com
+│
+├── cypress/                             # E2E test specs
+├── angular.json
+├── tsconfig.json
+└── package.json
+```
 
-### Root shell (`app.ts` / `app.html`)
+---
 
-- Controls navbar visibility (hidden on auth screens)
-- Mobile hamburger menu with responsive navigation
-- Theme toggle (dark/light) and language toggle (EN/HU)
-- Profile link and logout button
-- Navbar visibility is determined by authentication state and current route
+## 3. App Bootstrap
 
-### Environment configuration
+1. `main.ts` bootstraps `App` with `appConfig`
+2. `app.config.ts` provides:
+   - Angular Router with route definitions
+   - `HttpClient` with `authInterceptor`
+   - Lucide icon set (60+ icons, tree-shakeable)
+   - Zone.js change detection with event coalescing
+3. `App` component (`app.ts`):
+   - Controls navbar visibility (hidden on auth pages)
+   - Mobile responsive hamburger menu
+   - Theme toggle (dark/light) and language toggle (EN/HU)
+   - Profile link and logout button
+   - WebSocket connection lifecycle via `effect()` — connects on login, disconnects on logout
+   - Listens for `order:assigned` WebSocket events and shows toast notifications
 
-- `environment.ts` — Development: `production: false`, `apiUrl: http://localhost:3000`
-- `environment.prod.ts` — Production: `production: true`, `apiUrl` pointing to Render backend
+---
 
-## 3) Routing map
+## 4. Routing
 
-| Path | Component | Guard | Notes |
-|------|-----------|-------|-------|
+| Path | Component | Guard(s) | Notes |
+|---|---|---|---|
 | `/` | — | — | Redirects to `/dashboard` |
-| `/login` | `LoginComponent` | `GuestGuard` | Email/password login with remember-me and support modal |
-| `/register` | `RegisterComponent` | `GuestGuard` | 4-step workflow with role selection |
+| `/login` | `LoginComponent` | `GuestGuard` | Email/password, remember-me, support contact modal |
+| `/register` | `RegisterComponent` | `GuestGuard` | 4-step wizard: role → credentials → personal info → review |
 | `/forgot` | `ForgotComponent` | `GuestGuard` | Password reset request (non-disclosing) |
-| `/reset-password` | `ResetPasswordComponent` | `GuestGuard` | Token-based password reset |
+| `/reset-password` | `ResetPasswordComponent` | `GuestGuard` | Token-based password reset (token from query param) |
 | `/dashboard` | `DashboardComponent` | `AuthGuard` | Stats, activity feed, quick actions, report download |
-| `/products` | `ProductsComponent` | `AuthGuard` | Product CRUD, search/filter, category/brand selection |
+| `/products` | `ProductsComponent` | `AuthGuard` | Product CRUD, search, category/brand selection |
 | `/orders` | `OrdersComponent` | `AuthGuard` | Order list, status workflow, assignment, export |
-| `/analytics` | `AnalyticsComponent` | `AuthGuard` + `StaffGuard` | Charts, summary cards, export (hidden from buyers) |
-| `/profile` | `ProfileComponent` | `AuthGuard` | Profile edit, avatar, password change, sessions |
-| `/admin/sessions` | `AdminSessionsComponent` | `AuthGuard` + `AdminGuard` | All sessions, pending admin approvals |
-| `/admin/audit` | `AdminAuditComponent` | `AuthGuard` + `AdminGuard` | Paginated audit log |
-| `/admin/action-result` | `AdminActionResultComponent` | — | One-click email action result page |
+| `/analytics` | `AnalyticsComponent` | `AuthGuard` + `StaffGuard` | Charts, summary, export (hidden from buyers) |
+| `/profile` | `ProfileComponent` | `AuthGuard` | Profile edit, avatar, password, sessions |
+| `/admin/sessions` | `AdminSessionsComponent` | `AuthGuard` + `AdminGuard` | All sessions + pending admin approvals |
+| `/admin/audit` | `AdminAuditComponent` | `AuthGuard` + `AdminGuard` | Paginated audit log viewer |
+| `/admin/action-result` | `AdminActionResultComponent` | `AuthGuard` + `AdminGuard` | One-click email action result |
 | `/admin/pending-admins` | — | — | Redirects to `/admin/sessions` |
-| `**` | — | — | Wildcard redirects to `/dashboard` |
-
-## 4) Authentication and session management
-
-Implemented in `auth.service.ts`, route guards, and `auth.interceptor.ts`.
-
-### Token storage
-
-- **Access token** + **user object** stored in:
-  - `localStorage` if "remember me" is enabled (persists across browser sessions)
-  - `sessionStorage` otherwise (cleared on tab close)
-- **Refresh token** stored in a backend-issued httpOnly cookie (not accessible to JS)
-
-### Startup / page refresh flow
-
-1. `AuthService` constructor calls `loadFromStorage()` to restore token and user
-2. If token is expired, auth data is cleared but the "remember me" preference is **preserved**
-3. If remember-me is set and no valid token exists, `refresh()` is called automatically
-4. `authReady` promise resolves once the startup flow (restore or refresh) has settled
-5. Components that need auth data (e.g. `ProfileComponent`) await `authReady` before loading
-
-### Interceptor behavior
-
-- Attaches `Authorization: Bearer <token>` and `Accept-Language` headers to all outgoing requests
-- On `401` responses (non-auth endpoints), attempts a transparent token refresh
-- If refresh succeeds, the original request is retried with the new token
-- If refresh fails, the user is logged out with a "session expired" toast
+| `**` | — | — | Wildcard → `/dashboard` |
 
 ### Guards
 
 | Guard | Behavior |
-|-------|----------|
-| `AuthGuard` | Allows route if authenticated; may attempt one-time refresh |
-| `AdminGuard` | Same as `AuthGuard` + requires `admin` role |
-| `StaffGuard` | Same as `AuthGuard` + blocks `buyer` role (allows `admin` and `worker`) |
-| `GuestGuard` | Blocks auth pages for already-authenticated users |
+|---|---|
+| `AuthGuard` | Allows if authenticated. If token expired but remember-me set, attempts one-time refresh. |
+| `AdminGuard` | Same as `AuthGuard` + requires `role === 'admin'`. Redirects non-admins to `/dashboard`. |
+| `StaffGuard` | Same as `AuthGuard` + blocks `buyer` role. Allows `admin` and `worker`. |
+| `GuestGuard` | Blocks already-authenticated users from auth pages. Redirects to `/dashboard`. |
 
-## 5) API integration layer
+All guards are functional (not class-based) and support async refresh attempts before deciding.
+
+---
+
+## 5. Authentication & Session Management
+
+Implemented in `auth.service.ts`, guards, and `auth.interceptor.ts`.
+
+### Token Storage (`utils/token.util.ts`)
+
+| Storage Key | Storage | Purpose |
+|---|---|---|
+| `pc_token` | localStorage (remember) or sessionStorage (session-only) | JWT access token |
+| `pc_user` | Same as above | Serialized user object |
+| `pc_remember` | localStorage | Remember-me flag (`"true"` / absent) |
+
+- If "remember me" is enabled, tokens go to `localStorage` (persist across browser sessions)
+- Otherwise, `sessionStorage` (cleared on tab close)
+- On save, the other storage is cleared to avoid ambiguity
+
+### Startup Flow
+
+1. `AuthService` constructor calls `loadFromStorage()` to restore token and user
+2. If token is expired, auth data is cleared but remember-me preference is preserved
+3. If remember-me is set and no valid token exists, `refresh()` is called automatically
+4. `authReady` promise resolves once the startup flow settles
+5. Components that depend on auth (e.g., `ProfileComponent`) `await authReady` before loading
+
+### HTTP Interceptor (`auth.interceptor.ts`)
+
+- Attaches `Authorization: Bearer <token>` to all requests
+- Attaches `Accept-Language` header from `localStorage` (`pc_language`)
+- On `401` response (non-auth endpoints):
+  1. Attempts transparent token refresh
+  2. On success: retries original request with new token
+  3. On failure: triggers `logout('expired')` with session-expired toast
+
+### Auth API Methods
+
+| Method | Backend Endpoint | Purpose |
+|---|---|---|
+| `register()` | `POST /auth/register` | Multi-role registration. Handles `requiresApproval` response. |
+| `login()` | `POST /auth/login` | Email + password + rememberMe. Stores tokens on success. |
+| `refresh()` | `POST /auth/refresh` | Singleton (shared via `shareReplay`). Deduplicated across concurrent 401 retries. |
+| `logout()` | `POST /auth/logout` | Clears tokens, cookies, redirects to `/login`. Shows toast (success or expired). |
+| `forgotPassword()` | `POST /auth/forgot-password` | Sends email. Non-disclosing response. |
+| `resetPassword()` | `POST /auth/reset-password` | Token + new password. |
+
+### Session Management
+
+| Method | Backend Endpoint | Purpose |
+|---|---|---|
+| `getSessions()` | `GET /auth/tokens` | List user's own active sessions |
+| `revokeSession()` | `DELETE /auth/tokens/:id` | Revoke a specific session |
+| `getAllSessionsPaged()` | `GET /auth/admin/sessions` | Admin: paginated all-user sessions |
+| `revokeSessionByAdmin()` | `DELETE /auth/tokens/:id` | Admin: revoke any session |
+| `listPendingAdmins()` | `GET /auth/admin/pending-admins` | Admin: pending admin list |
+| `approveAdmin()` | `POST .../approve` | Admin: approve pending admin |
+| `rejectAdmin()` | `POST .../reject` | Admin: reject pending admin |
+
+---
+
+## 6. Service Layer
 
 ### `ApiService` (`services/api.service.ts`)
 
-Centralizes URL building and HTTP request helpers:
+Centralized HTTP client wrapper. Builds URLs from `environment.apiUrl`.
 
-| Method | Purpose |
-|--------|---------|
-| `get<T>()` | Standard GET |
-| `post<T>()` | Standard POST |
-| `patch<T>()` | Standard PATCH |
-| `delete<T>()` | Standard DELETE |
-| `getWithCredentials<T>()` | GET with `withCredentials: true` (sends cookies) |
-| `postWithCredentials<T>()` | POST with cookies |
-| `deleteWithCredentials<T>()` | DELETE with cookies |
-| `postFormData<T>()` | POST multipart/form-data (avatar upload) |
-| `getBlob()` | GET that returns a `Blob` (file downloads, avatar fetch), sends cookies |
+| Method | HTTP | Features |
+|---|---|---|
+| `get<T>()` | GET | Standard request |
+| `post<T>()` | POST | Standard request |
+| `patch<T>()` | PATCH | Standard request |
+| `delete<T>()` | DELETE | Standard request |
+| `getWithCredentials<T>()` | GET | Sends cookies (`withCredentials: true`) |
+| `postWithCredentials<T>()` | POST | Sends cookies |
+| `deleteWithCredentials<T>()` | DELETE | Sends cookies |
+| `postFormData<T>()` | POST | Multipart/form-data (avatar upload) |
+| `getBlob()` | GET | Returns `Observable<Blob>` for file downloads |
 
-Base URL is read from `environment.apiUrl`.
+### `ItemService` (`services/item.service.ts`)
 
-### `AuthService` (`auth/auth.service.ts`)
+| Method | Endpoint | Returns |
+|---|---|---|
+| `getItems()` | `GET /items` | `{ items: Item[] }` |
+| `createItem()` | `POST /items` | `{ success, item }` |
+| `updateItem()` | `PATCH /items/:id` | `{ item }` |
+| `deleteItem()` | `DELETE /items/:id` | `{ success }` |
+| `getCategories()` | `GET /items/categories` | `{ categories: Category[] }` |
+| `getBrands()` | `GET /items/brands` | `{ brands: Brand[] }` |
 
-Acts as the primary API client for all feature endpoints. All methods return typed `Observable<T>` using interfaces from `api.models.ts`. Key method groups:
+Note: `specifications` and `specs` fields are stripped from payloads before sending.
 
-- **Auth:** `login()`, `register()`, `refresh()`, `logout()`, `forgotPassword()`, `resetPassword()`
-- **Profile:** `getMe()`, `updateProfile()`, `changePassword()`
-- **Avatar:** `getMyAvatar()`, `uploadAvatar()`, `deleteAvatar()`
-- **Sessions:** `getSessions()`, `revokeSession()`
-- **Items:** `getItems()`, `createItem()`, `updateItem()`, `deleteItem()`, `getCategories()`, `getBrands()`
-- **Orders:** `getOrders()`, `createOrder()`, `updateOrderStatus()`, `assignOrder()`, `deleteOrder()`, `exportOrders()`
-- **Customers:** `getCustomers()`, `createCustomer()`
-- **Analytics:** `getAnalytics()`, `exportAnalytics()`
-- **Dashboard:** `getDashboard()`, `generateBusinessReport()`
-- **Admin:** `getAllSessionsPaged()`, `listPendingAdmins()`, `approveAdmin()`, `rejectAdmin()`, `revokeSessionByAdmin()`
-- **Workers:** `getWorkers()`
+### `OrderService` (`services/order.service.ts`)
 
-## 6) Feature components
+| Method | Endpoint | Returns |
+|---|---|---|
+| `getOrders()` | `GET /orders` | `{ orders: Order[] }` |
+| `createOrder()` | `POST /orders` | `{ success, order }` |
+| `updateOrderStatus()` | `PATCH /orders/:id/status` | `{ success }` |
+| `deleteOrder()` | `DELETE /orders/:id` | `{ success }` |
+| `assignOrder()` | `PATCH /orders/:id/assign` | `{ success }` |
+| `exportOrders()` | `GET /orders/export` | `Blob` (CSV or PDF) |
+| `getCustomers()` | `GET /customers` | `{ customers: Customer[] }` |
+| `createCustomer()` | `POST /customers` | `{ success, customer }` |
+| `getWorkers()` | `GET /users/workers` | `{ users: User[] }` |
 
-### Authentication
+### `DashboardService` (`services/dashboard.service.ts`)
 
-- **Login** — Email/password, remember-me toggle, support contact modal
-- **Register** — 4-step form (role selection → credentials → personal info → confirmation). Three role options: Admin, Worker, Buyer. Admin role requires approval; Worker and Buyer are auto-approved.
-- **Forgot password** — Generic non-disclosing success message
-- **Reset password** — Token-based, from query parameter
+| Method | Endpoint | Returns |
+|---|---|---|
+| `getDashboard()` | `GET /dashboard` | `{ stats: DashboardStats, activities: DashboardActivity[] }` |
+| `getAnalytics()` | `GET /analytics?period=` | `{ summary, revenueChart, categoryChart, topProducts, recentTransactions }` |
+| `exportAnalytics()` | `GET /analytics/export` | `Blob` |
+| `generateBusinessReport()` | `GET /analytics/export` | `Blob` (alias for `exportAnalytics`) |
 
-### Dashboard
+### `UserService` (`services/user.service.ts`)
 
-- Loads summary stats from `/dashboard` (total products, sales, active orders, customers)
-- Recent activity feed
-- Quick action buttons (new order, add product)
-- Business report download modal (period selector, CSV/PDF format)
-- **Print** button — opens the browser print dialog to print the current dashboard view
-- Stats rebuild on language change via Angular `effect()`
-- **Buyer view:** Report generation, print, and “Add Product” quick action are hidden. “Analytics” quick action is hidden. “New Order” button text changes to “Place Order”.
+| Method | Endpoint | Returns |
+|---|---|---|
+| `getMe()` | `GET /users/me` | `{ user: User }` |
+| `getMyAvatar()` | `GET /users/me/avatar` | `Blob` |
+| `uploadAvatar()` | `POST /users/me/avatar` | `{ success, message }` |
+| `updateMe()` | `PATCH /users/me` | `{ user: User }` |
+| `changePassword()` | `PATCH /users/me/password` | `{ success, message }` |
+| `deleteMe()` | `DELETE /users/me` | `{ success }` |
 
-### Products
+### `SocketService` (`services/socket.service.ts`)
 
-- Full CRUD on inventory via `/items`
-- Category and brand dropdowns (loaded from API)
-- Search and filter UI
+- Connects to backend WebSocket using `socket.io-client`
+- On connect: joins user-specific room via `join` event
+- Exposes `orderAssigned$` Subject for `order:assigned` events
+- Auto-connects on login, disconnects on logout (managed by `App` component's `effect()`)
+- Transport: WebSocket with polling fallback
+
+---
+
+## 7. Feature Components
+
+### Login (`auth/login/`)
+
+- Email/password form with "Stay signed in" toggle
+- Calls `AuthService.login()` on submit
+- Support contact modal (name, email, message → `POST /support/contact`)
+- Theme toggle available on login page
+- Redirects to `/dashboard` on success
+- `GuestGuard` prevents access if already logged in
+
+### Register (`auth/register/`)
+
+- 4-step wizard:
+  1. **Role selection** — Admin, Worker, or Buyer
+  2. **Credentials** — Username (3+ chars, alphanumeric + `_.-`) and password (strong)
+  3. **Personal info** — Full name and email
+  4. **Review & submit** — Confirmation of all details
+- Client-side validation at each step with localized error messages
+- On admin registration: displays "awaiting approval" message if `requiresApproval` is true
+- Auto-login for non-admin registrations
+
+### Forgot Password (`auth/forgot/`)
+
+- Email input → `AuthService.forgotPassword()`
+- Non-disclosing: always shows success message regardless of email existence
+
+### Reset Password (`auth/reset-password/`)
+
+- Reads `token` from URL query parameter
+- New password + confirmation with strong password validation
+- Calls `AuthService.resetPassword()` on submit
+
+### Dashboard (`dashboard/`)
+
+- Loads stats from `GET /dashboard`: total products, total sales, active orders, customers
+- Recent activity feed from backend
+- Quick action buttons: New Order, Add Product, View Orders, Reports, Settings
+- Business report download modal: period selector (7/30/90 days), format (CSV/PDF)
+- Print button for browser print dialog
+- **Buyer view:** "Add Product", "Analytics", report generation, and print are hidden. "New Order" shows as "Place Order".
+
+### Products (`components/products.component/`)
+
+- Full CRUD via `ItemService`
+- Category and brand dropdowns loaded from API
+- Client-side search/filter across product name, model, brand
+- Modal for create/edit with validation
 - Confirmation modal for deletes
+- **Buyer view:** Read-only. Add/edit/delete controls hidden.
 
-### Orders
+### Orders (`components/orders.component/`)
 
-- Order listing with search, custom status filter dropdown (uses `custom-dropdown` class with `HostListener` click-outside detection)
-- Order status updates (pending → processing → completed / cancelled)
-- Manual order creation with inline customer creation option
-- Worker assignment (admin only)
-- Export orders as CSV/PDF
-- **Print** button (admin and buyer) — prints the current orders view via the browser print dialog
-- **Buyer view:** Sees own orders only. Can place new orders (status forced to “pending”), cancel pending/processing orders, export/print. Cannot edit status, assign workers, or delete orders. “Assigned To” column and admin action buttons are hidden; a cancel button is shown for cancellable orders.
+- Order listing with client-side search and custom status filter dropdown
+- Order creation with inline customer creation option
+- Status workflow: `pending` → `processing` → `completed` / `cancelled`
+- Worker assignment dropdown (admin only)
+- Export as CSV/PDF with status filter
+- Print button for browser print dialog
+- **Buyer view:** Own orders only. Can place new orders (status: `pending`), cancel own orders. Cannot edit status, assign workers, or delete. "Assigned To" column and admin actions are hidden.
 
-### Analytics
+### Analytics (`components/analytics.component/`)
 
-- Revenue line chart and category doughnut chart (`ng2-charts` / `chart.js`)
-- Summary stat cards (revenue, orders, average order value, top product, low stock, growth)
+- Revenue line chart + category doughnut chart (`ng2-charts` / `chart.js`)
+- Summary stat cards: revenue, orders, average order value, top product, low stock items, revenue growth
 - Top products table with trend indicators
 - Recent transactions section (admin only)
-- Period selector (`7days` / `30days` / `90days`)
-- Export analytics as CSV/PDF
-- **Print** button (admin only) — prints the current analytics view via the browser print dialog
+- Period selector: 7 days, 30 days, 90 days
+- Export as CSV/PDF
+- Print button (admin only)
 - Charts auto-update colors on theme change
+- **Not accessible to buyers** (blocked by `StaffGuard`)
 
-### Profile
+### Profile (`components/profile.component/`)
 
-- View and edit profile (email, username, fullname)
-- Avatar upload with immediate preview (blob URL)
-- Change password modal
-- Active session listing with revoke capability
-- Waits for `authReady` before loading data to prevent race conditions on page refresh
+- View and edit profile fields: email, username, fullname
+- Avatar upload with immediate preview (creates blob URL)
+- Change password modal (current + new password with validation)
+- Active session listing with per-session revoke capability
+- Waits for `authReady` before loading to prevent race conditions on page refresh
 
-### Admin pages
+### Admin Sessions (`admin-sessions/`)
 
-- **Admin Sessions** (`/admin/sessions`)
-  - Paginated session list with search, email filter, date range filter
-  - Session revocation with confirmation modal
-  - Pending admin approvals section with approve/reject confirmation modals
-- **Audit Logs** (`/admin/audit`)
-  - Paginated audit event stream
-- **Admin Action Result** (`/admin/action-result`)
-  - Displays result of one-click email approve/reject actions
+- Paginated session list with search, email filter, date range filter
+- Session revocation with confirmation modal
+- Pending admin approvals section: approve/reject with confirmation modals
+- Admin-only access via `AdminGuard`
 
-### Shared UX components
+### Admin Audit (`admin-audit/`)
 
-- **ToastService** + **ToastComponent** — Non-blocking notifications (`info`, `success`, `error`, `warning`) with auto-dismiss
-- **ConfirmationModalComponent** — Reusable modal for destructive actions (replaces native `confirm()` dialogs)
+- Paginated audit event log viewer
+- Displays event type, actor, target, details, timestamp
+- Admin-only access via `AdminGuard`
 
-## 7) Internationalization and theming
+### Admin Action Result (`admin-action-result/`)
 
-### i18n
+- Landing page for one-click email approve/reject actions
+- Reads `result` query parameter (`approved` / `rejected`) and displays outcome
 
-- `I18nService` contains an in-app dictionary with **450+ keys** for `en` and `hu`
-- `TranslatePipe` (`| t`) renders translated keys in templates
+---
+
+## 8. Shared UI Components
+
+### Toast System
+
+- **`ToastService`** — Injectable service with `show(message, opts)` and `hide(id)` methods
+- Types: `info`, `success`, `error`, `warning`
+- Auto-dismiss with configurable timeout (default: 4000 ms)
+- State managed via `BehaviorSubject<Toast[]>`
+- **`ToastComponent`** — Renders active toasts (subscribed to `toasts$`)
+
+### Confirmation Modal
+
+- **`ConfirmationModalComponent`** — Reusable modal for destructive actions
+- Replaces native `confirm()` dialogs for consistent UX
+- Used for: delete product, delete order, revoke session, approve/reject admin
+
+---
+
+## 9. Internationalization (i18n)
+
+- **`I18nService`** — Contains an in-app dictionary with **450+ keys** for `en` and `hu`
+- **`TranslatePipe`** (`| t`) — Pure pipe (impure for reactivity) that renders translated keys in templates
+- Supports parameterized strings: `{{ 'key' | t:{ param: value } }}`
 - Current language stored in `localStorage` (`pc_language`)
-- Interceptor sends language via `Accept-Language` header
-- Language signal triggers reactive UI updates
+- Language signal (`currentLang`) triggers reactive UI updates
+- `toggleLanguage()` switches between `en` and `hu`
+- Backend receives language via `Accept-Language` header (set by interceptor)
 
-### Theme
+### Coverage Areas
 
-- `ThemeService` toggles dark/light mode via `body` class (`dark-theme`)
+- Navigation labels
+- Dashboard stats and actions
+- Product form labels and validation messages
+- Order statuses, columns, and actions
+- Analytics labels and export headers
+- Auth forms (login, register, forgot, reset)
+- Profile form fields and messages
+- Admin session and audit labels
+- Toast messages
+- Support contact modal
+
+---
+
+## 10. Theming
+
+- **`ThemeService`** — Toggles dark/light mode via `body.dark-theme` class
 - Theme persisted in `localStorage` (`pc_theme`)
-- Charts dynamically update their color scheme on theme change
+- CSS custom properties define color scheme (set in `styles.css`)
+- Charts dynamically update their color scheme on theme change via Angular `effect()`
+- Theme toggle available in navbar and on login page
 
-### Print styles
+---
 
-- Global `@media print` rules defined in `src/styles.css`
-- Hides navbar, buttons, inputs, selects, modals, and elements with the `.no-print` class
-- Forces landscape orientation with `1.5cm` margins
-- Styles tables with clean collapsed borders for readability
-- Prevents page breaks inside cards and table rows (`break-inside: avoid`)
-- Removes box shadows and transforms for clean paper output
-- Preserves chart canvases and status badge colors via `print-color-adjust: exact`
+## 11. Print Styles
 
-## 8) Data contracts (`api.models.ts`)
+Global `@media print` rules defined in `styles.css`:
 
-The frontend defines shared TypeScript interfaces used across all services and components:
+- **Hidden elements:** Navbar, buttons, inputs, selects, modals, `.no-print` class, `.fixed` elements
+- **Layout:** Forced landscape orientation, 1.5 cm margins
+- **Tables:** Clean collapsed borders, readable styling
+- **Page breaks:** `break-inside: avoid` on cards and table rows
+- **Visual:** Removed box shadows and transforms; preserved chart canvases and status badge colors via `print-color-adjust: exact`
+
+---
+
+## 12. Real-Time Notifications
+
+The `SocketService` connects to the backend Socket.io server:
+
+1. On login: `App` component's `effect()` calls `socketService.connect(userId)`
+2. Socket joins user-specific room: `user:{userId}`
+3. On `order:assigned` event: `orderAssigned$` Subject emits, `App` shows info toast
+4. On logout: `socketService.disconnect()` is called
+
+---
+
+## 13. Data Contracts (`api.models.ts`)
 
 | Interface | Purpose |
-|-----------|---------|
-| `User` | User profile (id, email, username, fullname, role) |
-| `AuthResponse` | Login/register response (supports `token`, `accessToken`, `access_token` variants) |
-| `Item` | Product/inventory item |
-| `Category` | Product category |
-| `Brand` | Product brand |
-| `Customer` | Customer record |
-| `OrderStatus` | Type alias: `'pending' \| 'processing' \| 'completed' \| 'cancelled'` |
-| `Order` | Order with product, customer, status, assignment |
-| `Session` | Active session / refresh token metadata |
-| `AnalyticsSummary` | Summary stats for analytics page |
-| `TopProduct` | Top-selling product entry |
-| `Transaction` | Recent transaction entry |
-| `DashboardStats` | Dashboard summary statistics |
-| `DashboardActivity` | Dashboard activity feed entry |
-| `AuditLog` | Admin audit log entry |
-| `PendingAdmin` | Pending admin registration |
+|---|---|
+| `User` | User profile: `id`, `email`, `username`, `fullname?`, `role` |
+| `AuthResponse` | Login/register response. Supports `token`, `accessToken`, and `access_token` variants. |
+| `Item` | Product: `id`, `name`, `model?`, `price`, `amount`, `warranty?`, `category_id`, `brand_id`, `category?`, `brand?` |
+| `Category` | `id`, `name` |
+| `Brand` | `id`, `name` |
+| `Customer` | `id`, `name`, `email?`, `phone?` |
+| `OrderStatus` | Union type: `'pending' \| 'processing' \| 'completed' \| 'cancelled'` |
+| `Order` | Full order: `id`, `orderNumber`, `product`, `productId`, `quantity`, `unitPrice`, `totalAmount`, `status`, `customer`, `date`, `timestamp`, `assignedTo?` |
+| `Session` | Refresh token metadata: `id`, `ip?`, `user_agent?`, `created_at`, `expires_at`, `user?` |
+| `AnalyticsSummary` | `totalRevenue`, `totalOrders`, `averageOrderValue`, `topSellingProduct`, `lowStockItems`, `revenueGrowth` |
+| `TopProduct` | `name`, `sales`, `revenue`, `trend` |
+| `Transaction` | `id`, `product`, `customer`, `amount`, `status`, `date` |
+| `DashboardStats` | `totalProducts?`, `totalSales?`, `activeOrders?`, `customers?` |
+| `DashboardActivity` | `id`, `description`, `timestamp`, `type` |
+| `AuditLog` | `id`, `event_type`, `actor_user_id?`, `target_user_id?`, `details?`, `created_at`, `actor?`, `target?` |
+| `PendingAdmin` | `id`, `email`, `username`, `fullname?` |
 
-## 9) Build and run
+---
+
+## 14. Build & Run
+
+### Development
 
 ```bash
 cd frontend
 npm install
-npm start        # Development server at http://localhost:4200
+npm start        # ng serve → http://localhost:4200
 ```
 
-Other scripts:
+### Production Build
+
+```bash
+npm run build    # Output: dist/frontend/browser
+```
+
+### Other Scripts
 
 | Script | Purpose |
-|--------|---------|
-| `npm run build` | Production build (output: `dist/frontend/browser`) |
+|---|---|
 | `npm run watch` | Build in watch mode |
-| `npm run test` | Run unit tests (Karma + Jasmine) |
+| `npm run test` | Unit tests (Karma + Jasmine) |
+| `npm run cy:open` | Open Cypress E2E test runner |
+| `npm run cy:run` | Run Cypress E2E tests headlessly |
+| `npm run e2e` | Alias for `cy:run` |
 
-## 10) Deployment (Render)
+---
 
-Render static site deployment publishes `frontend/dist/frontend/browser`.
+## 15. Deployment (Render)
 
-Backend API base URL is configured via Angular environment files:
+`render.yaml` defines a static site for the frontend (`rootDir: frontend`, `runtime: static`).
 
-- **Dev:** `http://localhost:3000` (in `environment.ts`)
-- **Prod:** Render backend URL (in `environment.prod.ts`)
+- Build command: `npm install && npm run build`
+- Publish path: `dist/frontend/browser`
+- `_redirects` file in `public/` handles SPA routing for Render static hosting
 
-## 11) Dependencies
+### Environment Configuration
+
+| Environment | `apiUrl` |
+|---|---|
+| Development | `http://localhost:3000` (`environment.ts`) |
+| Production | `https://pc-store-manager.onrender.com` (`environment.prod.ts`) |
+
+---
+
+## 16. Dependencies
 
 ### Runtime
 
 | Package | Version | Purpose |
-|---------|---------|---------|
-| `@angular/*` | 21.x | Core framework |
+|---|---|---|
+| `@angular/*` | 21.x | Core framework, router, forms, HTTP |
 | `rxjs` | 7.8.x | Reactive programming |
-| `chart.js` | 4.x | Chart rendering |
+| `chart.js` | 4.x | Chart rendering engine |
 | `ng2-charts` | 8.x | Angular Chart.js wrapper |
-| `lucide-angular` | 0.563.x | Icon library |
+| `lucide-angular` | 0.563.x | Icon library (60+ icons) |
+| `socket.io-client` | 4.x | WebSocket client |
 | `zone.js` | 0.15.x | Change detection |
 
 ### Dev
 
 | Package | Version | Purpose |
-|---------|---------|---------|
-| `@angular/build` | 21.x | Build tooling |
+|---|---|---|
+| `@angular/build` | 21.x | Build tooling (esbuild-based) |
 | `@angular/cli` | 21.x | CLI |
 | `typescript` | 5.9.x | TypeScript compiler |
-| `tailwindcss` | 4.x | Utility-first CSS framework (used extensively in templates) |
-| `karma` / `jasmine` | — | Test runner / assertion library |
+| `tailwindcss` | 4.x | Utility-first CSS framework |
+| `cypress` | 15.x | E2E testing |
+| `karma` + `jasmine` | — | Unit test runner + assertion library |
 
-## 12) Extension guidelines
+---
+
+## 17. Extension Guidelines
 
 When adding features:
 
-1. Create a new standalone component under `src/app/…`
-2. Add route in `app.routes.ts` with the appropriate guard(s)
-3. Add API wrapper method in `auth.service.ts` with proper return type from `api.models.ts`
-4. Add i18n keys in **both** `en` and `hu` sections of `i18n.service.ts`
-5. Surface user feedback via `ToastService` or `ConfirmationModalComponent`
-6. Use shared interfaces from `api.models.ts` — avoid `any` types in component properties
-7. For printable views, add the `.no-print` class to elements that should be hidden when printing (buttons, controls, etc.).
-   The existing `@media print` rules in `src/styles.css` automatically hide `nav`, `button`, `select`, `input`, and `.fixed` elements.
-8. Custom dropdowns must include the `custom-dropdown` CSS class on their wrapper div so the `HostListener`-based click-outside logic can distinguish internal clicks from document clicks.
-9. When adding buyer-visible features, use `auth.isBuyer()` to gate UI. Buyers should not see admin/worker-specific controls (analytics, worker assignment, product CRUD). Use `StaffGuard` on routes that should block buyers.
+1. **Component:** Create a new standalone component under `src/app/`
+2. **Route:** Add route in `app.routes.ts` with appropriate guard(s)
+3. **Service:** Add API wrapper in the relevant service (or create a new one) with typed return from `api.models.ts`
+4. **i18n:** Add translation keys in **both** `en` and `hu` sections of `i18n.service.ts`
+5. **Toast:** Surface user feedback via `ToastService` (success, error, warning, info)
+6. **Confirmation:** Use `ConfirmationModalComponent` for destructive actions
+7. **Types:** Use shared interfaces from `api.models.ts` — avoid `any`
+8. **Print:** Add `.no-print` class to elements that should be hidden when printing. Existing `@media print` rules hide `nav`, `button`, `select`, `input`, and `.fixed` elements.
+9. **Custom dropdowns:** Use the `custom-dropdown` CSS class on wrapper divs for click-outside detection via `HostListener`.
+10. **Buyer gating:** Use `auth.isBuyer()` to gate UI elements. Use `StaffGuard` on routes that should block buyers.
+
+---
+
+## 18. Suggested Improvements
+
+### UX / Features
+- No client-side pagination for products, orders, or customers — all data loaded at once
+- No optimistic UI updates — all state refreshes wait for server response
+- No offline support or service worker
+- No form auto-save or draft state
+
+### Code Quality
+- `AuthResponse` supports three token field variants (`token`, `accessToken`, `access_token`) — consider normalizing
+- Some components may directly access `AuthService` for domain data instead of dedicated services — consider strict separation
+- No shared form validation utility — each component implements its own validation logic
+
+### Testing
+- E2E tests (Cypress) exist but coverage is unclear
+- Unit tests use Karma/Jasmine — consider migration to Jest for consistency with backend

@@ -21,6 +21,16 @@ export const createOrder = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
+  // Workers can only update orders assigned to them
+  if (req.user.role === 'worker') {
+    const assignedOrder = await run(
+      supabase.from('logs').select('id').eq('id', req.params.id).eq('assigned_to', req.user.id).limit(1)
+    ).catch(() => []);
+    if (!assignedOrder || assignedOrder.length === 0) {
+      return res.status(403).json({ error: t(req.lang, 'order.notAssignedToYou') });
+    }
+  }
+
   // Buyers can only cancel their own orders
   if (req.user.role === 'buyer') {
     if (req.body.status !== 'cancelled') {

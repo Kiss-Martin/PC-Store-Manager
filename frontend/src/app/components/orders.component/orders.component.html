@@ -159,7 +159,7 @@
         @if (!auth.isBuyer()) {
           <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.assignedTo' | t }}</th>
         }
-        @if (auth.isAdmin() || auth.isBuyer()) {
+        @if (auth.isAdmin() || auth.isBuyer() || auth.isWorker()) {
           <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.actions' | t }}</th>
         }
       </tr>
@@ -229,13 +229,22 @@
               }
             </td>
           }
+          @if (auth.isWorker()) {
+            <td class="py-4 px-5">
+              @if (canWorkerUpdateStatus(order)) {
+                <button class="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent border-none cursor-pointer transition-colors hover:bg-violet-600/10 text-violet-600" (click)="openStatusModal(order)" [title]="'orders.updateStatus' | t" aria-label="Update status">
+                  <lucide-icon name="pencil" size="16"></lucide-icon>
+                </button>
+              }
+            </td>
+          }
         </tr>
       }
 
       <!-- Empty state in table -->
       @if (filteredOrders.length === 0) {
         <tr>
-          <td [attr.colspan]="auth.isBuyer() ? 8 : (auth.isAdmin() ? 9 : 8)" class="py-16 text-center">
+          <td [attr.colspan]="auth.isBuyer() ? 8 : ((auth.isAdmin() || auth.isWorker()) ? 9 : 8)" class="py-16 text-center">
             <lucide-icon name="inbox" size="48" class="text-violet-600/20 mx-auto"></lucide-icon>
             <p class="text-sm mt-2" [style.color]="'var(--color-muted)'">{{ 'orders.empty.title' | t }}</p>
           </td>
@@ -317,7 +326,7 @@
 
         <div class="flex items-center justify-end gap-3 p-6 border-t" [style.border-color]="'var(--color-card-border)'">
           <button class="px-5 py-2.5 rounded-xl border-2 bg-transparent font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closeDetailsModal()">{{ 'orders.close' | t }}</button>
-          @if (auth.isAdmin() && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed') {
+          @if ((auth.isAdmin() || canWorkerUpdateStatus(selectedOrder)) && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed') {
             <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="openStatusModal(selectedOrder); closeDetailsModal()">
               {{ 'orders.updateStatus' | t }}
             </button>
