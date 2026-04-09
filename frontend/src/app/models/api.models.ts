@@ -22,7 +22,6 @@ export interface Item {
   price: number;
   amount: number;
   warranty?: number;
-  warranty_unit?: string;
   category_id: string;
   brand_id: string;
   date_added?: string;

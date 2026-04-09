@@ -250,6 +250,14 @@ export class OrdersComponent implements OnInit {
       this.orderError = this.i18n.t('orders.error.customerNameRequired');
       return;
     }
+    if (!this.newCustomer.email) {
+      this.orderError = this.i18n.t('orders.error.customerEmailRequired');
+      return;
+    }
+    if (!this.newCustomer.phone) {
+      this.orderError = this.i18n.t('orders.error.customerPhoneRequired');
+      return;
+    }
 
     this.isSavingCustomer = true;
     this.orderError = '';

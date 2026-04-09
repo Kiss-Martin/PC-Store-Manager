@@ -3,11 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../auth/auth.service';
 import { UserService } from '../../services/user.service';
+import { ApiService } from '../../services/api.service';
 import { ThemeService } from '../../theme.service';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
 import { User, Session } from '../../models/api.models';
+import { ToastService } from '../../shared/toast.service';
 
 @Component({
   selector: 'app-profile',
@@ -50,11 +52,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
   showDeleteConfirm = false;
   isDeletingAccount = false;
 
+  // Contact support modal
+  showContactModal = false;
+  contactMessage = '';
+  contactLoading = false;
+
   constructor(
     public auth: AuthService,
     private userService: UserService,
+    private api: ApiService,
     public theme: ThemeService,
     public i18n: I18nService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -303,6 +312,39 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (role === 'admin') return this.i18n.t('role.admin');
     if (role === 'worker') return this.i18n.t('role.worker');
     return this.i18n.t('role.user');
+  }
+
+  openContactModal(): void {
+    this.contactMessage = '';
+    this.contactLoading = false;
+    this.showContactModal = true;
+  }
+
+  closeContactModal(): void {
+    this.showContactModal = false;
+  }
+
+  submitContactSupport(): void {
+    if (!this.contactMessage.trim()) {
+      this.showError(this.i18n.t('profile.contactModal.errorEmpty'));
+      return;
+    }
+    this.contactLoading = true;
+    this.api.post<{ success: boolean; message?: string }>('/support/contact', {
+      name: this.user?.fullname || this.user?.username || '',
+      email: this.user?.email || '',
+      message: this.contactMessage.trim(),
+    }).subscribe({
+      next: () => {
+        this.contactLoading = false;
+        this.showContactModal = false;
+        this.showSuccess(this.i18n.t('profile.contactModal.success'));
+      },
+      error: () => {
+        this.contactLoading = false;
+        this.showError(this.i18n.t('profile.contactModal.error'));
+      },
+    });
   }
 
   ngOnDestroy(): void {

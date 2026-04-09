@@ -274,6 +274,10 @@
         <div class="flex items-center justify-between gap-4">
           <p class="text-sm m-0" [style.color]="'var(--color-muted)'">{{ 'profile.logoutInfo' | t }}</p>
           <div class="flex items-center gap-2">
+            <button class="inline-flex items-center gap-2 border border-violet-600/30 text-violet-600 bg-transparent px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-violet-600/10 whitespace-nowrap" (click)="openContactModal()">
+              <lucide-icon name="mail" [size]="18"></lucide-icon>
+              {{ 'profile.contactSupport' | t }}
+            </button>
             <button class="inline-flex items-center gap-2 bg-red-500 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:bg-red-600 hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap" (click)="logout()">
               <lucide-icon name="LogOut" [size]="18"></lucide-icon>
               {{ 'profile.logout' | t }}
@@ -415,6 +419,43 @@
               <lucide-icon name="Check" [size]="18"></lucide-icon>
               {{ 'profile.changePassword' | t }}
             }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Contact Support Modal -->
+@if (showContactModal) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-1000 p-4 animate-fade-in" (click)="closeContactModal()" role="dialog" aria-modal="true">
+    <div class="rounded-2xl p-7 w-full max-w-lg shadow-2xl animate-slide-up border" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="text-lg font-bold m-0 flex items-center gap-2" [style.color]="'var(--color-text)'">
+          <lucide-icon name="mail" size="22" class="text-violet-600"></lucide-icon>
+          {{ 'profile.contactModal.title' | t }}
+        </h2>
+        <button type="button" class="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center transition-colors hover:bg-black/5" [style.color]="'var(--color-muted)'" (click)="closeContactModal()" aria-label="Close">
+          <lucide-icon name="x" size="18"></lucide-icon>
+        </button>
+      </div>
+      <p class="text-sm mb-5" [style.color]="'var(--color-muted)'">{{ 'profile.contactModal.subtitle' | t }}</p>
+      <form (ngSubmit)="submitContactSupport()" class="flex flex-col gap-4">
+        <div class="flex flex-col">
+          <label for="supportMessage" class="text-sm font-medium mb-2" [style.color]="'var(--color-muted)'">{{ 'profile.contactModal.message' | t }}</label>
+          <textarea id="supportMessage" [(ngModel)]="contactMessage" name="contactMessage" rows="5" [placeholder]="'profile.contactModal.messagePlaceholder' | t"
+            class="px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 resize-y min-h-28"
+            [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" required></textarea>
+        </div>
+        <div class="flex gap-3 justify-end mt-1">
+          <button type="button" class="py-2 px-4 rounded-xl border bg-transparent cursor-pointer text-sm font-medium transition-colors hover:bg-black/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closeContactModal()" [disabled]="contactLoading">
+            {{ 'profile.cancel' | t }}
+          </button>
+          <button type="submit" class="inline-flex items-center gap-2 py-2 px-5 rounded-xl border-none bg-violet-600 text-white cursor-pointer text-sm font-semibold transition-colors hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed" [disabled]="contactLoading">
+            @if (contactLoading) {
+              <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            }
+            {{ contactLoading ? ('profile.contactModal.sending' | t) : ('profile.contactModal.send' | t) }}
           </button>
         </div>
       </form>

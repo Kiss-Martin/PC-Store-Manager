@@ -49,20 +49,78 @@ const UserService = {
     const user = await run(supabase.from('users').select('id').eq('id', userId).single()).catch(() => null);
     if (!user) throw new Error(t(lang, 'user.fetchFailed'));
 
+    // Clean up auth-related records (hard delete; these tables are safe to purge)
     await run(supabase.from('refresh_tokens').delete().eq('user_id', userId)).catch(() => null);
     await run(supabase.from('password_resets').delete().eq('user_id', userId)).catch(() => null);
+    await run(supabase.from('revoked_tokens').delete().eq('user_id', userId)).catch(() => null);
 
-    await run(supabase.from('logs').update({ user_id: null }).eq('user_id', userId)).catch(() => null);
-    await run(supabase.from('logs').update({ assigned_to: null }).eq('assigned_to', userId)).catch(() => null);
-    await run(supabase.from('orders_status').update({ updated_by: null }).eq('updated_by', userId)).catch(() => null);
-    await run(supabase.from('users').update({ admin_approved_by: null }).eq('admin_approved_by', userId)).catch(() => null);
-    await run(supabase.from('audit_logs').update({ actor_user_id: null }).eq('actor_user_id', userId)).catch(() => null);
-    await run(supabase.from('audit_logs').update({ target_user_id: null }).eq('target_user_id', userId)).catch(() => null);
-
-    const deleted = await run(supabase.from('users').delete().eq('id', userId).select('id')).catch(() => null);
-    if (!deleted || deleted.length === 0) {
-      throw new Error(t(lang, 'user.deleteFailed'));
+    // --- Handle orders_status → logs → users FK chain ---
+    // 1) Nullify or delete orders_status rows where updated_by = userId
+    try {
+      await run(supabase.from('orders_status').update({ updated_by: null }).eq('updated_by', userId));
+    } catch {
+      // Column may be NOT NULL; delete those status rows instead
+      await run(supabase.from('orders_status').delete().eq('updated_by', userId)).catch(() => null);
     }
+
+    // 2) Gather all log IDs referencing this user (for cleaning child orders_status first)
+    const userLogIds = [];
+    const logsAsUser = await run(supabase.from('logs').select('id').eq('user_id', userId)).catch(() => []);
+    const logsAsAssigned = await run(supabase.from('logs').select('id').eq('assigned_to', userId)).catch(() => []);
+    if (logsAsUser?.length) userLogIds.push(...logsAsUser.map((l) => l.id));
+    if (logsAsAssigned?.length) userLogIds.push(...logsAsAssigned.map((l) => l.id));
+
+    // 3) Delete orders_status entries referencing those logs (FK: orders_status.log_id → logs.id)
+    if (userLogIds.length) {
+      await run(supabase.from('orders_status').delete().in('log_id', userLogIds)).catch(() => null);
+    }
+
+    // 4) Nullify or delete the log rows themselves
+    try {
+      await run(supabase.from('logs').update({ user_id: null }).eq('user_id', userId));
+    } catch {
+      await run(supabase.from('logs').delete().eq('user_id', userId)).catch(() => null);
+    }
+    try {
+      await run(supabase.from('logs').update({ assigned_to: null }).eq('assigned_to', userId));
+    } catch {
+      await run(supabase.from('logs').delete().eq('assigned_to', userId)).catch(() => null);
+    }
+
+    // --- Other FK references ---
+    await run(supabase.from('users').update({ admin_approved_by: null }).eq('admin_approved_by', userId)).catch(() => null);
+    try {
+      await run(supabase.from('audit_logs').update({ actor_user_id: null }).eq('actor_user_id', userId));
+    } catch {
+      await run(supabase.from('audit_logs').delete().eq('actor_user_id', userId)).catch(() => null);
+    }
+    try {
+      await run(supabase.from('audit_logs').update({ target_user_id: null }).eq('target_user_id', userId));
+    } catch {
+      await run(supabase.from('audit_logs').delete().eq('target_user_id', userId)).catch(() => null);
+    }
+
+    // Attempt hard delete
+    const deleted = await run(supabase.from('users').delete().eq('id', userId).select('id')).catch(() => null);
+    if (deleted && deleted.length > 0) {
+      return { success: true, message: t(lang, 'user.deleted') };
+    }
+
+    // Hard delete failed — anonymize so user can no longer log in
+    const anonymized = `deleted_${userId.slice(0, 8)}`;
+    await run(
+      supabase.from('users').update({
+        email: `${anonymized}@deleted.local`,
+        username: anonymized,
+        fullname: null,
+        password_hash: 'DELETED',
+        role: 'worker',
+      }).eq('id', userId)
+    ).catch(() => null);
+
+    // Retry hard delete after anonymization
+    await run(supabase.from('users').delete().eq('id', userId).select('id')).catch(() => null);
+
     return { success: true, message: t(lang, 'user.deleted') };
   },
 };

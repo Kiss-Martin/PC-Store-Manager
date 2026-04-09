@@ -145,14 +145,36 @@
 
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.brand' | t }}</label>
-            <select aria-label="brand" [(ngModel)]="newProduct.brand_id"
-              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
-              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
-              <option value="">{{ 'products.form.selectBrand' | t }}</option>
-              @for (brand of brands; track brand.id) {
-                <option [value]="brand.id">{{ brand.name }}</option>
-              }
-            </select>
+            @if (!showNewBrandInput) {
+              <div class="flex gap-2">
+                <select aria-label="brand" [(ngModel)]="newProduct.brand_id"
+                  class="flex-1 px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
+                  [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+                  <option value="">{{ 'products.form.selectBrand' | t }}</option>
+                  @for (brand of brands; track brand.id) {
+                    <option [value]="brand.id">{{ brand.name }}</option>
+                  }
+                </select>
+                <button type="button" class="w-11 h-11 rounded-lg flex items-center justify-center border-2 bg-transparent cursor-pointer transition-colors hover:bg-violet-600/10 text-violet-600" [style.border-color]="'var(--color-card-border)'" (click)="toggleNewBrand()" [title]="'products.form.addBrand' | t">
+                  <lucide-icon name="plus" size="18"></lucide-icon>
+                </button>
+              </div>
+            } @else {
+              <div class="flex flex-col gap-2 p-3 rounded-lg border" [style.border-color]="'var(--color-card-border)'">
+                <input type="text" [(ngModel)]="newBrandName" [placeholder]="'products.form.newBrandPlaceholder' | t"
+                  class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+                  [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+                <div class="flex items-center gap-2">
+                  <button type="button" class="px-3 py-1.5 rounded-lg border bg-transparent text-sm cursor-pointer transition-colors" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleNewBrand()">{{ 'products.cancel' | t }}</button>
+                  <button type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-600 text-white border-none text-sm cursor-pointer transition-colors hover:bg-violet-700 disabled:opacity-50" (click)="createBrand()" [disabled]="isSavingBrand || !newBrandName.trim()">
+                    @if (isSavingBrand) {
+                      <span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    }
+                    {{ 'products.create' | t }}
+                  </button>
+                </div>
+              </div>
+            }
             <small class="text-xs" [style.color]="'var(--color-muted)'">{{ 'products.form.selectedId' | t:{ value: (newProduct.brand_id || ('products.form.none' | t)) } }}</small>
           </div>
 
@@ -182,16 +204,9 @@
             <label for="productWarranty" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.warranty' | t }}</label>
             <div class="flex gap-2">
               <input type="number" id="productWarranty" [(ngModel)]="newProduct.warranty" min="0" step="1"
-                class="flex-1 px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+                class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
                 [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
-                placeholder="0">
-              <select [(ngModel)]="newProduct.warranty_unit" aria-label="Warranty unit"
-                class="px-3 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
-                [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
-                @for (unit of warrantyUnits; track unit.value) {
-                  <option [value]="unit.value">{{ unit.label }}</option>
-                }
-              </select>
+                [placeholder]="'products.form.warrantyPlaceholder' | t">
             </div>
           </div>
         </div>

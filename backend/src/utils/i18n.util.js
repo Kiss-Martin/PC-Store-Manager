@@ -39,6 +39,13 @@ const dictionaries = {
     'order.notFound': 'Order not found',
 
     'customer.nameRequired': 'Customer name is required',
+    'customer.emailRequired': 'Customer email is required',
+    'customer.phoneRequired': 'Customer phone is required',
+
+    'item.deleteActiveOrders': 'Cannot delete this product because it has active (pending or processing) orders. Complete or cancel them first.',
+    'item.deleteFkError': 'Cannot delete this product because it is still referenced by other records.',
+    'brand.invalidName': 'Brand name is invalid. Must start with a letter and contain no quantity-like values.',
+    'brand.duplicate': 'A brand with this name already exists.',
 
     'validation.email': 'Please enter a valid email address',
     'validation.usernameMin': 'Username must be at least 3 characters',
@@ -163,6 +170,13 @@ const dictionaries = {
     'order.notFound': 'A rendelés nem található',
 
     'customer.nameRequired': 'A vásárló neve kötelező',
+    'customer.emailRequired': 'A vásárló e-mail címe kötelező',
+    'customer.phoneRequired': 'A vásárló telefonszáma kötelező',
+
+    'item.deleteActiveOrders': 'A termék nem törölhető, mert aktív (függőben lévő vagy feldolgozás alatt álló) rendelései vannak. Előbb teljesítsd vagy töröld őket.',
+    'item.deleteFkError': 'A termék nem törölhető, mert más rekordok hivatkoznak rá.',
+    'brand.invalidName': 'A márkanév érvénytelen. Betűvel kell kezdődnie, és nem tartalmazhat mennyiség-szerű értékeket.',
+    'brand.duplicate': 'Már létezik ilyen nevű márka.',
 
     'validation.email': 'Adj meg egy érvényes e-mail címet',
     'validation.usernameMin': 'A felhasználónév legalább 3 karakter legyen',

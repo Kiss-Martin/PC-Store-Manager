@@ -10,6 +10,8 @@ import {
   createOrderSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  createCustomerSchema,
+  createBrandSchema,
 } from '../src/validators.js';
 
 describe('registerSchema', () => {
@@ -242,39 +244,11 @@ describe('createItemSchema', () => {
       amount: 10,
       model: 'Founders Edition',
       warranty: 36,
-      warranty_unit: 'months',
     });
     expect(result.success).toBe(true);
     expect(result.data.amount).toBe(10);
     expect(result.data.model).toBe('Founders Edition');
     expect(result.data.warranty).toBe(36);
-    expect(result.data.warranty_unit).toBe('months');
-  });
-
-  it('should accept all warranty_unit enum values', () => {
-    for (const unit of ['days', 'weeks', 'months', 'years']) {
-      const result = createItemSchema.safeParse({
-        name: 'GPU',
-        price: 100,
-        category_id: 'cat-uuid-1',
-        brand_id: 'brand-uuid-1',
-        warranty: 3,
-        warranty_unit: unit,
-      });
-      expect(result.success).toBe(true);
-    }
-  });
-
-  it('should reject invalid warranty_unit', () => {
-    const result = createItemSchema.safeParse({
-      name: 'GPU',
-      price: 100,
-      category_id: 'cat-uuid-1',
-      brand_id: 'brand-uuid-1',
-      warranty: 3,
-      warranty_unit: 'centuries',
-    });
-    expect(result.success).toBe(false);
   });
 
   it('should reject string warranty (must be number)', () => {
@@ -499,10 +473,9 @@ describe('updateItemSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should accept warranty number with unit', () => {
+  it('should accept warranty number', () => {
     const result = updateItemSchema.safeParse({
       warranty: 24,
-      warranty_unit: 'months',
     });
     expect(result.success).toBe(true);
   });
@@ -520,17 +493,109 @@ describe('updateItemSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should reject invalid warranty_unit', () => {
-    const result = updateItemSchema.safeParse({
-      warranty_unit: 'decades',
-    });
-    expect(result.success).toBe(false);
-  });
-
   it('should reject string warranty', () => {
     const result = updateItemSchema.safeParse({
       warranty: '2 years',
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('createCustomerSchema', () => {
+  it('should accept valid customer data', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '+1234567890',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject missing name', () => {
+    const result = createCustomerSchema.safeParse({
+      email: 'john@example.com',
+      phone: '+1234567890',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject missing email', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      phone: '+1234567890',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject missing phone', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      email: 'john@example.com',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid email', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      email: 'not-an-email',
+      phone: '+1234567890',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject empty phone string', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject phone longer than 30 chars', () => {
+    const result = createCustomerSchema.safeParse({
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '1'.repeat(31),
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('createBrandSchema', () => {
+  it('should accept valid brand name', () => {
+    const result = createBrandSchema.safeParse({ name: 'Gigabyte' });
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept brand name with accented characters', () => {
+    const result = createBrandSchema.safeParse({ name: 'Übertech' });
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject empty brand name', () => {
+    const result = createBrandSchema.safeParse({ name: '' });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject brand name starting with a digit', () => {
+    const result = createBrandSchema.safeParse({ name: '2x Gigabyte' });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject quantity-prefixed brand name', () => {
+    const result = createBrandSchema.safeParse({ name: '3X Intel' });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject brand name longer than 100 chars', () => {
+    const result = createBrandSchema.safeParse({ name: 'A'.repeat(101) });
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept brand name at max length', () => {
+    const result = createBrandSchema.safeParse({ name: 'A'.repeat(100) });
+    expect(result.success).toBe(true);
   });
 });

@@ -20,7 +20,6 @@ interface Product {
   specifications?: string;
   specs?: string;
   warranty?: number;
-  warranty_unit?: string;
   brand_id?: string;
   category_id?: string;
   brands?: { name: string };
@@ -49,6 +48,11 @@ export class ProductsComponent implements OnInit {
   productToDelete: Product | null = null;
   private openedFromDashboard = false;
 
+  // Brand creation inline
+  showNewBrandInput = false;
+  newBrandName = '';
+  isSavingBrand = false;
+
   newProduct = {
     name: '',
     model: '',
@@ -56,7 +60,6 @@ export class ProductsComponent implements OnInit {
     price: 0,
     amount: 0,
     warranty: 0,
-    warranty_unit: 'months',
     brand_id: '',
     category_id: '',
   };
@@ -153,7 +156,6 @@ export class ProductsComponent implements OnInit {
       model: product.model || '',
       specifications: product.specifications || product.specs || '',
       warranty: product.warranty || 0,
-      warranty_unit: product.warranty_unit || 'months',
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',
     };
@@ -177,7 +179,6 @@ export class ProductsComponent implements OnInit {
       model: '',
       specifications: '',
       warranty: 0,
-      warranty_unit: 'months',
       brand_id: '',
       category_id: '',
       price: 0,
@@ -256,16 +257,31 @@ export class ProductsComponent implements OnInit {
 
   getWarrantyDisplay(product: Product): string {
     if (!product.warranty) return this.i18n.t('products.na');
-    const unit = product.warranty_unit || 'months';
-    return `${product.warranty} ${this.i18n.t('products.warrantyUnit.' + unit)}`;
+    return `${product.warranty} ${this.i18n.t('products.warrantyUnit.months')}`;
   }
 
-  get warrantyUnits() {
-    return [
-      { value: 'days', label: this.i18n.t('products.warrantyUnit.days') },
-      { value: 'weeks', label: this.i18n.t('products.warrantyUnit.weeks') },
-      { value: 'months', label: this.i18n.t('products.warrantyUnit.months') },
-      { value: 'years', label: this.i18n.t('products.warrantyUnit.years') },
-    ];
+  toggleNewBrand() {
+    this.showNewBrandInput = !this.showNewBrandInput;
+    this.newBrandName = '';
+  }
+
+  createBrand() {
+    const name = this.newBrandName.trim();
+    if (!name) return;
+    this.isSavingBrand = true;
+    this.itemService.createBrand(name).subscribe({
+      next: (res) => {
+        this.brands.push(res.brand);
+        this.newProduct.brand_id = res.brand.id;
+        this.showNewBrandInput = false;
+        this.newBrandName = '';
+        this.isSavingBrand = false;
+        this.toast.show(this.i18n.t('products.brandCreated'), { type: 'success', timeout: 3000 });
+      },
+      error: (err) => {
+        this.isSavingBrand = false;
+        this.toast.show(err.error?.error || this.i18n.t('products.brandCreateError'), { type: 'error', timeout: 4000 });
+      },
+    });
   }
 }

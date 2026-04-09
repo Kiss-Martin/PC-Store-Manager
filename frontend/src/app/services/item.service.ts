@@ -36,4 +36,8 @@ export class ItemService {
   getBrands(): Observable<{ brands: Brand[] }> {
     return this.api.get<{ brands: Brand[] }>('/items/brands');
   }
+
+  createBrand(name: string): Observable<{ success: boolean; brand: Brand }> {
+    return this.api.post<{ success: boolean; brand: Brand }>('/items/brands', { name });
+  }
 }

@@ -474,7 +474,7 @@ The `SocketService` connects to the backend Socket.io server:
 |---|---|
 | `User` | User profile: `id`, `email`, `username`, `fullname?`, `role` |
 | `AuthResponse` | Login/register response. Supports `token`, `accessToken`, and `access_token` variants. |
-| `Item` | Product: `id`, `name`, `model?`, `price`, `amount`, `warranty?` (number), `warranty_unit?` (`'days'`\|`'weeks'`\|`'months'`\|`'years'`), `category_id`, `brand_id`, `category?`, `brand?` |
+| `Item` | Product: `id`, `name`, `model?`, `price`, `amount`, `warranty?` (number, months), `category_id`, `brand_id`, `category?`, `brand?` |
 | `Category` | `id`, `name` |
 | `Brand` | `id`, `name` |
 | `Customer` | `id`, `name`, `email?`, `phone?` |

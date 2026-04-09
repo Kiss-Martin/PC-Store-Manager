@@ -466,7 +466,7 @@ Request payloads are validated using **Zod** schemas defined in `validators.js`.
 | `registerSchema` | `email` (valid email), `username` (3–32, `[a-zA-Z0-9_.-]`), `password` (strong), `fullname?` (max 128), `role?` (`admin`\|`worker`) | Strong password: ≥8 chars, uppercase, lowercase, digit, special char |
 | `loginSchema` | `email?`, `username?`, `password` (min 1), `rememberMe?` | Requires either `email` or `username` (Zod refine) |
 | `changePasswordSchema` | `currentPassword` (min 1), `newPassword` (strong) | |
-| `createItemSchema` | `name` (min 1), `price` (≥0), `category_id`, `brand_id`, `amount?` (int ≥0), `model?`, `warranty?` (int ≥0), `warranty_unit?` (`days`\|`weeks`\|`months`\|`years`) | Warranty is a numeric value with a separate unit field (defaults to `months`) |
+| `createItemSchema` | `name` (min 1), `price` (≥0), `category_id`, `brand_id`, `amount?` (int ≥0), `model?`, `warranty?` (int ≥0) | Warranty is a numeric value in months |
 | `updateItemSchema` | Same as create but all optional; `category_id` and `brand_id` nullable | |
 | `createOrderSchema` | `item_id`, `customer_id?`, `quantity` (int, positive), `status?` | |
 | `forgotPasswordSchema` | `email` (valid email) | |
@@ -482,7 +482,7 @@ Validation errors are localized via `localizeValidationErrors()` which maps Zod 
 | Table | Key Columns | Purpose |
 |---|---|---|
 | `users` | `id`, `email`, `username`, `fullname`, `password_hash`, `role`, `admin_approved`, `admin_approved_by`, `admin_approved_at` | User accounts |
-| `items` | `id`, `name`, `model`, `price`, `amount`, `warranty` (integer), `warranty_unit` (`days`/`weeks`/`months`/`years`), `category_id` (FK → categories), `brand_id` (FK → brands), `date_added` | Product inventory |
+| `items` | `id`, `name`, `model`, `price`, `amount`, `warranty` (integer, months), `category_id` (FK → categories), `brand_id` (FK → brands), `date_added` | Product inventory |
 | `categories` | `id`, `name` | Product categories (read-only via API) |
 | `brands` | `id`, `name` | Product brands (read-only via API) |
 | `customers` | `id`, `name`, `email`, `phone` | Customer records |

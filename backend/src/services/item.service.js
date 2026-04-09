@@ -12,7 +12,7 @@ const ItemService = {
     }));
   },
 
-  async createItem({ name, model, price, amount, warranty, warranty_unit, category_id, brand_id }, userId) {
+  async createItem({ name, model, price, amount, warranty, category_id, brand_id }, userId) {
     const data = await run(
       supabase.from('items').insert({
         name,
@@ -20,7 +20,6 @@ const ItemService = {
         price,
         amount,
         warranty,
-        warranty_unit: warranty_unit || 'months',
         category_id,
         brand_id,
         date_added: new Date().toISOString().split('T')[0],
@@ -41,7 +40,7 @@ const ItemService = {
 
   async updateItem(id, updates) {
     // Only pass known columns to Supabase; convert empty-string FKs to null
-    const allowed = ['name', 'model', 'price', 'amount', 'warranty', 'warranty_unit', 'brand_id', 'category_id'];
+    const allowed = ['name', 'model', 'price', 'amount', 'warranty', 'brand_id', 'category_id'];
     const clean = {};
     for (const key of allowed) {
       if (key in updates) {
@@ -59,8 +58,40 @@ const ItemService = {
   },
 
   async deleteItem(id) {
-    // Nullify logs referencing this item to avoid foreign key constraint violation
-    await run(supabase.from('logs').update({ item_id: null }).eq('item_id', id)).catch(() => null);
+    // Find all logs that reference this item
+    const itemLogs = await run(
+      supabase.from('logs').select('id').eq('item_id', id)
+    ).catch(() => []);
+
+    if (itemLogs && itemLogs.length > 0) {
+      const logIds = itemLogs.map((l) => l.id);
+
+      // Check if any of those orders have an active status (pending/processing)
+      const activeStatuses = await run(
+        supabase.from('orders_status')
+          .select('log_id,status')
+          .in('log_id', logIds)
+          .in('status', ['pending', 'processing'])
+      ).catch(() => []);
+
+      if (activeStatuses && activeStatuses.length > 0) {
+        const err = new Error('ACTIVE_ORDERS');
+        err.code = 'ACTIVE_ORDERS';
+        throw err;
+      }
+
+      // Delete orders_status entries referencing these logs first (FK: orders_status.log_id → logs.id)
+      await run(supabase.from('orders_status').delete().in('log_id', logIds)).catch(() => null);
+    }
+
+    // Nullify item_id in logs; if that fails (NOT NULL constraint), delete the log rows
+    try {
+      await run(supabase.from('logs').update({ item_id: null }).eq('item_id', id));
+    } catch {
+      // orders_status rows already cleaned above, safe to delete logs
+      await run(supabase.from('logs').delete().eq('item_id', id)).catch(() => null);
+    }
+
     await run(supabase.from('items').delete().eq('id', id));
   },
 
@@ -72,6 +103,22 @@ const ItemService = {
   async getBrands() {
     const data = await run(supabase.from('brands').select('id,name').order('name', { ascending: true }));
     return data || [];
+  },
+
+  async createBrand(name) {
+    // Check for duplicates (case-insensitive)
+    const existing = await run(
+      supabase.from('brands').select('id,name').ilike('name', name.trim())
+    ).catch(() => []);
+    if (existing && existing.length > 0) {
+      const err = new Error('BRAND_DUPLICATE');
+      err.code = 'BRAND_DUPLICATE';
+      throw err;
+    }
+    const data = await run(
+      supabase.from('brands').insert({ name: name.trim() }).select().single()
+    );
+    return data;
   },
 };
 

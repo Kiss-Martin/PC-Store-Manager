@@ -40,7 +40,6 @@ export const createItemSchema = z.object({
   amount: z.number().int().nonnegative().optional(),
   model: z.string().optional(),
   warranty: z.number().int().nonnegative().optional(),
-  warranty_unit: z.enum(['days', 'weeks', 'months', 'years']).optional(),
 });
 
 export const updateItemSchema = z.object({
@@ -51,7 +50,6 @@ export const updateItemSchema = z.object({
   amount: z.number().int().nonnegative().optional(),
   model: z.string().optional(),
   warranty: z.number().int().nonnegative().optional(),
-  warranty_unit: z.enum(['days', 'weeks', 'months', 'years']).optional(),
 });
 
 export const createOrderSchema = z.object({
@@ -72,6 +70,15 @@ export const resetPasswordSchema = z.object({
 
 export const createCustomerSchema = z.object({
   name: z.string().min(1),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().max(30).optional().or(z.literal('')),
+  email: z.string().email(),
+  phone: z.string().min(1).max(30),
+});
+
+// Brand name: must start with a letter, no quantity-like prefixes (e.g. "2x"), 1-100 chars
+export const createBrandSchema = z.object({
+  name: z.string()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Za-zÀ-ÿ]/, 'brandStartsWithLetter')
+    .refine((v) => !/^\d+[xX]\s/.test(v), { message: 'brandNoQuantityPrefix' }),
 });

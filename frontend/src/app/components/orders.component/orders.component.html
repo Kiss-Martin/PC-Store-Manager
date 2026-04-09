@@ -523,6 +523,7 @@
                   class="w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:border-violet-600"
                   [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
                   [placeholder]="'orders.customerEmailPlaceholder' | t"
+                  required
                 />
                 <input
                   type="tel"
@@ -532,6 +533,7 @@
                   class="w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:border-violet-600"
                   [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
                   [placeholder]="'orders.customerPhonePlaceholder' | t"
+                  required
                 />
                 <div class="flex items-center gap-3 mt-1">
                   <button type="button" class="px-4 py-2 rounded-lg border-2 bg-transparent text-sm font-medium cursor-pointer transition-colors" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleNewCustomerForm()">
