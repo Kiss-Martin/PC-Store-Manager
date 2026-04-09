@@ -32,14 +32,14 @@ const AnalyticsService = {
       const allCustomers = await run(supabase.from('customers').select('id'));
 
       // Get sales logs (stock_out actions) for the period
-      const salesLogs = await run(
-        supabase
+      let salesQuery = supabase
           .from('logs')
           .select('id, item_id, action, timestamp, details, items(name,price)')
           .eq('action', 'stock_out')
           .gte('timestamp', startDate.toISOString())
-          .order('timestamp', { ascending: false })
-      );
+          .order('timestamp', { ascending: false });
+      if (user.role === 'worker') salesQuery = salesQuery.eq('assigned_to', user.id);
+      const salesLogs = await run(salesQuery);
 
       // --- Revenue, Orders, Sales by Product/Day ---
       let totalRevenue = 0;
@@ -166,14 +166,14 @@ const AnalyticsService = {
       // --- Revenue Growth (compare to previous period) ---
       const previousStartDate = new Date(startDate);
       previousStartDate.setDate(previousStartDate.getDate() - daysAgo);
-      const previousSalesLogs = await run(
-        supabase
+      let prevQuery = supabase
           .from('logs')
           .select('id, details, items(price)')
           .eq('action', 'stock_out')
           .gte('timestamp', previousStartDate.toISOString())
-          .lt('timestamp', startDate.toISOString())
-      );
+          .lt('timestamp', startDate.toISOString());
+      if (user.role === 'worker') prevQuery = prevQuery.eq('assigned_to', user.id);
+      const previousSalesLogs = await run(prevQuery);
       let previousRevenue = 0;
       if (previousSalesLogs) {
         previousSalesLogs.forEach((log) => {

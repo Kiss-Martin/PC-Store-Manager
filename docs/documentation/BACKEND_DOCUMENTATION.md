@@ -1,6 +1,6 @@
 # Backend Documentation
 
-Last updated: March 31, 2026
+Last updated: April 9, 2026
 
 ---
 
@@ -203,7 +203,7 @@ Three roles: **`admin`**, **`worker`**, **`buyer`**
 ### Worker
 
 - Auto-approved on registration
-- Can view items, orders (filtered by `assigned_to`), and analytics
+- Can view items, orders (filtered by `assigned_to`), and analytics (scoped to own assigned orders)
 - Cannot create/update/delete items or manage admin features
 - Receives real-time WebSocket notifications when assigned an order
 - Receives email notifications when a new order is placed
@@ -287,7 +287,7 @@ Base URL (local): `http://localhost:3000`
 | `GET` | `/items/brands` | auth | List all brands. |
 | `POST` | `/items` | admin | Create item. Logs `stock_in` action. |
 | `PATCH` | `/items/:id` | admin | Update item fields. |
-| `DELETE` | `/items/:id` | admin | Delete item. Nullifies referencing log entries. |
+| `DELETE` | `/items/:id` | admin | Delete item. Nullifies referencing log entries. Returns **409** with a user-friendly message if the item is still referenced by foreign key constraints (e.g., existing orders). |
 
 ### Customers
 
@@ -311,7 +311,7 @@ Base URL (local): `http://localhost:3000`
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/analytics` | auth | Analytics summary. Query: `?period=7days\|30days\|90days` |
+| `GET` | `/analytics` | auth | Analytics summary. Query: `?period=7days\|30days\|90days`. **Workers** see only analytics for orders assigned to them. Admins see global analytics. |
 | `GET` | `/analytics/export` | admin | Export analytics report. Query: `?period=&format=csv\|pdf` |
 | `GET` | `/dashboard` | auth | Dashboard: stats + recent activity (7-day period). |
 
@@ -466,7 +466,7 @@ Request payloads are validated using **Zod** schemas defined in `validators.js`.
 | `registerSchema` | `email` (valid email), `username` (3–32, `[a-zA-Z0-9_.-]`), `password` (strong), `fullname?` (max 128), `role?` (`admin`\|`worker`) | Strong password: ≥8 chars, uppercase, lowercase, digit, special char |
 | `loginSchema` | `email?`, `username?`, `password` (min 1), `rememberMe?` | Requires either `email` or `username` (Zod refine) |
 | `changePasswordSchema` | `currentPassword` (min 1), `newPassword` (strong) | |
-| `createItemSchema` | `name` (min 1), `price` (≥0), `category_id`, `brand_id`, `amount?` (int ≥0), `model?`, `warranty?` | |
+| `createItemSchema` | `name` (min 1), `price` (≥0), `category_id`, `brand_id`, `amount?` (int ≥0), `model?`, `warranty?` (int ≥0), `warranty_unit?` (`days`\|`weeks`\|`months`\|`years`) | Warranty is a numeric value with a separate unit field (defaults to `months`) |
 | `updateItemSchema` | Same as create but all optional; `category_id` and `brand_id` nullable | |
 | `createOrderSchema` | `item_id`, `customer_id?`, `quantity` (int, positive), `status?` | |
 | `forgotPasswordSchema` | `email` (valid email) | |
@@ -482,7 +482,7 @@ Validation errors are localized via `localizeValidationErrors()` which maps Zod 
 | Table | Key Columns | Purpose |
 |---|---|---|
 | `users` | `id`, `email`, `username`, `fullname`, `password_hash`, `role`, `admin_approved`, `admin_approved_by`, `admin_approved_at` | User accounts |
-| `items` | `id`, `name`, `model`, `price`, `amount`, `warranty`, `category_id` (FK → categories), `brand_id` (FK → brands), `date_added` | Product inventory |
+| `items` | `id`, `name`, `model`, `price`, `amount`, `warranty` (integer), `warranty_unit` (`days`/`weeks`/`months`/`years`), `category_id` (FK → categories), `brand_id` (FK → brands), `date_added` | Product inventory |
 | `categories` | `id`, `name` | Product categories (read-only via API) |
 | `brands` | `id`, `name` | Product brands (read-only via API) |
 | `customers` | `id`, `name`, `email`, `phone` | Customer records |

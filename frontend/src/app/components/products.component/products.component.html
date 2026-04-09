@@ -68,7 +68,7 @@
                   {{ product.amount }}
                 </span>
               </td>
-              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ product.warranty || ('products.na' | t) }}</td>
+              <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ getWarrantyDisplay(product) }}</td>
               @if (auth.isAdmin()) {
                 <td class="py-4 px-5">
                   <div class="flex items-center gap-2">
@@ -180,9 +180,19 @@
 
           <div class="flex flex-col gap-2">
             <label for="productWarranty" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'products.form.warranty' | t }}</label>
-            <input type="text" id="productWarranty" [(ngModel)]="newProduct.warranty" [placeholder]="'products.form.warrantyPlaceholder' | t"
-              class="w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
-              [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+            <div class="flex gap-2">
+              <input type="number" id="productWarranty" [(ngModel)]="newProduct.warranty" min="0" step="1"
+                class="flex-1 px-4 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600"
+                [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'"
+                placeholder="0">
+              <select [(ngModel)]="newProduct.warranty_unit" aria-label="Warranty unit"
+                class="px-3 py-3 border rounded-lg text-sm transition-all duration-200 focus:outline-none focus:border-violet-600 appearance-none"
+                [style.background]="'var(--color-card)'" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'">
+                @for (unit of warrantyUnits; track unit.value) {
+                  <option [value]="unit.value">{{ unit.label }}</option>
+                }
+              </select>
+            </div>
           </div>
         </div>
 

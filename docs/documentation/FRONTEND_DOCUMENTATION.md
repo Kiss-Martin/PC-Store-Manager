@@ -1,6 +1,6 @@
 # Frontend Documentation
 
-Last updated: March 31, 2026
+Last updated: April 9, 2026
 
 ---
 
@@ -106,8 +106,10 @@ frontend/
    - Zone.js change detection with event coalescing
 3. `App` component (`app.ts`):
    - Controls navbar visibility (hidden on auth pages)
+   - **PC Store logo** is clickable and navigates to `/dashboard`
+   - **Active navigation highlighting** — current page link is highlighted with violet color
    - Mobile responsive hamburger menu
-   - Theme toggle (dark/light) and language toggle (EN/HU)
+   - Theme toggle (dark/light) and **language toggle** (EN/HU) — styled for both light and dark mode visibility
    - Profile link and logout button
    - WebSocket connection lifecycle via `effect()` — connects on login, disconnects on logout
    - Listens for `order:assigned` WebSocket events and shows toast notifications
@@ -285,6 +287,7 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 ### Login (`auth/login/`)
 
 - Email/password form with "Stay signed in" toggle
+- **Password visibility toggle** (eye/eye-off icon button)
 - Calls `AuthService.login()` on submit
 - Support contact modal (name, email, message → `POST /support/contact`)
 - Theme toggle available on login page
@@ -294,10 +297,11 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 ### Register (`auth/register/`)
 
 - 4-step wizard:
-  1. **Role selection** — Admin, Worker, or Buyer
+  1. **Role selection** — Admin, Worker (hard-hat icon), or Buyer
   2. **Credentials** — Username (3+ chars, alphanumeric + `_.-`) and password (strong)
   3. **Personal info** — Full name and email
   4. **Review & submit** — Confirmation of all details
+- **Password visibility toggle** on password and confirm password fields
 - Client-side validation at each step with localized error messages
 - On admin registration: displays "awaiting approval" message if `requiresApproval` is true
 - Auto-login for non-admin registrations
@@ -311,6 +315,7 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 
 - Reads `token` from URL query parameter
 - New password + confirmation with strong password validation
+- **Password visibility toggle** on both password fields
 - Calls `AuthService.resetPassword()` on submit
 
 ### Dashboard (`dashboard/`)
@@ -318,6 +323,7 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 - Loads stats from `GET /dashboard`: total products, total sales, active orders, customers
 - Recent activity feed from backend
 - Quick action buttons: New Order, Add Product, View Orders, Reports, Settings
+- Quick actions open their respective pages; cancelling returns the user back to the dashboard
 - Business report download modal: period selector (7/30/90 days), format (CSV/PDF)
 - Print button for browser print dialog
 - **Buyer view:** "Add Product", "Analytics", report generation, and print are hidden. "New Order" shows as "Place Order".
@@ -328,7 +334,8 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 - Category and brand dropdowns loaded from API
 - Client-side search/filter across product name, model, brand
 - Modal for create/edit with validation
-- Confirmation modal for deletes
+- **Warranty field**: numeric value (integer) with separate unit selector dropdown (days, weeks, months, years). Display combines number and localized unit (e.g., "36 months" / "36 hónap")
+- Confirmation modal for deletes; returns **409** error with a user-friendly message if FK constraints prevent deletion
 - **Buyer view:** Read-only. Add/edit/delete controls hidden.
 
 ### Orders (`components/orders.component/`)
@@ -340,6 +347,7 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 - Export as CSV/PDF with status filter
 - Print button for browser print dialog
 - **Buyer view:** Own orders only. Can place new orders (status: `pending`), cancel own orders. Cannot edit status, assign workers, or delete. "Assigned To" column and admin actions are hidden.
+- **Worker view:** Sees only orders assigned to them. "Assigned to you" badge (green) is shown for the worker's own assigned orders. Can update the status of assigned orders that are not completed/cancelled.
 
 ### Analytics (`components/analytics.component/`)
 
@@ -351,6 +359,7 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 - Export as CSV/PDF
 - Print button (admin only)
 - Charts auto-update colors on theme change
+- **Worker view:** Analytics are scoped to the worker's own assigned orders (revenue, order count, growth comparison)
 - **Not accessible to buyers** (blocked by `StaffGuard`)
 
 ### Profile (`components/profile.component/`)
@@ -358,6 +367,8 @@ Note: `specifications` and `specs` fields are stripped from payloads before send
 - View and edit profile fields: email, username, fullname
 - Avatar upload with immediate preview (creates blob URL)
 - Change password modal (current + new password with validation)
+- **Password visibility toggle** on all three password fields in change password modal
+- Role badge with per-role icon and color (admin: shield/violet, worker: hard-hat/amber, buyer: shopping-bag/blue)
 - Active session listing with per-session revoke capability
 - Waits for `authReady` before loading to prevent race conditions on page refresh
 
@@ -463,7 +474,7 @@ The `SocketService` connects to the backend Socket.io server:
 |---|---|
 | `User` | User profile: `id`, `email`, `username`, `fullname?`, `role` |
 | `AuthResponse` | Login/register response. Supports `token`, `accessToken`, and `access_token` variants. |
-| `Item` | Product: `id`, `name`, `model?`, `price`, `amount`, `warranty?`, `category_id`, `brand_id`, `category?`, `brand?` |
+| `Item` | Product: `id`, `name`, `model?`, `price`, `amount`, `warranty?` (number), `warranty_unit?` (`'days'`\|`'weeks'`\|`'months'`\|`'years'`), `category_id`, `brand_id`, `category?`, `brand?` |
 | `Category` | `id`, `name` |
 | `Brand` | `id`, `name` |
 | `Customer` | `id`, `name`, `email?`, `phone?` |

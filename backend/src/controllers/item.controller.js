@@ -25,8 +25,18 @@ export const updateItem = async (req, res) => {
 };
 
 export const deleteItem = async (req, res) => {
-  await ItemService.deleteItem(req.params.id);
-  res.json({ success: true });
+  try {
+    await ItemService.deleteItem(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    const msg = err?.message || '';
+    if (msg.includes('foreign key') || msg.includes('violates') || msg.includes('referenced')) {
+      return res.status(409).json({ error: req.lang === 'hu'
+        ? 'A termék nem törölhető, mert rendelések hivatkoznak rá.'
+        : 'Cannot delete this product because it is referenced by existing orders.' });
+    }
+    throw err;
+  }
 };
 
 export const getCategories = async (req, res) => {

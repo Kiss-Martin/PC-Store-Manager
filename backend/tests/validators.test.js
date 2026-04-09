@@ -6,6 +6,7 @@ import {
   loginSchema,
   changePasswordSchema,
   createItemSchema,
+  updateItemSchema,
   createOrderSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -16,7 +17,7 @@ describe('registerSchema', () => {
     const result = registerSchema.safeParse({
       email: 'test@example.com',
       username: 'testuser',
-      password: 'secret123',
+      password: 'Secret123!',
     });
     expect(result.success).toBe(true);
   });
@@ -25,7 +26,7 @@ describe('registerSchema', () => {
     const result = registerSchema.safeParse({
       email: 'test@example.com',
       username: 'testuser',
-      password: 'secret123',
+      password: 'Secret123!',
       fullname: 'Test User',
       role: 'admin',
     });
@@ -34,15 +35,25 @@ describe('registerSchema', () => {
     expect(result.data.role).toBe('admin');
   });
 
-  it('should accept buyer role', () => {
+  it('should accept worker role', () => {
+    const result = registerSchema.safeParse({
+      email: 'worker@example.com',
+      username: 'workeruser',
+      password: 'Secret123!',
+      role: 'worker',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.role).toBe('worker');
+  });
+
+  it('should reject buyer as explicit role (buyer is default, not in enum)', () => {
     const result = registerSchema.safeParse({
       email: 'buyer@example.com',
       username: 'buyeruser',
-      password: 'secret123',
+      password: 'Secret123!',
       role: 'buyer',
     });
-    expect(result.success).toBe(true);
-    expect(result.data.role).toBe('buyer');
+    expect(result.success).toBe(false);
   });
 
   it('should reject invalid email', () => {
@@ -58,7 +69,7 @@ describe('registerSchema', () => {
     const result = registerSchema.safeParse({
       email: 'test@example.com',
       username: 'ab',
-      password: 'secret123',
+      password: 'Secret123!',
     });
     expect(result.success).toBe(false);
   });
@@ -67,16 +78,52 @@ describe('registerSchema', () => {
     const result = registerSchema.safeParse({
       email: 'test@example.com',
       username: 'a'.repeat(33),
-      password: 'secret123',
+      password: 'Secret123!',
     });
     expect(result.success).toBe(false);
   });
 
-  it('should reject password shorter than 6 characters', () => {
+  it('should reject password shorter than 8 characters', () => {
     const result = registerSchema.safeParse({
       email: 'test@example.com',
       username: 'testuser',
-      password: '12345',
+      password: 'Sh0rt!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject password without uppercase', () => {
+    const result = registerSchema.safeParse({
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'secret123!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject password without lowercase', () => {
+    const result = registerSchema.safeParse({
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'SECRET123!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject password without digit', () => {
+    const result = registerSchema.safeParse({
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'Secretpass!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject password without special character', () => {
+    const result = registerSchema.safeParse({
+      email: 'test@example.com',
+      username: 'testuser',
+      password: 'Secret1234',
     });
     expect(result.success).toBe(false);
   });
@@ -84,7 +131,7 @@ describe('registerSchema', () => {
   it('should reject missing email', () => {
     const result = registerSchema.safeParse({
       username: 'testuser',
-      password: 'secret123',
+      password: 'Secret123!',
     });
     expect(result.success).toBe(false);
   });
@@ -145,7 +192,7 @@ describe('changePasswordSchema', () => {
   it('should accept valid password change data', () => {
     const result = changePasswordSchema.safeParse({
       currentPassword: 'oldpass',
-      newPassword: 'newpass123',
+      newPassword: 'NewPass123!',
     });
     expect(result.success).toBe(true);
   });
@@ -153,15 +200,23 @@ describe('changePasswordSchema', () => {
   it('should reject empty current password', () => {
     const result = changePasswordSchema.safeParse({
       currentPassword: '',
-      newPassword: 'newpass123',
+      newPassword: 'NewPass123!',
     });
     expect(result.success).toBe(false);
   });
 
-  it('should reject new password shorter than 6 characters', () => {
+  it('should reject weak new password (no uppercase)', () => {
     const result = changePasswordSchema.safeParse({
       currentPassword: 'oldpass',
-      newPassword: '12345',
+      newPassword: 'newpass123!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject new password shorter than 8 characters', () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: 'oldpass',
+      newPassword: 'Sh0rt!',
     });
     expect(result.success).toBe(false);
   });
@@ -186,11 +241,62 @@ describe('createItemSchema', () => {
       brand_id: 'brand-uuid-1',
       amount: 10,
       model: 'Founders Edition',
-      warranty: '3 years',
+      warranty: 36,
+      warranty_unit: 'months',
     });
     expect(result.success).toBe(true);
     expect(result.data.amount).toBe(10);
     expect(result.data.model).toBe('Founders Edition');
+    expect(result.data.warranty).toBe(36);
+    expect(result.data.warranty_unit).toBe('months');
+  });
+
+  it('should accept all warranty_unit enum values', () => {
+    for (const unit of ['days', 'weeks', 'months', 'years']) {
+      const result = createItemSchema.safeParse({
+        name: 'GPU',
+        price: 100,
+        category_id: 'cat-uuid-1',
+        brand_id: 'brand-uuid-1',
+        warranty: 3,
+        warranty_unit: unit,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it('should reject invalid warranty_unit', () => {
+    const result = createItemSchema.safeParse({
+      name: 'GPU',
+      price: 100,
+      category_id: 'cat-uuid-1',
+      brand_id: 'brand-uuid-1',
+      warranty: 3,
+      warranty_unit: 'centuries',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject string warranty (must be number)', () => {
+    const result = createItemSchema.safeParse({
+      name: 'GPU',
+      price: 100,
+      category_id: 'cat-uuid-1',
+      brand_id: 'brand-uuid-1',
+      warranty: '3 years',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject negative warranty', () => {
+    const result = createItemSchema.safeParse({
+      name: 'GPU',
+      price: 100,
+      category_id: 'cat-uuid-1',
+      brand_id: 'brand-uuid-1',
+      warranty: -1,
+    });
+    expect(result.success).toBe(false);
   });
 
   it('should reject negative price', () => {
@@ -354,7 +460,7 @@ describe('resetPasswordSchema', () => {
   it('should accept valid reset data', () => {
     const result = resetPasswordSchema.safeParse({
       token: 'some-reset-token',
-      newPassword: 'newpass123',
+      newPassword: 'NewPass123!',
     });
     expect(result.success).toBe(true);
   });
@@ -362,7 +468,15 @@ describe('resetPasswordSchema', () => {
   it('should reject empty token', () => {
     const result = resetPasswordSchema.safeParse({
       token: '',
-      newPassword: 'newpass123',
+      newPassword: 'NewPass123!',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject weak new password', () => {
+    const result = resetPasswordSchema.safeParse({
+      token: 'some-token',
+      newPassword: 'weakpass',
     });
     expect(result.success).toBe(false);
   });
@@ -370,7 +484,52 @@ describe('resetPasswordSchema', () => {
   it('should reject short new password', () => {
     const result = resetPasswordSchema.safeParse({
       token: 'some-token',
-      newPassword: '12345',
+      newPassword: 'Sh0rt!',
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('updateItemSchema', () => {
+  it('should accept partial updates', () => {
+    const result = updateItemSchema.safeParse({
+      name: 'Updated GPU',
+      price: 1299.99,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept warranty number with unit', () => {
+    const result = updateItemSchema.safeParse({
+      warranty: 24,
+      warranty_unit: 'months',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept nullable category_id and brand_id', () => {
+    const result = updateItemSchema.safeParse({
+      category_id: null,
+      brand_id: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should accept an empty object (all fields optional)', () => {
+    const result = updateItemSchema.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject invalid warranty_unit', () => {
+    const result = updateItemSchema.safeParse({
+      warranty_unit: 'decades',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject string warranty', () => {
+    const result = updateItemSchema.safeParse({
+      warranty: '2 years',
     });
     expect(result.success).toBe(false);
   });

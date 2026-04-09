@@ -87,3 +87,44 @@ describe('Orders Page (Buyer)', () => {
     cy.get('button').filter(':contains("Export"), :contains("export"), :contains("Download"), :contains("download")').should('exist');
   });
 });
+
+describe('Orders Page (Worker)', () => {
+  beforeEach(() => {
+    cy.stubBackendApi();
+    // Override orders stub to include an order assigned to this worker
+    cy.intercept('GET', '**/orders', {
+      statusCode: 200,
+      body: {
+        orders: [
+          { id: 'ord-1', orderNumber: '#1001', product: 'RTX 4090', productId: 'item-1', quantity: 1, unitPrice: 1599.99, totalAmount: 1599.99, status: 'processing', customer: 'John Doe', date: '03/20/2026', timestamp: '2026-03-20T10:00:00Z', assignedTo: 'worker-id' },
+        ],
+      },
+    }).as('ordersApi');
+    const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Indvcmtlci1pZCIsInJvbGUiOiJ3b3JrZXIiLCJleHAiOjk5OTk5OTk5OTl9.fake';
+    const fakeUser = { id: 'worker-id', email: 'worker@test.com', username: 'worker', fullname: 'Worker User', role: 'worker' };
+    window.localStorage.setItem('pc_token', fakeToken);
+    window.localStorage.setItem('token', fakeToken);
+    window.localStorage.setItem('user', JSON.stringify(fakeUser));
+    window.localStorage.setItem('pc_remember', 'true');
+    cy.visit('/orders');
+  });
+
+  it('should display the orders page for worker', () => {
+    cy.url().should('include', '/orders');
+  });
+
+  it('should show "Assigned to you" badge for own assigned orders', () => {
+    cy.wait('@ordersApi');
+    cy.contains(/assigned to you|hozzád rendelve/i).should('be.visible');
+  });
+
+  it('should show update status button for assigned processing orders', () => {
+    cy.wait('@ordersApi');
+    cy.get('button[aria-label="Update status"]').should('exist');
+  });
+
+  it('should not show admin assignment dropdown', () => {
+    cy.wait('@ordersApi');
+    cy.get('select[title="Assign worker"]').should('not.exist');
+  });
+});

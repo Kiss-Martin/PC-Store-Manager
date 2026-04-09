@@ -12,7 +12,7 @@ const ItemService = {
     }));
   },
 
-  async createItem({ name, model, price, amount, warranty, category_id, brand_id }, userId) {
+  async createItem({ name, model, price, amount, warranty, warranty_unit, category_id, brand_id }, userId) {
     const data = await run(
       supabase.from('items').insert({
         name,
@@ -20,6 +20,7 @@ const ItemService = {
         price,
         amount,
         warranty,
+        warranty_unit: warranty_unit || 'months',
         category_id,
         brand_id,
         date_added: new Date().toISOString().split('T')[0],
@@ -40,7 +41,7 @@ const ItemService = {
 
   async updateItem(id, updates) {
     // Only pass known columns to Supabase; convert empty-string FKs to null
-    const allowed = ['name', 'model', 'price', 'amount', 'warranty', 'brand_id', 'category_id'];
+    const allowed = ['name', 'model', 'price', 'amount', 'warranty', 'warranty_unit', 'brand_id', 'category_id'];
     const clean = {};
     for (const key of allowed) {
       if (key in updates) {

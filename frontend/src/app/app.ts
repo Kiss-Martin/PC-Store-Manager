@@ -22,6 +22,7 @@ export class App implements OnInit {
   protected readonly title = signal('PC Store Manager');
   isNavOpen = false;
   showNavbar = false;
+  currentUrl = signal('');
   isMobile = signal(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
   constructor(public router: Router, public auth: AuthService, public theme: ThemeService, public i18n: I18nService, private socketService: SocketService, private toast: ToastService) {
@@ -66,10 +67,17 @@ export class App implements OnInit {
   private updateNavbarVisibility(url: string) {
     const isAuthRoute = url.includes('/login') || url.includes('/register') || url.includes('/forgot') || url.includes('/reset-password');
     this.showNavbar = this.auth.isAuthenticated() && !isAuthRoute;
+    this.currentUrl.set(url);
 
     if (!this.showNavbar) {
       this.isNavOpen = false;
     }
+  }
+
+  isActive(path: string): boolean {
+    const url = this.currentUrl();
+    if (path === 'dashboard') return url === '/dashboard' || url === '/';
+    return url.startsWith('/' + path);
   }
 
   toggleTheme() {

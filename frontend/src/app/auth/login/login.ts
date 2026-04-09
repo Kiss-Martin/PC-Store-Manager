@@ -22,6 +22,7 @@ export class LoginComponent {
   password = '';
   rememberMe = false;
   isLoading = false;
+  showPassword = false;
 
   // Contact support modal
   showContactModal = false;

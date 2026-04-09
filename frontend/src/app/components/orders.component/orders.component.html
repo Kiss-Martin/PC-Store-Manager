@@ -203,7 +203,11 @@
                   }
                 </select>
               } @else {
-                <span class="inline-flex px-3 py-1 rounded-full text-xs bg-violet-600/10 text-violet-600">{{ getWorkerName(order.assignedTo) }}</span>
+                @if (order.assignedTo === auth.user()?.id) {
+                  <span class="inline-flex px-3 py-1 rounded-full text-xs bg-emerald-500/10 text-emerald-600 font-medium">{{ 'orders.assignedToYouBadge' | t }}</span>
+                } @else {
+                  <span class="inline-flex px-3 py-1 rounded-full text-xs bg-violet-600/10 text-violet-600">{{ getWorkerName(order.assignedTo) }}</span>
+                }
               }
             }
           </td>

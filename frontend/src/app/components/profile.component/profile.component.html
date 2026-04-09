@@ -38,8 +38,8 @@
             <h2 class="text-xl font-bold m-0" [style.color]="'var(--color-text)'">{{ user.fullname || user.username }}</h2>
             <p class="text-sm mt-1 m-0" [style.color]="'var(--color-muted)'">@{{ user.username }}</p>
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2"
-              [class]="user.role === 'admin' ? 'bg-violet-600/10 text-violet-600' : 'bg-blue-500/10 text-blue-500'">
-              <lucide-icon name="shield" [size]="14"></lucide-icon>
+              [class]="user.role === 'admin' ? 'bg-violet-600/10 text-violet-600' : user.role === 'worker' ? 'bg-amber-500/10 text-amber-600' : 'bg-blue-500/10 text-blue-500'">
+              <lucide-icon [name]="user.role === 'admin' ? 'shield' : user.role === 'worker' ? 'hard-hat' : 'shopping-bag'" [size]="14"></lucide-icon>
               {{ getRoleLabel(user.role) }}
             </span>
           </div>
@@ -345,47 +345,62 @@
 
         <div class="flex flex-col gap-1.5">
           <label for="currentPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.currentPassword' | t }}</label>
-          <input
-            type="password"
-            id="currentPassword"
-            [(ngModel)]="passwordForm.currentPassword"
-            name="currentPassword"
-            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
-            [style.color]="'var(--color-text)'"
-            [style.border-color]="'var(--color-card-border)'"
-            [placeholder]="'profile.currentPasswordPlaceholder' | t"
-            required
-          />
+          <div class="relative">
+            <input
+              [type]="showCurrentPassword ? 'text' : 'password'"
+              id="currentPassword"
+              [(ngModel)]="passwordForm.currentPassword"
+              name="currentPassword"
+              class="w-full px-4 py-3 pr-12 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+              [style.color]="'var(--color-text)'"
+              [style.border-color]="'var(--color-card-border)'"
+              [placeholder]="'profile.currentPasswordPlaceholder' | t"
+              required
+            />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showCurrentPassword = !showCurrentPassword">
+              <lucide-icon [name]="showCurrentPassword ? 'eye-off' : 'eye'" size="18"></lucide-icon>
+            </button>
+          </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
           <label for="newPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.newPassword' | t }}</label>
-          <input
-            type="password"
-            id="newPassword"
-            [(ngModel)]="passwordForm.newPassword"
-            name="newPassword"
-            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
-            [style.color]="'var(--color-text)'"
-            [style.border-color]="'var(--color-card-border)'"
-            [placeholder]="'profile.newPasswordPlaceholder' | t"
-            required
-          />
+          <div class="relative">
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              id="newPassword"
+              [(ngModel)]="passwordForm.newPassword"
+              name="newPassword"
+              class="w-full px-4 py-3 pr-12 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+              [style.color]="'var(--color-text)'"
+              [style.border-color]="'var(--color-card-border)'"
+              [placeholder]="'profile.newPasswordPlaceholder' | t"
+              required
+            />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showNewPassword = !showNewPassword">
+              <lucide-icon [name]="showNewPassword ? 'eye-off' : 'eye'" size="18"></lucide-icon>
+            </button>
+          </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
           <label for="confirmPassword" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'profile.confirmNewPassword' | t }}</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            [(ngModel)]="passwordForm.confirmPassword"
-            name="confirmPassword"
-            class="w-full px-4 py-3 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
-            [style.color]="'var(--color-text)'"
-            [style.border-color]="'var(--color-card-border)'"
-            [placeholder]="'profile.confirmNewPasswordPlaceholder' | t"
-            required
-          />
+          <div class="relative">
+            <input
+              [type]="showConfirmNewPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              [(ngModel)]="passwordForm.confirmPassword"
+              name="confirmPassword"
+              class="w-full px-4 py-3 pr-12 border rounded-xl text-sm bg-transparent focus:outline-none focus:border-violet-600 transition-colors"
+              [style.color]="'var(--color-text)'"
+              [style.border-color]="'var(--color-card-border)'"
+              [placeholder]="'profile.confirmNewPasswordPlaceholder' | t"
+              required
+            />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showConfirmNewPassword = !showConfirmNewPassword">
+              <lucide-icon [name]="showConfirmNewPassword ? 'eye-off' : 'eye'" size="18"></lucide-icon>
+            </button>
+          </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 mt-2 pt-4 border-t" [style.border-color]="'var(--color-card-border)'">

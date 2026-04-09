@@ -22,6 +22,8 @@ export class ResetPasswordComponent implements OnInit {
   isLoading = false;
   success = false;
   error = '';
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private route: ActivatedRoute,

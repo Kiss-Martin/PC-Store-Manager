@@ -19,7 +19,8 @@ interface Product {
   model?: string;
   specifications?: string;
   specs?: string;
-  warranty?: string;
+  warranty?: number;
+  warranty_unit?: string;
   brand_id?: string;
   category_id?: string;
   brands?: { name: string };
@@ -46,6 +47,7 @@ export class ProductsComponent implements OnInit {
   // ✅ Confirmation modal state
   showDeleteConfirm = false;
   productToDelete: Product | null = null;
+  private openedFromDashboard = false;
 
   newProduct = {
     name: '',
@@ -53,7 +55,8 @@ export class ProductsComponent implements OnInit {
     specifications: '',
     price: 0,
     amount: 0,
-    warranty: '',
+    warranty: 0,
+    warranty_unit: 'months',
     brand_id: '',
     category_id: '',
   };
@@ -76,6 +79,7 @@ export class ProductsComponent implements OnInit {
     // Check for query params to auto-open add modal
     this.route.queryParams.subscribe((params) => {
       if (params['action'] === 'add') {
+        this.openedFromDashboard = true;
         this.openAddModal();
         // Clear the query param after opening modal
         this.router.navigate([], {
@@ -148,16 +152,22 @@ export class ProductsComponent implements OnInit {
       price: product.price || 0,
       model: product.model || '',
       specifications: product.specifications || product.specs || '',
-      warranty: product.warranty || '',
+      warranty: product.warranty || 0,
+      warranty_unit: product.warranty_unit || 'months',
       brand_id: product.brand_id || '',
       category_id: product.category_id || '',
     };
   }
 
   closeModal() {
+    const wasFromDashboard = this.openedFromDashboard;
     this.showAddModal = false;
     this.editingProduct = null;
+    this.openedFromDashboard = false;
     this.resetForm();
+    if (wasFromDashboard) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   resetForm() {
@@ -166,7 +176,8 @@ export class ProductsComponent implements OnInit {
       amount: 0,
       model: '',
       specifications: '',
-      warranty: '',
+      warranty: 0,
+      warranty_unit: 'months',
       brand_id: '',
       category_id: '',
       price: 0,
@@ -241,5 +252,20 @@ export class ProductsComponent implements OnInit {
 
   getCategoryName(product: Product): string {
     return product.categories?.name || this.i18n.t('products.na');
+  }
+
+  getWarrantyDisplay(product: Product): string {
+    if (!product.warranty) return this.i18n.t('products.na');
+    const unit = product.warranty_unit || 'months';
+    return `${product.warranty} ${this.i18n.t('products.warrantyUnit.' + unit)}`;
+  }
+
+  get warrantyUnits() {
+    return [
+      { value: 'days', label: this.i18n.t('products.warrantyUnit.days') },
+      { value: 'weeks', label: this.i18n.t('products.warrantyUnit.weeks') },
+      { value: 'months', label: this.i18n.t('products.warrantyUnit.months') },
+      { value: 'years', label: this.i18n.t('products.warrantyUnit.years') },
+    ];
   }
 }

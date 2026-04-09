@@ -20,7 +20,7 @@ describe('Login Page', () => {
 
   it('should login successfully with valid credentials', () => {
     cy.get('input[name="email"]').type('admin@test.com');
-    cy.get('input[name="password"]').type('password123');
+    cy.get('input[name="password"]').type('Secret123!');
     cy.get('button[type="submit"]').click();
     cy.wait('@loginApi');
     // Should navigate to dashboard
@@ -55,6 +55,16 @@ describe('Login Page', () => {
 
   it('should have a remember me checkbox', () => {
     cy.get('input[name="rememberMe"]').should('exist');
+  });
+
+  it('should toggle password visibility', () => {
+    cy.get('input[name="password"]').should('have.attr', 'type', 'password');
+    // Click the eye toggle button next to the password field
+    cy.get('input[name="password"]').parent().find('button').click();
+    cy.get('input[name="password"]').should('have.attr', 'type', 'text');
+    // Click again to hide
+    cy.get('input[name="password"]').parent().find('button').click();
+    cy.get('input[name="password"]').should('have.attr', 'type', 'password');
   });
 
   it('should have theme toggle button', () => {

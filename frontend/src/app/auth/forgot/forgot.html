@@ -4,11 +4,11 @@
       <div class="flex items-center justify-center gap-3 mb-4">
         <lucide-icon name="monitor" class="text-violet-600" size="32"></lucide-icon>
         <span class="text-2xl font-bold" [style.color]="'var(--color-text)'">PC Store</span>
-        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleTheme()" [attr.aria-label]="'login.themeAria' | t">
           <lucide-icon [name]="theme.isDark() ? 'sun' : 'moon'" size="16"></lucide-icon>
           <span class="ml-2">{{ theme.isDark() ? ('app.theme.light' | t) : ('app.theme.dark' | t) }}</span>
         </button>
-        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border border-gray-900/5 bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-semibold cursor-pointer border bg-transparent hover:bg-violet-600/5 transition-colors" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
           {{ 'app.lang.toggle' | t }}
         </button>
       </div>

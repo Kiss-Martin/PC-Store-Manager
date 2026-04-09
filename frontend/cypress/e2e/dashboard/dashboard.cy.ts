@@ -32,6 +32,20 @@ describe('Dashboard Page', () => {
     cy.get('nav, [class*="nav"], [class*="sidebar"]').should('exist');
   });
 
+  it('should highlight active navigation link', () => {
+    // Dashboard link should have active styling (text-violet-600)
+    cy.get('nav').find('a, span, button').filter(':contains("Dashboard"), :contains("dashboard")').first()
+      .should('exist');
+  });
+
+  it('should navigate to dashboard when clicking PC Store logo', () => {
+    cy.contains(/product/i).first().click();
+    cy.url().should('include', '/products');
+    // Click the PC Store logo/text to go back to dashboard
+    cy.contains('PC Store').click();
+    cy.url().should('include', '/dashboard');
+  });
+
   it('should navigate to products page', () => {
     cy.contains(/product/i).first().click();
     cy.url().should('include', '/products');

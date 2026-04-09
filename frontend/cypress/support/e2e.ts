@@ -81,8 +81,8 @@ Cypress.Commands.add('stubBackendApi', () => {
     statusCode: 200,
     body: {
       items: [
-        { id: 'item-1', name: 'RTX 4090', model: 'FE', price: 1599.99, amount: 5, warranty: '3y', category_id: 'cat-1', brand_id: 'brand-1', category: 'GPU', brand: 'NVIDIA' },
-        { id: 'item-2', name: 'Core i9-14900K', model: '', price: 599.99, amount: 12, warranty: '2y', category_id: 'cat-2', brand_id: 'brand-2', category: 'CPU', brand: 'Intel' },
+        { id: 'item-1', name: 'RTX 4090', model: 'FE', price: 1599.99, amount: 5, warranty: 36, warranty_unit: 'months', category_id: 'cat-1', brand_id: 'brand-1', category: 'GPU', brand: 'NVIDIA' },
+        { id: 'item-2', name: 'Core i9-14900K', model: '', price: 599.99, amount: 12, warranty: 24, warranty_unit: 'months', category_id: 'cat-2', brand_id: 'brand-2', category: 'CPU', brand: 'Intel' },
       ],
     },
   }).as('itemsApi');

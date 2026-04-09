@@ -28,4 +28,12 @@ describe('Theme and Language Switching', () => {
     // Just verify the click doesn't crash
     cy.url().should('include', '/login');
   });
+
+  it('should keep language button visible in dark mode', () => {
+    // Toggle to dark mode
+    cy.get('button').filter('[aria-label]').first().click();
+    // Language button should still be visible and clickable
+    cy.get('button').filter(':contains("HU"), :contains("EN"), :contains("Magyar"), :contains("English")').first()
+      .should('be.visible');
+  });
 });

@@ -2,9 +2,9 @@
   @if (showNavbar) {
     <nav class="sticky top-0 z-1000 border-b shadow-sm" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
       <div class="max-w-350 mx-auto px-8 py-5 flex justify-between items-center max-md:px-6 max-md:py-4">
-        <div class="flex items-center gap-3 text-violet-600 text-xl font-bold cursor-pointer">
+        <div class="flex items-center gap-3 text-violet-600 text-xl font-bold cursor-pointer" (click)="navigate('dashboard')">
           <lucide-icon name="monitor" size="30"></lucide-icon>
-          <span class="uppercase tracking-[1.5px] text-sm" href="#">{{ title() }}</span>
+          <span class="uppercase tracking-[1.5px] text-sm">{{ title() }}</span>
         </div>
         <button class="hidden max-md:block bg-transparent border-none text-violet-600 text-2xl cursor-pointer" (click)="toggleNav()">
           @if (!isNavOpen) { <span>☰</span> }
@@ -14,18 +14,18 @@
             [style.background]="'var(--color-card)'"
             [style.border-color]="'var(--color-card-border)'"
             [style.max-height]="isNavOpen ? '600px' : (isMobile() ? '0' : 'none')">
-          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('dashboard')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'app.nav.dashboard' | t }}</a></li>
-          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('products')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'app.nav.products' | t }}</a></li>
-          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('orders')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'app.nav.orders' | t }}</a></li>
+          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('dashboard')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('dashboard')" [style.color]="isActive('dashboard') ? '' : 'var(--color-muted)'">{{ 'app.nav.dashboard' | t }}</a></li>
+          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('products')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('products')" [style.color]="isActive('products') ? '' : 'var(--color-muted)'">{{ 'app.nav.products' | t }}</a></li>
+          <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('orders')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('orders')" [style.color]="isActive('orders') ? '' : 'var(--color-muted)'">{{ 'app.nav.orders' | t }}</a></li>
           @if (!auth.isBuyer()) {
-            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('analytics')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'app.nav.analytics' | t }}</a></li>
+            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('analytics')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('analytics')" [style.color]="isActive('analytics') ? '' : 'var(--color-muted)'">{{ 'app.nav.analytics' | t }}</a></li>
           }
           @if (auth.isAdmin()) {
-            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('admin/sessions')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'admin.sessionsTitle' | t }}</a></li>
-            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('admin/audit')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'admin.auditNav' | t }}</a></li>
+            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('admin/sessions')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('admin/sessions')" [style.color]="isActive('admin/sessions') ? '' : 'var(--color-muted)'">{{ 'admin.sessionsTitle' | t }}</a></li>
+            <li class="max-md:w-full max-md:px-6 max-md:py-4 max-md:border-b max-md:border-slate-100"><a (click)="navigate('admin/audit')" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('admin/audit')" [style.color]="isActive('admin/audit') ? '' : 'var(--color-muted)'">{{ 'admin.auditNav' | t }}</a></li>
           }
           <li class="max-md:w-full max-md:px-6 max-md:py-4 border-t border-violet-600/15">
-            <button type="button" class="inline-flex items-center gap-[0.45rem] rounded-full px-3.5 py-2 text-sm font-bold min-w-14 justify-center cursor-pointer border border-transparent bg-[#eef2ff] text-violet-800 hover:bg-violet-50 transition-colors" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
+            <button type="button" class="inline-flex items-center gap-[0.45rem] rounded-full px-3.5 py-2 text-sm font-bold min-w-14 justify-center cursor-pointer border border-violet-600/20 transition-colors hover:bg-violet-600/10" [style.background]="theme.isDark() ? 'rgba(124,58,237,0.15)' : '#eef2ff'" [style.color]="theme.isDark() ? '#c4b5fd' : '#5b21b6'" (click)="toggleLanguage()" [attr.aria-label]="'app.lang.aria' | t">
               {{ 'app.lang.toggle' | t }}
             </button>
           </li>
@@ -36,7 +36,7 @@
             </button>
           </li>
           <li class="max-md:w-full max-md:px-6 max-md:py-4 border-t border-violet-600/15">
-            <a (click)="openProfile()" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [style.color]="'var(--color-muted)'">{{ 'app.nav.profile' | t }}</a>
+            <a (click)="openProfile()" class="font-medium text-[0.95rem] transition-colors duration-300 cursor-pointer no-underline hover:text-violet-600" [class.text-violet-600]="isActive('profile')" [style.color]="isActive('profile') ? '' : 'var(--color-muted)'">{{ 'app.nav.profile' | t }}</a>
           </li>
         </ul>
       </div>

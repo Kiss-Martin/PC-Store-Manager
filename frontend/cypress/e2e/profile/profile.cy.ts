@@ -38,4 +38,10 @@ describe('Profile Page', () => {
   it('should have logout functionality', () => {
     cy.get('button').filter(':contains("Logout"), :contains("logout"), :contains("Sign out"), :contains("sign out")').should('exist');
   });
+
+  it('should display role badge with appropriate icon', () => {
+    cy.wait('@profileApi');
+    // Admin should have a shield icon in their role badge
+    cy.get('lucide-icon[name="shield"]').should('exist');
+  });
 });

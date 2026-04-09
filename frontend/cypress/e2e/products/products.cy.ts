@@ -32,6 +32,12 @@ describe('Products Page', () => {
     cy.contains('NVIDIA').should('be.visible');
   });
 
+  it('should display warranty as number with unit', () => {
+    cy.wait('@itemsApi');
+    // Warranty should display as "36 months" (localized) instead of raw string
+    cy.contains(/36/).should('be.visible');
+  });
+
   it('should have a button to add new product (admin only)', () => {
     // Admin should see an add button
     cy.get('button').filter(':contains("Add"), :contains("add"), :contains("New"), :contains("new"), :contains("+")').should('exist');

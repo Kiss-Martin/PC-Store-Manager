@@ -38,6 +38,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isSaving = false;
   successMessage = '';
   errorMessage = '';
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmNewPassword = false;
   sessions: Session[] = [];
   sessionsLoading = false;
 

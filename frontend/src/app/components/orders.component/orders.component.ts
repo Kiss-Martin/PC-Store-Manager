@@ -7,7 +7,7 @@ import { OrderService, ExportFormat } from '../../services/order.service';
 import { ItemService } from '../../services/item.service';
 import { ThemeService } from '../../theme.service';
 import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { I18nService } from '../../i18n.service';
 import { TranslatePipe } from '../../translate.pipe';
 import { ToastService } from '../../shared/toast.service';
@@ -47,6 +47,7 @@ export class OrdersComponent implements OnInit {
   isSavingCustomer = false;
   orderError = '';
   orderSuccess = '';
+  private openedFromDashboard = false;
 
   // Custom dropdown states
   showStatusFilterDropdown = false;
@@ -86,6 +87,7 @@ export class OrdersComponent implements OnInit {
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private router: Router,
     private toast: ToastService,
   ) {}
 
@@ -110,6 +112,7 @@ export class OrdersComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       if (params['action'] === 'new' && (this.auth.isAdmin() || this.auth.isBuyer())) {
+        this.openedFromDashboard = true;
         setTimeout(() => this.openAddOrderModal(), 200);
       }
     });
@@ -205,9 +208,14 @@ export class OrdersComponent implements OnInit {
   }
 
   closeAddOrderModal() {
+    const wasFromDashboard = this.openedFromDashboard;
     this.showAddOrderModal = false;
     this.showNewCustomerForm = false;
+    this.openedFromDashboard = false;
     this.resetOrderForm();
+    if (wasFromDashboard) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   resetOrderForm() {

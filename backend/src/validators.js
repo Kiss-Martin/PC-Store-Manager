@@ -39,7 +39,8 @@ export const createItemSchema = z.object({
   brand_id: z.string().min(1),
   amount: z.number().int().nonnegative().optional(),
   model: z.string().optional(),
-  warranty: z.string().optional(),
+  warranty: z.number().int().nonnegative().optional(),
+  warranty_unit: z.enum(['days', 'weeks', 'months', 'years']).optional(),
 });
 
 export const updateItemSchema = z.object({
@@ -49,7 +50,8 @@ export const updateItemSchema = z.object({
   brand_id: z.string().min(1).optional().nullable(),
   amount: z.number().int().nonnegative().optional(),
   model: z.string().optional(),
-  warranty: z.string().optional(),
+  warranty: z.number().int().nonnegative().optional(),
+  warranty_unit: z.enum(['days', 'weeks', 'months', 'years']).optional(),
 });
 
 export const createOrderSchema = z.object({

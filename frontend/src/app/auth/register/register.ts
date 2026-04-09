@@ -40,6 +40,8 @@ export class RegisterComponent {
 
   errors: { [key: string]: string } = {};
   isLoading = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(private router: Router, private authService: AuthService, private toast: ToastService, public theme: ThemeService, public i18n: I18nService) {}
 
@@ -110,7 +112,7 @@ export class RegisterComponent {
     this.formData.role = role;
     const roleIcons: { [key: string]: string } = {
       'admin': 'shield',
-      'worker': 'user',
+      'worker': 'hard-hat',
       'buyer': 'shopping-bag'
     };
     this.formData.icon = roleIcons[role] || 'user';
