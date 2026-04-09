@@ -18,8 +18,8 @@ A full-stack inventory and order management platform for PC component stores. Bu
 ## Architecture
 
 ```
-┌─────────────────────┐       HTTP / WebSocket       ┌─────────────────────────┐
-│   Angular 21 SPA    │ ◄──────────────────────────► │   Express 5 API Server  │
+┌─────────────────────┐       HTTP / WebSocket        ┌─────────────────────────┐
+│   Angular 21 SPA    │ ◄──────────────────────────►  │   Express 5 API Server  │
 │                     │   Bearer JWT + Accept-Lang    │                         │
 │  standalone comps   │                               │  Controller → Service   │
 │  signal-based state │                               │  → Supabase/PostgreSQL  │
