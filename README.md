@@ -108,13 +108,13 @@ Create a `.env` file in `backend/`:
 | `SUPABASE_URL` | Supabase project URL | `https://xxx.supabase.co` |
 | `SUPABASE_KEY` | Supabase service-role key | `eyJ...` |
 | `JWT_SECRET` | JWT signing secret | `your-secret-key` |
-| `REFRESH_SECRET` | Refresh token signing secret | `your-refresh-secret` |
-| `CORS_ORIGIN` | Allowed CORS origin | `http://localhost:4200` |
-| `MAIL_HOST` | SMTP host | `smtp.gmail.com` |
-| `MAIL_PORT` | SMTP port | `587` |
-| `MAIL_USER` | SMTP username | `user@gmail.com` |
-| `MAIL_PASS` | SMTP password / app password | `xxxx xxxx xxxx xxxx` |
-| `MAIL_FROM` | Sender address | `"PC Store" <noreply@example.com>` |
+| `REFRESH_TOKEN_SECRET` | Refresh token signing secret | `your-refresh-secret` |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:4200` |
+| `SMTP_HOST` | SMTP host | `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP port | `587` |
+| `SMTP_USER` | SMTP username | `user@gmail.com` |
+| `SMTP_PASS` | SMTP password / app password | `xxxx xxxx xxxx xxxx` |
+| `SMTP_FROM` | Sender address | `"PC Store" <noreply@example.com>` |
 | `FRONTEND_URL` | Frontend base URL (for email links) | `http://localhost:4200` |
 
 ---

@@ -471,7 +471,7 @@ Request payloads are validated using **Zod** schemas defined in `validators.js`.
 | `createOrderSchema` | `item_id`, `customer_id?`, `quantity` (int, positive), `status?` | |
 | `forgotPasswordSchema` | `email` (valid email) | |
 | `resetPasswordSchema` | `token` (min 1), `newPassword` (strong) | |
-| `createCustomerSchema` | `name` (min 1), `email?` (email or empty string), `phone?` (max 30 or empty string) | |
+| `createCustomerSchema` | `name` (min 1), `email` (valid email), `phone` (min 1, max 30) | All fields are required |
 
 Validation errors are localized via `localizeValidationErrors()` which maps Zod issue codes to `en`/`hu` translation keys.
 

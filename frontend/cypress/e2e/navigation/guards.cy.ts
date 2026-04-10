@@ -55,7 +55,7 @@ describe('Auth Guards and Navigation', () => {
       const fakeUser = { id: 'test-id', email: 'admin@test.com', username: 'admin', fullname: 'Admin User', role: 'admin' };
       window.localStorage.setItem('pc_token', fakeToken);
       window.localStorage.setItem('token', fakeToken);
-      window.localStorage.setItem('user', JSON.stringify(fakeUser));
+      window.localStorage.setItem('pc_user', JSON.stringify(fakeUser));
       window.localStorage.setItem('pc_remember', 'true');
     });
 
@@ -86,7 +86,7 @@ describe('Auth Guards and Navigation', () => {
       const fakeUser = { id: 'worker-id', email: 'worker@test.com', username: 'worker', fullname: 'Worker User', role: 'worker' };
       window.localStorage.setItem('pc_token', fakeToken);
       window.localStorage.setItem('token', fakeToken);
-      window.localStorage.setItem('user', JSON.stringify(fakeUser));
+      window.localStorage.setItem('pc_user', JSON.stringify(fakeUser));
       window.localStorage.setItem('pc_remember', 'true');
     });
 
@@ -107,7 +107,7 @@ describe('Auth Guards and Navigation', () => {
       const fakeUser = { id: 'buyer-id', email: 'buyer@test.com', username: 'buyer', fullname: 'Buyer User', role: 'buyer' };
       window.localStorage.setItem('pc_token', fakeToken);
       window.localStorage.setItem('token', fakeToken);
-      window.localStorage.setItem('user', JSON.stringify(fakeUser));
+      window.localStorage.setItem('pc_user', JSON.stringify(fakeUser));
       window.localStorage.setItem('pc_remember', 'true');
     });
 

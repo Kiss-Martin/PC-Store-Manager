@@ -2,8 +2,6 @@
 import { jest } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
-
 // Mock supabase before importing auth middleware
 const mockFrom = jest.fn(() => ({
   select: jest.fn().mockReturnThis(),
@@ -19,6 +17,10 @@ jest.unstable_mockModule('../src/db.js', () => ({
 }));
 
 const { authMiddleware, requireRole } = await import('../src/middlewares/auth.middleware.js');
+
+// Read JWT_SECRET after the dynamic import above, which triggers dotenv/config
+// loading via config.js. This ensures process.env.JWT_SECRET is populated from .env.
+const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret';
 
 describe('authMiddleware', () => {
   it('should return 401 when no Authorization header', async () => {

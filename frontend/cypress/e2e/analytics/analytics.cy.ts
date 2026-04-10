@@ -5,7 +5,7 @@ describe('Analytics Page', () => {
     const fakeUser = { id: 'test-id', email: 'admin@test.com', username: 'admin', fullname: 'Admin User', role: 'admin' };
     window.localStorage.setItem('pc_token', fakeToken);
     window.localStorage.setItem('token', fakeToken);
-    window.localStorage.setItem('user', JSON.stringify(fakeUser));
+    window.localStorage.setItem('pc_user', JSON.stringify(fakeUser));
     window.localStorage.setItem('pc_remember', 'true');
     cy.visit('/analytics');
   });
@@ -45,7 +45,7 @@ describe('Analytics Page (Buyer - blocked by StaffGuard)', () => {
     const fakeUser = { id: 'buyer-id', email: 'buyer@test.com', username: 'buyer', fullname: 'Buyer User', role: 'buyer' };
     window.localStorage.setItem('pc_token', fakeToken);
     window.localStorage.setItem('token', fakeToken);
-    window.localStorage.setItem('user', JSON.stringify(fakeUser));
+    window.localStorage.setItem('pc_user', JSON.stringify(fakeUser));
     window.localStorage.setItem('pc_remember', 'true');
   });
 

@@ -8,8 +8,8 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "lint": "eslint src --ext .js --fix",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit --detectOpenHandles",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --forceExit --detectOpenHandles --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --detectOpenHandles",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --detectOpenHandles --coverage"
   },
   "keywords": [],
   "author": "",

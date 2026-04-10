@@ -14,7 +14,7 @@ Cypress.Commands.add('loginByApi', (email: string, password: string) => {
     if (res.status === 200 && res.body.accessToken) {
       window.localStorage.setItem('pc_token', res.body.accessToken);
       window.localStorage.setItem('token', res.body.accessToken);
-      window.localStorage.setItem('user', JSON.stringify(res.body.user));
+      window.localStorage.setItem('pc_user', JSON.stringify(res.body.user));
       window.localStorage.setItem('pc_remember', 'true');
     }
   });
@@ -24,10 +24,12 @@ Cypress.Commands.add('loginByApi', (email: string, password: string) => {
 Cypress.Commands.add('clearAuth', () => {
   window.localStorage.removeItem('pc_token');
   window.localStorage.removeItem('token');
+  window.localStorage.removeItem('pc_user');
   window.localStorage.removeItem('user');
   window.localStorage.removeItem('pc_remember');
   window.sessionStorage.removeItem('pc_token');
   window.sessionStorage.removeItem('token');
+  window.sessionStorage.removeItem('pc_user');
   window.sessionStorage.removeItem('user');
 });
 
