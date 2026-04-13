@@ -49,6 +49,10 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
   loadError = '';
 
+  // Buyer-specific features
+  buyerRecentOrders: any[] = [];
+  buyerOrdersLoading = false;
+
   showReportModal = false;
   reportPeriod = '7days';
   reportFormat: ExportFormat = 'csv';
@@ -65,6 +69,11 @@ export class DashboardComponent implements OnInit {
   ngOnInit() {
     // Load dashboard data from backend
     this.loadDashboardData();
+
+    // Load recent orders for buyers
+    if (this.auth.isBuyer()) {
+      this.loadBuyerRecentOrders();
+    }
   }
 
   generateReport() {
@@ -106,6 +115,31 @@ export class DashboardComponent implements OnInit {
 }
 
   private buildStats(stats: DashboardStats) {
+    // Show different stats based on user role
+    if (this.auth.isBuyer()) {
+      return [
+        {
+          title: this.i18n.t('dashboard.stats.myOrdersTotal'),
+          value: stats.buyerOrdersCount ?? 0,
+          icon: 'shopping-bag',
+          color: '#f59e0b',
+        },
+        {
+          title: this.i18n.t('dashboard.stats.mySales'),
+          value: stats.buyerTotalSpent ?? '$0',
+          icon: 'badge-dollar-sign',
+          color: '#10b981',
+        },
+        {
+          title: this.i18n.t('dashboard.stats.activeOrders'),
+          value: stats.buyerActiveOrders ?? 0,
+          icon: 'shopping-cart',
+          color: '#3b82f6',
+        },
+      ];
+    }
+
+    // Admin/Worker stats
     return [
       {
         title: this.i18n.t('dashboard.stats.totalProducts'),
@@ -176,6 +210,29 @@ export class DashboardComponent implements OnInit {
 
   addNewProduct() {
     this.router.navigate(['products'], { queryParams: { action: 'add' } });
+  }
+
+  loadBuyerRecentOrders() {
+    this.buyerOrdersLoading = true;
+    this.dashboardService.getDashboard().subscribe({
+      next: (res) => {
+        // Extract and limit to 5 recent orders
+        this.buyerRecentOrders = (res?.activities || [])
+          .filter((a: any) => a.type === 'order' || a.description?.includes('order'))
+          .slice(0, 5);
+        this.buyerOrdersLoading = false;
+      },
+      error: () => {
+        this.buyerOrdersLoading = false;
+      }
+    });
+  }
+
+  quickReorder(productName: string) {
+    // Navigate to orders with a quick order pre-filled
+    this.router.navigate(['/orders'], {
+      queryParams: { action: 'new', quick: productName }
+    });
   }
 
   printCurrentView() {

@@ -45,6 +45,24 @@ const emailStrings = {
       status: 'Status',
       footer: 'This notification was sent automatically by the PC Store Manager application.',
     },
+    buyerOrderConfirm: {
+      heading: '&#128230; Order Confirmed',
+      body: 'Your order has been received and is now in the system.',
+      orderNumber: 'Order Number',
+      product: 'Product',
+      quantity: 'Quantity',
+      total: 'Total',
+      status: 'Status',
+      footer: 'Thank you for your order. You will receive updates as your order is processed.',
+    },
+    orderStatusChange: {
+      heading: '&#128230; Order Status Updated',
+      body: 'Your order status has been updated.',
+      orderNumber: 'Order Number',
+      product: 'Product',
+      newStatus: 'New Status',
+      footer: 'This notification was sent automatically by the PC Store Manager application.',
+    },
   },
   hu: {
     adminNotify: {
@@ -90,6 +108,24 @@ const emailStrings = {
       total: 'Összeg',
       customer: 'Ügyfél',
       status: 'Státusz',
+      footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
+    },
+    buyerOrderConfirm: {
+      heading: '&#128230; Rendelés megerősítve',
+      body: 'A rendelésed beérkezett a rendszerbe.',
+      orderNumber: 'Rendelés száma',
+      product: 'Termék',
+      quantity: 'Mennyiség',
+      total: 'Végösszeg',
+      status: 'Státusz',
+      footer: 'Köszönjük a rendelésed. Értesítést küldünk, ahogy a rendelés feldolgozása halad.',
+    },
+    orderStatusChange: {
+      heading: '&#128230; Rendelés státusza frissült',
+      body: 'A rendelésed státusza frissítésre került.',
+      orderNumber: 'Rendelés száma',
+      product: 'Termék',
+      newStatus: 'Új státusz',
       footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
     },
   },
@@ -213,4 +249,46 @@ export function renderNewOrderNotification({ lang = 'en', orderNumber, product, 
   return { subject, text: plain, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification };
+export function renderOrderStatusChangeNotification({ lang = 'en', orderNumber, product, newStatus }) {
+  const s = getEmailStrings(lang);
+  const n = s.orderStatusChange;
+  const subject = `${n.heading} — ${orderNumber}`;
+  const plain = `${n.body}\n\n${n.orderNumber}: ${orderNumber}\n${n.product}: ${product}\n${n.newStatus}: ${newStatus}\n\n${n.footer}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${n.heading}</h2>
+    <p>${n.body}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:140px">${n.orderNumber}</td><td style="padding:10px 14px">${safe(orderNumber)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.product}</td><td style="padding:10px 14px">${safe(product)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.newStatus}</td><td style="padding:10px 14px">${safe(newStatus)}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">${n.footer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export function renderBuyerOrderConfirmation({ lang = 'en', orderNumber, product, quantity, totalAmount, status }) {
+  const s = getEmailStrings(lang);
+  const n = s.buyerOrderConfirm;
+  const subject = `${n.heading} — ${orderNumber}`;
+  const plain = `${n.body}\n\n${n.orderNumber}: ${orderNumber}\n${n.product}: ${product}\n${n.quantity}: ${quantity}\n${n.total}: $${totalAmount}\n${n.status}: ${status}\n\n${n.footer}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${n.heading}</h2>
+    <p>${n.body}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:140px">${n.orderNumber}</td><td style="padding:10px 14px">${safe(orderNumber)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.product}</td><td style="padding:10px 14px">${safe(product)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.quantity}</td><td style="padding:10px 14px">${safe(quantity)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${n.total}</td><td style="padding:10px 14px">$${safe(totalAmount)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${n.status}</td><td style="padding:10px 14px">${safe(status)}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">${n.footer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification, renderOrderStatusChangeNotification, renderBuyerOrderConfirmation };

@@ -113,6 +113,13 @@ export class OrdersComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['action'] === 'new' && (this.auth.isAdmin() || this.auth.isBuyer())) {
         this.openedFromDashboard = true;
+        // Pre-select product if coming from quick reorder
+        if (params['quick']) {
+          const product = this.products.find(p => p.name.toLowerCase().includes(params['quick'].toLowerCase()));
+          if (product) {
+            this.newOrder.item_id = product.id;
+          }
+        }
         setTimeout(() => this.openAddOrderModal(), 200);
       }
     });
@@ -218,6 +225,23 @@ export class OrdersComponent implements OnInit {
     }
   }
 
+  reorderProduct(order: Order) {
+    if (!this.auth.isBuyer()) {
+      this.toast.show(this.i18n.t('orders.error.buyerOnly'), { type: 'error' });
+      return;
+    }
+
+    // Find product by name
+    const product = this.products.find(p => p.name === order.product);
+    if (product) {
+      this.newOrder.item_id = product.id;
+      this.newOrder.quantity = 1; // Reset quantity to 1
+      this.openAddOrderModal();
+    } else {
+      this.toast.show(this.i18n.t('orders.error.productNotFound'), { type: 'error' });
+    }
+  }
+
   resetOrderForm() {
     this.newOrder = {
       item_id: '',
@@ -313,7 +337,17 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         this.isSavingOrder = false;
-        this.orderError = (err as any).error?.error || this.i18n.t('orders.error.createOrder');
+        // Better error message handling
+        let errorMessage = this.i18n.t('orders.error.createOrder');
+        if (err?.error?.error) {
+          errorMessage = err.error.error;
+        } else if (err?.error?.message) {
+          errorMessage = err.error.message;
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        this.orderError = errorMessage;
+        console.error('[Order] Creation failed:', err);
       },
     });
   }

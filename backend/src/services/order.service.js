@@ -6,7 +6,7 @@ import { ORDER_STATUSES } from '../utils/constants.js';
 import { t } from '../utils/i18n.util.js';
 import { getIO } from '../utils/socket.util.js';
 import { mailTransporter, smtpConfig } from '../utils/mail.util.js';
-import { renderNewOrderNotification } from '../utils/email.template.js';
+import { renderNewOrderNotification, renderOrderStatusChangeNotification, renderBuyerOrderConfirmation } from '../utils/email.template.js';
 
 const OrderService = {
   async getOrders(user, lang = 'en') {
@@ -60,6 +60,7 @@ const OrderService = {
   },
 
   async createOrder(user, { item_id, customer_id, quantity, status = 'pending' }, lang = 'en') {
+    console.log(`[Order.createOrder] User auth info:`, { id: user?.id, role: user?.role, isBuyer: user?.role === 'buyer' }, `customerId received:`, customer_id);
     if (!ORDER_STATUSES.includes(status)) {
       throw new Error(t(lang, 'order.invalidStatus'));
     }
@@ -103,35 +104,89 @@ const OrderService = {
       console.error('Failed to send new-order notifications:', err?.message || err)
     );
 
+    // Notify buyer if this was created by a buyer
+    if (user?.role === 'buyer' && user?.id) {
+      this._notifyBuyerOfOrderCreation(result, user, lang).catch((err) =>
+        console.error('Failed to send buyer order confirmation:', err?.message || err)
+      );
+    }
+
     return result;
   },
 
   async _resolveCustomerIdForOrder(user, customerId, lang = 'en') {
-    if (user?.role !== 'buyer') {
-      if (!customerId) throw new Error(t(lang, 'validation.customerRequired'));
+    const isBuyer = user?.role === 'buyer';
+    console.log(`\n[Order._resolveCustomerIdForOrder] ===== STARTING CUSTOMER RESOLUTION =====`);
+    console.log(`[Order._resolveCustomerIdForOrder] User: ${user?.username} (${user?.email}), Role: ${user?.role}`);
+    
+    // STAFF (admin/worker): requires customer_id parameter
+    if (!isBuyer) {
+      if (!customerId) {
+        console.error(`[Order._resolveCustomerIdForOrder] ✗ FAILED: Non-buyer without customer_id`);
+        throw new Error(t(lang, 'validation.customerRequired'));
+      }
+      console.log(`[Order._resolveCustomerIdForOrder] ✓ Staff member using provided customer_id: ${customerId}`);
       return customerId;
     }
 
-    const buyer = await run(
-      supabase.from('users').select('id, email, username, fullname').eq('id', user.id).single()
-    ).catch(() => null);
-    if (!buyer) throw new Error(t(lang, 'user.fetchFailed'));
-
-    if (buyer.email) {
-      const existingByEmail = await run(
-        supabase.from('customers').select('id').eq('email', buyer.email).limit(1)
-      ).catch(() => []);
-      if (existingByEmail?.[0]?.id) return existingByEmail[0].id;
+    // BUYER: Must lookup or create customer
+    console.log(`[Order._resolveCustomerIdForOrder] Processing BUYER customer resolution...`);
+    
+    if (!user?.email) {
+      console.error(`[Order._resolveCustomerIdForOrder] ✗ FAILED: Buyer has no email in token`);
+      throw new Error('Buyer profile missing email - corrupted token');
     }
 
-    const created = await run(
-      supabase.from('customers').insert({
-        name: buyer.fullname || buyer.username || buyer.email || t(lang, 'common.unknown'),
-        email: buyer.email || null,
-        phone: null,
-      }).select('id').single()
-    );
-    return created.id;
+    try {
+      // Normalize email: lowercase, trim whitespace
+      const normalizedEmail = (user.email || '').toLowerCase().trim();
+      console.log(`[Order._resolveCustomerIdForOrder] Normalized buyer email: ${normalizedEmail}`);
+
+      // Step 1: Query database for customer with this email
+      console.log(`[Order._resolveCustomerIdForOrder] Step 1: Searching for existing customer in DB...`);
+      const existingCustomers = await run(
+        supabase.from('customers').select('id, name, email').eq('email', normalizedEmail)
+      ).catch((err) => {
+        console.error(`[Order._resolveCustomerIdForOrder] ✗ Query error:`, err?.message);
+        throw err;
+      });
+
+      console.log(`[Order._resolveCustomerIdForOrder] Query returned ${existingCustomers?.length || 0} result(s)`);
+
+      if (existingCustomers && existingCustomers.length > 0) {
+        const customer = existingCustomers[0];
+        console.log(`[Order._resolveCustomerIdForOrder] ✓ FOUND existing customer: ID=${customer.id}, Name=${customer.name}, Email=${customer.email}`);
+        return customer.id;
+      }
+
+      // Step 2: Customer not found, create one now
+      console.log(`[Order._resolveCustomerIdForOrder] Step 2: Customer not found, creating new one...`);
+      const customerName = user.fullname || user.username || 'Unknown Buyer';
+      console.log(`[Order._resolveCustomerIdForOrder] Creating with: name="${customerName}", email="${normalizedEmail}"`);
+
+      const newCustomer = await run(
+        supabase.from('customers').insert({
+          name: customerName,
+          email: normalizedEmail,
+          phone: null,
+        }).select('id, name, email').single()
+      ).catch((err) => {
+        console.error(`[Order._resolveCustomerIdForOrder] ✗ Insert error:`, err?.message);
+        throw err;
+      });
+
+      if (!newCustomer || !newCustomer.id) {
+        console.error(`[Order._resolveCustomerIdForOrder] ✗ Customer creation returned invalid result`);
+        throw new Error('Customer creation returned invalid result');
+      }
+
+      console.log(`[Order._resolveCustomerIdForOrder] ✓ CREATED new customer: ID=${newCustomer.id}, Name=${newCustomer.name}, Email=${newCustomer.email}`);
+      return newCustomer.id;
+      
+    } catch (error) {
+      console.error(`[Order._resolveCustomerIdForOrder] ✗ FAILED with exception:`, error?.message || error);
+      throw new Error(`Customer resolution failed: ${error?.message || 'Unknown error'}`);
+    }
   },
 
   async _notifyWorkersOfNewOrder(order, customerId, lang = 'en') {
@@ -171,6 +226,35 @@ const OrderService = {
     );
   },
 
+  async _notifyBuyerOfOrderCreation(order, user, lang = 'en') {
+    if (!mailTransporter || !user?.email) return;
+
+    try {
+      const emailData = {
+        lang,
+        orderNumber: order.orderNumber,
+        product: order.product,
+        quantity: order.quantity,
+        totalAmount: order.totalAmount,
+        status: order.status,
+      };
+      const tpl = renderBuyerOrderConfirmation(emailData);
+
+      await mailTransporter.sendMail({
+        to: user.email,
+        from: smtpConfig.from,
+        subject: tpl.subject,
+        text: tpl.text,
+        html: tpl.html,
+      });
+
+      console.log(`[Order._notifyBuyerOfOrderCreation] ✓ Sent order confirmation email to ${user.email}`);
+    } catch (err) {
+      console.error('[Order._notifyBuyerOfOrderCreation] Error:', err?.message || err);
+      // Don't throw - email notification failure shouldn't break the order creation
+    }
+  },
+
   async updateOrderStatus(id, status, userId, lang = 'en') {
     if (!ORDER_STATUSES.includes(status)) {
       throw new Error(t(lang, 'order.invalidStatus'));
@@ -191,7 +275,58 @@ const OrderService = {
         supabase.from('orders_status').insert({ log_id: id, status, updated_by: userId, updated_at: new Date().toISOString() }).select().single()
       );
     }
+
+    // Notify buyer if order belongs to a buyer
+    this._notifyBuyerOfStatusChange(id, status, lang).catch((err) =>
+      console.error('Failed to send status change notification:', err?.message || err)
+    );
+
     return result;
+  },
+
+  async _notifyBuyerOfStatusChange(orderId, status, lang = 'en') {
+    if (!mailTransporter) return;
+
+    try {
+      // Fetch the order details including buyer info
+      const order = await run(
+        supabase.from('logs').select('id, details, user_id, items(name)').eq('id', orderId).single()
+      ).catch(() => null);
+
+      if (!order || !order.user_id) return; // No buyer attached to this order
+
+      // Fetch the buyer's email
+      const buyer = await run(
+        supabase.from('users').select('email').eq('id', order.user_id).single()
+      ).catch(() => null);
+
+      if (!buyer || !buyer.email) return; // No buyer email
+
+      // Generate order number - extract from order details
+      const orderNumberMatch = (order.details || '').match(/Order #(\d+)/);
+      const orderNumber = orderNumberMatch ? `#${orderNumberMatch[1]}` : orderId;
+
+      const emailData = {
+        lang,
+        orderNumber,
+        product: order.items?.name || 'Unknown Product',
+        newStatus: status,
+      };
+      const tpl = renderOrderStatusChangeNotification(emailData);
+
+      await mailTransporter.sendMail({
+        to: buyer.email,
+        from: smtpConfig.from,
+        subject: tpl.subject,
+        text: tpl.text,
+        html: tpl.html,
+      });
+
+      console.log(`[Order._notifyBuyerOfStatusChange] ✓ Sent status change email to ${buyer.email}`);
+    } catch (err) {
+      console.error('[Order._notifyBuyerOfStatusChange] Error:', err?.message || err);
+      // Don't throw - email notification failure shouldn't break the status update
+    }
   },
 
   async assignOrder(id, assigned_to) {

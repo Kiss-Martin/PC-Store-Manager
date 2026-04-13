@@ -37,6 +37,12 @@ const dictionaries = {
     'order.itemNotFound': 'Item not found',
     'order.insufficientStock': 'Insufficient stock. Only {count} available',
     'order.notFound': 'Order not found',
+    'order.statusChanged': 'Order status updated to {status}',
+    'order.youCanViewIt': 'You can view it in your orders',
+
+    'dashboard.stats.mySales': 'My Sales',
+    'dashboard.stats.myOrdersTotal': 'My Orders Total',
+    'dashboard.stats.myRecentOrders': 'Recent Orders',
 
     'customer.nameRequired': 'Customer name is required',
     'customer.emailRequired': 'Customer email is required',
@@ -168,6 +174,12 @@ const dictionaries = {
     'order.itemNotFound': 'A termék nem található',
     'order.insufficientStock': 'Nincs elegendő készlet. Csak {count} db érhető el',
     'order.notFound': 'A rendelés nem található',
+    'order.statusChanged': 'A rendelés státusza frissítésre került: {status}',
+    'order.youCanViewIt': 'Megtekintheted a rendeléseidben',
+
+    'dashboard.stats.mySales': 'Felhalmozott összeg',
+    'dashboard.stats.myOrdersTotal': 'Összes rendelésem',
+    'dashboard.stats.myRecentOrders': 'Legutóbbi rendelések',
 
     'customer.nameRequired': 'A vásárló neve kötelező',
     'customer.emailRequired': 'A vásárló e-mail címe kötelező',

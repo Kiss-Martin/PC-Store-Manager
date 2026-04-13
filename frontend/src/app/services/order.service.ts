@@ -17,8 +17,17 @@ export class OrderService {
     item_id: string;
     customer_id?: string;
     quantity: number;
+    status?: string;
   }): Observable<{ success: boolean; order: Order }> {
-    return this.api.post<{ success: boolean; order: Order }>('/orders', order);
+    // Filter out empty customer_id for buyers (not sending empty string, must be either absent or have a value)
+    const payload: any = { item_id: order.item_id, quantity: order.quantity };
+    if (order.customer_id) {
+      payload.customer_id = order.customer_id;
+    }
+    if (order.status) {
+      payload.status = order.status;
+    }
+    return this.api.post<{ success: boolean; order: Order }>('/orders', payload);
   }
 
   updateOrderStatus(id: string, status: string): Observable<{ success: boolean }> {

@@ -166,8 +166,61 @@ const AuthService = {
       };
     }
 
+    // Auto-create customer record for buyer role
+    if (data.role === 'buyer') {
+      console.log(`[Auth.register] Buyer detected: ${data.username} (${data.email}) - Creating/linking customer...`);
+      try {
+        // First check if customer already exists with this email
+        let customer = null;
+        if (data.email) {
+          const existing = await run(
+            supabase.from('customers').select('id, email').eq('email', data.email).limit(1)
+          ).catch((err) => {
+            console.warn(`[Auth.register] ERROR checking for existing customer:`, err?.message);
+            return null;
+          });
+          if (existing && existing.length > 0) {
+            customer = existing[0];
+            console.log(`[Auth.register] ✓ FOUND existing customer: ID=${customer.id}, email=${customer.email}`);
+          }
+        }
+
+        // If not found, create new customer
+        if (!customer) {
+          console.log(`[Auth.register] Creating new customer...`);
+          customer = await run(
+            supabase.from('customers').insert({
+              name: data.fullname || data.username || data.email || t(lang, 'common.unknown'),
+              email: data.email || null,
+              phone: null,
+            }).select('id, email').single()
+          );
+          console.log(`[Auth.register] ✓ CREATED new customer: ID=${customer.id}, email=${customer.email}`);
+        }
+
+        if (!customer || !customer.id) {
+          throw new Error('Customer object has no ID');
+        }
+
+        // Store customer ID in user metadata for quick access
+        try {
+          await run(
+            supabase.from('users').update({ metadata: { customer_id: customer.id } }).eq('id', data.id)
+          );
+          console.log(`[Auth.register] ✓ LINKED user ${data.id} → customer ${customer.id}`);
+        } catch (metaErr) {
+          console.warn(`[Auth.register] WARNING: Could not store customer_id in metadata:`, metaErr?.message);
+          // Non-critical, continue
+        }
+      } catch (e) {
+        console.error(`[Auth.register] ✗ ERROR during buyer customer creation:`, e?.message || e);
+        // Don't throw - registration should succeed even if customer creation fails
+        // The customer will be created during first order
+      }
+    }
+
     // create access token and refresh token
-    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
+    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role, email: data.email, username: data.username, fullname: data.fullname }, '1h');
     const refreshToken = generateRefreshTokenStr();
     const refreshExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // try to persist refresh token (store hashed token); if table missing, warn but continue
@@ -232,7 +285,7 @@ const AuthService = {
       throw err;
     }
     // Issue short-lived access token and a refresh token (persisted)
-    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role }, '1h');
+    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role, email: data.email, username: data.username, fullname: data.fullname }, '1h');
     const refreshToken = generateRefreshTokenStr();
     const refreshExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
     // keep up to max tokens per user (append new and cleanup older)
@@ -276,7 +329,7 @@ const AuthService = {
     const user = await run(supabase.from('users').select('id,role,email,username,fullname').eq('id', rt.user_id).single()).catch(() => null);
     if (!user) return null;
     // rotate refresh token: create a new access token (with jti) and persist the rotated refresh token with that access_jti
-    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: user.id, role: user.role }, '1h');
+    const { token: accessToken, jti: accessJti } = generateAccessToken({ id: user.id, role: user.role, email: user.email, username: user.username, fullname: user.fullname }, '1h');
     const newRefresh = generateRefreshTokenStr();
     const newExpires = rt.expires_at;
     try {

@@ -13,11 +13,29 @@ export const getOrders = async (req, res) => {
 };
 
 export const createOrder = async (req, res) => {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`[OrderController.createOrder] ⚡ ORDER CREATION INITIATED`);
+  console.log(`[OrderController.createOrder] User object:`, JSON.stringify(req.user, null, 2));
+  console.log(`[OrderController.createOrder] Request body:`, JSON.stringify(req.body, null, 2));
+  
   const parse = createOrderSchema.safeParse(req.body);
-  if (!parse.success)
+  if (!parse.success) {
+    console.warn(`[OrderController.createOrder] ❌ Validation failed:`, parse.error.errors);
     return res.status(400).json({ error: localizeValidationErrors(req.lang, parse.error.errors) });
-  const order = await OrderService.createOrder(req.user, parse.data, req.lang);
-  res.json({ success: true, order });
+  }
+  console.log(`[OrderController.createOrder] ✓ Validation passed`);
+  
+  try {
+    console.log(`[OrderController.createOrder] Calling OrderService.createOrder...`);
+    const order = await OrderService.createOrder(req.user, parse.data, req.lang);
+    console.log(`[OrderController.createOrder] ✓ Order created successfully:`, order);
+    res.json({ success: true, order });
+  } catch (err) {
+    console.error(`[OrderController.createOrder] ❌ Error:`, err?.message);
+    console.error(`[OrderController.createOrder] Full error:`, err);
+    res.status(400).json({ error: err?.message || t(req.lang, 'orders.error.createOrder') });
+  }
+  console.log(`${'='.repeat(60)}\n`);
 };
 
 export const updateOrderStatus = async (req, res) => {

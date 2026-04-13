@@ -118,6 +118,14 @@ export class RegisterComponent {
     this.formData.icon = roleIcons[role] || 'user';
   }
 
+  onEnterKey() {
+    if (this.currentStep < this.totalSteps) {
+      this.nextStep();
+    } else if (this.currentStep === this.totalSteps) {
+      this.submitRegistration();
+    }
+  }
+
 submitRegistration() {
   if (!this.validateStep(this.currentStep)) return;
 

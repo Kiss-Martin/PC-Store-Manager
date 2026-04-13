@@ -105,6 +105,10 @@ export interface DashboardStats {
   totalSales?: string | number;
   activeOrders?: number;
   customers?: number;
+  // Buyer-specific stats
+  buyerOrdersCount?: number;
+  buyerTotalSpent?: string | number;
+  buyerActiveOrders?: number;
 }
 
 export interface DashboardActivity {

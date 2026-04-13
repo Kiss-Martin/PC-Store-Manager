@@ -159,7 +159,7 @@
         @if (!auth.isBuyer()) {
           <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.assignedTo' | t }}</th>
         }
-        @if (auth.isAdmin() || auth.isBuyer() || auth.isWorker()) {
+        @if (auth.isAdmin() || auth.isWorker()) {
           <th class="text-left py-4 px-5 text-xs font-semibold uppercase tracking-wider" [style.color]="'var(--color-muted)'">{{ 'orders.table.actions' | t }}</th>
         }
       </tr>
@@ -260,15 +260,6 @@
 </div>
 }
 
-  <!-- Empty State -->
-@if (!isLoading && filteredOrders.length === 0) {
-  <div class="flex flex-col items-center justify-center py-16 gap-3 mt-6">
-    <lucide-icon name="shopping-bag" size="64" class="text-violet-600/20"></lucide-icon>
-    <h3 class="text-lg font-bold" [style.color]="'var(--color-text)'">{{ 'orders.empty.title' | t }}</h3>
-    <p class="text-sm" [style.color]="'var(--color-muted)'">{{ searchTerm || selectedStatus !== 'all' ? ('orders.empty.filters' | t) : ('orders.empty.initial' | t) }}</p>
-  </div>
-}
-
   <!-- Order Details Modal -->
   @if (showDetailsModal && selectedOrder) {
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-1000 animate-fade-in" (click)="closeDetailsModal()">
@@ -329,6 +320,12 @@
         </div>
 
         <div class="flex items-center justify-end gap-3 p-6 border-t" [style.border-color]="'var(--color-card-border)'">
+          @if (auth.isBuyer() && selectedOrder.status === 'completed') {
+            <button class="inline-flex items-center gap-2 bg-linear-to-br from-emerald-500 to-emerald-600 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="reorderProduct(selectedOrder); closeDetailsModal()">
+              <lucide-icon name="redo2" size="16"></lucide-icon>
+              {{ 'orders.reorder' | t }}
+            </button>
+          }
           <button class="px-5 py-2.5 rounded-xl border-2 bg-transparent font-medium cursor-pointer transition-colors hover:bg-violet-600/5" [style.color]="'var(--color-text)'" [style.border-color]="'var(--color-card-border)'" (click)="closeDetailsModal()">{{ 'orders.close' | t }}</button>
           @if ((auth.isAdmin() || canWorkerUpdateStatus(selectedOrder)) && selectedOrder.status !== 'cancelled' && selectedOrder.status !== 'completed') {
             <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="openStatusModal(selectedOrder); closeDetailsModal()">
@@ -477,8 +474,18 @@
           }
         </div>
 
-        @if (!auth.isBuyer()) {
-          <!-- Customer Selection -->
+        @if (auth.isBuyer()) {
+          <!-- Buyer Info - Auto-filled from profile -->
+          <div class="flex flex-col gap-2 p-4 rounded-lg border" [style.background]="'var(--color-bg)'" [style.border-color]="'var(--color-card-border)'">
+            <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.customer' | t }} {{ 'common.info' | t }}</label>
+            <p class="text-sm m-0" [style.color]="'var(--color-text)'">
+              <span class="font-medium">{{ auth.user()?.fullname || auth.user()?.username }}</span>
+            </p>
+            <p class="text-xs m-0" [style.color]="'var(--color-muted)'">{{ auth.user()?.email }}</p>
+            <p class="text-xs mt-1 px-2 py-1 rounded bg-violet-600/10 text-violet-600 w-fit">{{ 'orders.autoBuyerCustomer' | t }}</p>
+          </div>
+        } @else {
+          <!-- Customer Selection for Staff -->
           <div class="flex flex-col gap-2">
             <label for="customer" class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.customer' | t }}</label>
             @if (!showNewCustomerForm) {

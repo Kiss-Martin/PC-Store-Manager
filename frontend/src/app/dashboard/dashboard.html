@@ -45,6 +45,41 @@
     }
   </div>
 
+  <!-- Buyer Recent Orders Section -->
+  @if (auth.isBuyer()) {
+    <div class="rounded-2xl border-2 border-violet-600/6 p-8 transition-all duration-300 mb-8" [style.background]="'var(--color-card)'" [style.border-color]="'var(--color-card-border)'">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-bold m-0" [style.color]="'var(--color-text)'">{{ 'dashboard.myOrders' | t }}</h2>
+          <p class="text-sm mt-1 m-0" [style.color]="'var(--color-muted)'">{{ 'dashboard.myOrdersDescription' | t }}</p>
+        </div>
+        <button class="inline-flex items-center gap-2 bg-linear-to-br from-violet-600 to-violet-700 text-white border-none px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg" (click)="navigateToNewOrder()">
+          <lucide-icon name="plus" size="18"></lucide-icon>
+          {{ 'dashboard.placeOrder' | t }}
+        </button>
+      </div>
+      @if (buyerOrdersLoading) {
+        <div class="flex items-center justify-center py-8">
+          <lucide-icon name="loader-circle" class="text-violet-600 animate-spin" size="24"></lucide-icon>
+        </div>
+      } @else if (buyerRecentOrders.length === 0) {
+        <div class="text-center py-8">
+          <lucide-icon name="shopping-bag" class="text-violet-600/20 mx-auto mb-3" size="40"></lucide-icon>
+          <p class="text-sm" [style.color]="'var(--color-muted)'">{{ 'dashboard.noOrders' | t }}</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (order of buyerRecentOrders; track order.id) {
+            <div class="p-4 rounded-xl border" [style.border-color]="'var(--color-card-border)'" [style.background]="'var(--color-bg)'">
+              <p class="text-xs font-semibold text-violet-600 m-0 mb-2">{{ order.description }}</p>
+              <p class="text-sm font-medium m-0" [style.color]="'var(--color-text)'">{{ order.timestamp }}</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
   <!-- Main Content Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
     <!-- Recent Activity -->
