@@ -15,7 +15,7 @@ export const registerSchema = z.object({
     .regex(/^[a-zA-Z0-9_.-]+$/, 'usernameChars'),
   password: strongPassword,
   fullname: z.string().max(128).optional(),
-  role: z.enum(['admin', 'worker']).optional(),
+  role: z.enum(['admin', 'worker', 'buyer']).optional(),
 });
 
 export const loginSchema = z.object({

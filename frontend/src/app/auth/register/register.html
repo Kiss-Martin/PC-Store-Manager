@@ -186,7 +186,7 @@
                     [style.color]="'var(--color-text)'"
                     [style.border-color]="'var(--color-card-border)'"
                     />
-                  <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showPassword = !showPassword">
+                  <button aria-label="show password" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showPassword = !showPassword">
                     <lucide-icon [name]="showPassword ? 'eye-off' : 'eye'" size="18"></lucide-icon>
                   </button>
                 </div>
@@ -208,7 +208,7 @@
                       [style.color]="'var(--color-text)'"
                       [style.border-color]="'var(--color-card-border)'"
                       />
-                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showConfirmPassword = !showConfirmPassword">
+                    <button aria-label="Toggle password visibility" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-1 rounded transition-colors hover:bg-violet-600/10" [style.color]="'var(--color-muted)'" (click)="showConfirmPassword = !showConfirmPassword">
                       <lucide-icon [name]="showConfirmPassword ? 'eye-off' : 'eye'" size="18"></lucide-icon>
                     </button>
                   </div>
