@@ -495,6 +495,16 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'status.processing': 'Processing',
     'status.completed': 'Completed',
     'status.cancelled': 'Cancelled',
+
+    // Activity translations
+    'activity.generic': 'Activity',
+    'activity.stock.added': 'Added: {product}',
+    'activity.order.placed': 'Order: {product}',
+    'activity.user.approved': 'Approved admin',
+    'activity.user.rejected': 'Rejected admin',
+    'activity.user.logout': 'Logout',
+    'activity.session.revoked': 'Session revoked',
+    'activity.session.viewed': 'Viewed sessions',
   },
   hu: {
     'app.nav.dashboard': 'Vezérlőpult',
@@ -986,6 +996,16 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'status.processing': 'Feldolgozás',
     'status.completed': 'Teljesítve',
     'status.cancelled': 'Törölve',
+
+    // Activity translations (Hungarian)
+    'activity.generic': 'Tevékenység',
+    'activity.stock.added': 'Hozzáadva: {product}',
+    'activity.order.placed': 'Megrendelés: {product}',
+    'activity.user.approved': 'Admin jóváhagyva',
+    'activity.user.rejected': 'Admin visszautasítva',
+    'activity.user.logout': 'Kijelentkezés',
+    'activity.session.revoked': 'Munkamenet visszavonva',
+    'activity.session.viewed': 'Munkamenetek megtekintve',
   },
 };
 

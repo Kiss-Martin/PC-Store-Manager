@@ -95,7 +95,13 @@
               class="text-violet-600 mt-0.5"
             size="24"></lucide-icon>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium m-0" [style.color]="'var(--color-text)'">{{ activity.description }}</p>
+              <p class="text-sm font-medium m-0" [style.color]="'var(--color-text)'">
+                @if (activity.i18nKey) {
+                  {{ activity.i18nKey | t }} — <span [style.color]="'var(--color-muted)'">{{ activity.actor || activity.target }}</span>
+                } @else {
+                  {{ activity.description }}
+                }
+              </p>
               <p class="text-xs mt-1 m-0" [style.color]="'var(--color-muted)'">{{ activity.timestamp }}</p>
             </div>
           </div>

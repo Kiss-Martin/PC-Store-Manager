@@ -116,6 +116,9 @@ export interface DashboardActivity {
   description: string;
   timestamp: string;
   type: string;
+  i18nKey?: string;
+  actor?: string;
+  target?: string;
 }
 
 export interface AuditLog {

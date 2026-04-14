@@ -177,6 +177,9 @@ export class DashboardComponent implements OnInit {
           description: a.description,
           timestamp: a.timestamp || '',
           type: a.type || 'activity',
+          i18nKey: a.i18nKey,
+          actor: a.actor,
+          target: a.target,
         }));
 
         this.isLoading = false;

@@ -173,11 +173,11 @@ const AnalyticsService = {
           .limit(10)
       );
 
-      // Fetch from audit_logs (user registrations, approvals, etc.)
+      // Fetch from audit_logs (user registrations, approvals, etc.) with user info
       const auditEvents = await run(
         supabase
           .from('audit_logs')
-          .select('id, created_at, event_type, details, actor_user_id, target_user_id')
+          .select('id, created_at, event_type, details, actor_user_id, target_user_id, actor:actor_user_id(username), target:target_user_id(username)')
           .gte('created_at', startDate.toISOString())
           .order('created_at', { ascending: false })
           .limit(10)
@@ -187,15 +187,18 @@ const AnalyticsService = {
       const logActivities = (allRecentLogs || []).map((log) => {
         let type = 'activity';
         let description = 'Activity';
+        let activityKey = 'activity.generic';
         
         if (log.action === 'stock_in') {
           type = 'inventory';
           description = `Added: ${log.items?.name || 'Unknown'} — ${log.details || 'New stock'}`;
+          activityKey = 'activity.stock.added';
         } else if (log.action === 'stock_out') {
           type = 'order';
           const quantityMatch = log.details?.match(/Sold (\d+) unit/);
           const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
           description = `Order: ${log.items?.name || 'Unknown'} (${quantity}x) — ${log.customers?.name || 'Guest'}`;
+          activityKey = 'activity.order.placed';
         }
         
         return {
@@ -204,38 +207,50 @@ const AnalyticsService = {
           timestamp: new Date(log.timestamp).toISOString().replace('T', ' ').substring(0, 16),
           type,
           action: log.action,
+          i18nKey: activityKey,
         };
       });
 
       // Process audit events into activities
       const auditActivities = (auditEvents || []).map((event) => {
         let type = 'activity';
+        let i18nKey = 'activity.generic';
+        const actorUsername = event.actor?.username || 'System';
+        const targetUsername = event.target?.username || 'User';
         let description = 'Activity';
-        const actor = event.actor_user_id ? `User ${event.actor_user_id.substring(0, 6)}` : 'System';
-        const target = event.target_user_id ? `User ${event.target_user_id.substring(0, 6)}` : 'User';
 
         switch (event.event_type) {
           case 'approve_admin':
           case 'approve_admin_oneclick':
             type = 'approval';
-            description = `Approved admin: ${target}`;
+            i18nKey = 'activity.user.approved';
+            description = `Approved admin: ${targetUsername}`;
             break;
           case 'reject_admin':
           case 'reject_admin_oneclick':
             type = 'rejection';
-            description = `Rejected admin: ${target}`;
+            i18nKey = 'activity.user.rejected';
+            description = `Rejected admin: ${targetUsername}`;
             break;
           case 'logout':
             type = 'logout';
-            description = `Logout: ${actor}`;
+            i18nKey = 'activity.user.logout';
+            description = `Logout: ${actorUsername}`;
             break;
           case 'revoke_session':
             type = 'security';
-            description = `Session revoked: ${target}`;
+            i18nKey = 'activity.session.revoked';
+            description = `Session revoked: ${targetUsername}`;
+            break;
+          case 'view_sessions':
+            type = 'activity';
+            i18nKey = 'activity.session.viewed';
+            description = `Viewed sessions: ${actorUsername}`;
             break;
           default:
             type = 'activity';
-            description = `${event.event_type?.replace(/_/g, ' ')}: ${actor}`;
+            description = `${event.event_type?.replace(/_/g, ' ')}: ${actorUsername}`;
+            i18nKey = 'activity.generic';
         }
         
         return {
@@ -244,6 +259,9 @@ const AnalyticsService = {
           timestamp: new Date(event.created_at).toISOString().replace('T', ' ').substring(0, 16),
           type,
           action: event.event_type,
+          i18nKey,
+          actor: actorUsername,
+          target: targetUsername,
         };
       });
 
