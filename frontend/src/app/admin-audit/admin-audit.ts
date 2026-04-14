@@ -27,6 +27,11 @@ export class AdminAuditComponent implements OnInit {
     this.loadLogs();
   }
 
+  getEventLabel(eventType: string): string {
+    const key = `audit.event.${eventType}`;
+    return this.i18n.t(key);
+  }
+
   loadLogs(): void {
     this.loading = true;
     this.api.getWithCredentials<{ logs: AuditLog[]; total: number }>(`/auth/admin/audit?page=${this.page}&limit=${this.limit}`).subscribe({

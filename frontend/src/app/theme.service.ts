@@ -18,10 +18,14 @@ export class ThemeService {
   }
 
   apply() {
+    const html = document.documentElement;
+    const body = document.body;
     if (this.isDark()) {
-      document.body.classList.add('dark-theme');
+      html.classList.add('dark-theme');
+      body.classList.add('dark-theme');
     } else {
-      document.body.classList.remove('dark-theme');
+      html.classList.remove('dark-theme');
+      body.classList.remove('dark-theme');
     }
   }
 }

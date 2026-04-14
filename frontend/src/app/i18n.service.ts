@@ -505,6 +505,15 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'activity.user.logout': 'Logout',
     'activity.session.revoked': 'Session revoked',
     'activity.session.viewed': 'Viewed sessions',
+
+    // Audit event types
+    'audit.event.logout': 'User Logout',
+    'audit.event.revoke_session': 'Session Revoked',
+    'audit.event.view_sessions': 'Sessions Viewed',
+    'audit.event.approve_admin': 'Admin Approved',
+    'audit.event.reject_admin': 'Admin Rejected',
+    'audit.event.approve_admin_oneclick': 'Admin Approved (Email)',
+    'audit.event.reject_admin_oneclick': 'Admin Rejected (Email)',
   },
   hu: {
     'app.nav.dashboard': 'Vezérlőpult',
@@ -1006,6 +1015,15 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'activity.user.logout': 'Kijelentkezés',
     'activity.session.revoked': 'Munkamenet visszavonva',
     'activity.session.viewed': 'Munkamenetek megtekintve',
+
+    // Audit event types (Hungarian)
+    'audit.event.logout': 'Felhasználó kijelentkezés',
+    'audit.event.revoke_session': 'Munkamenet visszavonva',
+    'audit.event.view_sessions': 'Munkamenetek megtekintve',
+    'audit.event.approve_admin': 'Admin jóváhagyva',
+    'audit.event.reject_admin': 'Admin visszautasítva',
+    'audit.event.approve_admin_oneclick': 'Admin jóváhagyva (E-mail)',
+    'audit.event.reject_admin_oneclick': 'Admin visszautasítva (E-mail)',
   },
 };
 

@@ -41,6 +41,8 @@
     background: var(--color-bg);
     color: var(--color-text);
   }
+  html.dark-theme,
+  body.dark-theme,
   .dark-theme {
     --color-bg: #071226;
     --color-card: #0f1724;
