@@ -160,6 +160,98 @@ const AnalyticsService = {
         });
       }
 
+      // --- Recent Activities (diverse: stock_in, stock_out, order updates, user events) ---
+      let recentActivities = [];
+      
+      // Fetch from logs (inventory and sales)
+      const allRecentLogs = await run(
+        supabase
+          .from('logs')
+          .select('id, timestamp, action, details, items(name, price), customers(name)')
+          .gte('timestamp', startDate.toISOString())
+          .order('timestamp', { ascending: false })
+          .limit(10)
+      );
+
+      // Fetch from audit_logs (user registrations, approvals, etc.)
+      const auditEvents = await run(
+        supabase
+          .from('audit_logs')
+          .select('id, created_at, event_type, details, actor_user_id, target_user_id')
+          .gte('created_at', startDate.toISOString())
+          .order('created_at', { ascending: false })
+          .limit(10)
+      );
+
+      // Process logs into activities
+      const logActivities = (allRecentLogs || []).map((log) => {
+        let type = 'activity';
+        let description = 'Activity';
+        
+        if (log.action === 'stock_in') {
+          type = 'inventory';
+          description = `Added: ${log.items?.name || 'Unknown'} — ${log.details || 'New stock'}`;
+        } else if (log.action === 'stock_out') {
+          type = 'order';
+          const quantityMatch = log.details?.match(/Sold (\d+) unit/);
+          const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
+          description = `Order: ${log.items?.name || 'Unknown'} (${quantity}x) — ${log.customers?.name || 'Guest'}`;
+        }
+        
+        return {
+          id: log.id,
+          description,
+          timestamp: new Date(log.timestamp).toISOString().replace('T', ' ').substring(0, 16),
+          type,
+          action: log.action,
+        };
+      });
+
+      // Process audit events into activities
+      const auditActivities = (auditEvents || []).map((event) => {
+        let type = 'activity';
+        let description = 'Activity';
+        const actor = event.actor_user_id ? `User ${event.actor_user_id.substring(0, 6)}` : 'System';
+        const target = event.target_user_id ? `User ${event.target_user_id.substring(0, 6)}` : 'User';
+
+        switch (event.event_type) {
+          case 'approve_admin':
+          case 'approve_admin_oneclick':
+            type = 'approval';
+            description = `Approved admin: ${target}`;
+            break;
+          case 'reject_admin':
+          case 'reject_admin_oneclick':
+            type = 'rejection';
+            description = `Rejected admin: ${target}`;
+            break;
+          case 'logout':
+            type = 'logout';
+            description = `Logout: ${actor}`;
+            break;
+          case 'revoke_session':
+            type = 'security';
+            description = `Session revoked: ${target}`;
+            break;
+          default:
+            type = 'activity';
+            description = `${event.event_type?.replace(/_/g, ' ')}: ${actor}`;
+        }
+        
+        return {
+          id: event.id,
+          description,
+          timestamp: new Date(event.created_at).toISOString().replace('T', ' ').substring(0, 16),
+          type,
+          action: event.event_type,
+        };
+      });
+
+      // Combine and sort by timestamp (most recent first)
+      recentActivities = [...logActivities, ...auditActivities]
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 10);
+
       // --- Average Order Value ---
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -204,6 +296,7 @@ const AnalyticsService = {
         categoryChart,
         topProducts,
         recentTransactions,
+        recentActivities,
       };
     },
 

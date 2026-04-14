@@ -196,10 +196,15 @@ export class DashboardComponent implements OnInit {
 
   getActivityIcon(type: string): string {
     const icons: { [key: string]: string } = {
-      order: 'package',
-      inventory: 'chart-column',
+      order: 'shopping-bag',
+      inventory: 'inbox',
+      approval: 'circle-check',
+      rejection: 'circle-x',
+      logout: 'log-out',
+      security: 'shield',
       review: 'star',
       payment: 'credit-card',
+      activity: 'activity',
     };
     return icons[type] || 'activity';
   }

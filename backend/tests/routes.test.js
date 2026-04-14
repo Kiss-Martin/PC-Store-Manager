@@ -41,7 +41,7 @@ import http from 'http';
 
 function request(app, method, path, body = null, headers = {}) {
   return new Promise((resolve, reject) => {
-    const server = app.listen(0, () => {
+    const server = app.listen(0, '127.0.0.1', () => {
       const { port } = server.address();
       const options = {
         hostname: '127.0.0.1',
@@ -55,11 +55,13 @@ function request(app, method, path, body = null, headers = {}) {
         res.on('data', (chunk) => (data += chunk));
         res.on('end', () => {
           server.close();
-          try {
-            resolve({ status: res.statusCode, headers: res.headers, body: JSON.parse(data) });
-          } catch {
-            resolve({ status: res.statusCode, headers: res.headers, body: data });
-          }
+          setTimeout(() => {
+            try {
+              resolve({ status: res.statusCode, headers: res.headers, body: JSON.parse(data) });
+            } catch {
+              resolve({ status: res.statusCode, headers: res.headers, body: data });
+            }
+          }, 50);
         });
       });
       req.on('error', (err) => {
@@ -68,6 +70,9 @@ function request(app, method, path, body = null, headers = {}) {
       });
       if (body) req.write(JSON.stringify(body));
       req.end();
+    });
+    server.on('error', (err) => {
+      reject(err);
     });
   });
 }

@@ -47,11 +47,11 @@ export const getDashboard = async (req, res) => {
     };
   }
 
-  const activities = (analytics.recentTransactions || []).map((t) => ({
+  const activities = (analytics.recentActivities || analytics.recentTransactions || []).map((t) => ({
     id: t.id,
-    description: `${t.product} — ${t.customer}`,
-    timestamp: t.date || '',
-    type: t.type || 'activity',
+    description: t.description || `${t.product} — ${t.customer}`,
+    timestamp: t.timestamp || t.date || '',
+    type: t.type || t.action || 'activity',
   }));
 
   res.json({ stats, activities });
