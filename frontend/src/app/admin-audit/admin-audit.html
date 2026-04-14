@@ -85,8 +85,8 @@
                 <td class="py-4 px-5">
                   <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-violet-600/10 text-violet-600">{{ getEventLabel(l.event_type) }}</span>
                 </td>
-                <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono bg-gray-100 dark:bg-gray-800" [style.color]="'var(--color-muted)'">{{ l.actor_user_id || '-' }}</span></td>
-                <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono bg-gray-100 dark:bg-gray-800" [style.color]="'var(--color-muted)'">{{ l.target_user_id || '-' }}</span></td>
+                <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono" [style.background]="'rgba(124, 58, 237, 0.1)'" [style.color]="'var(--color-muted)'">{{ l.actor_user_id || '-' }}</span></td>
+                <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono" [style.background]="'rgba(124, 58, 237, 0.1)'" [style.color]="'var(--color-muted)'">{{ l.target_user_id || '-' }}</span></td>
                 <td class="py-4 px-5">
                   <pre class="text-xs m-0 p-2 rounded-lg max-w-xs overflow-auto whitespace-pre-wrap" [style.background]="'var(--color-card)'" [style.color]="'var(--color-muted)'" [style.border]="'1px solid var(--color-card-border)'">{{ l.details | json }}</pre>
                 </td>
