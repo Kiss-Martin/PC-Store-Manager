@@ -88,7 +88,7 @@
                 <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono bg-gray-100 dark:bg-gray-800" [style.color]="'var(--color-muted)'">{{ l.actor_user_id || '-' }}</span></td>
                 <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono bg-gray-100 dark:bg-gray-800" [style.color]="'var(--color-muted)'">{{ l.target_user_id || '-' }}</span></td>
                 <td class="py-4 px-5">
-                  <pre class="text-xs m-0 p-2 rounded-lg bg-gray-50 max-w-xs overflow-auto whitespace-pre-wrap" [style.color]="'var(--color-muted)'">{{ l.details | json }}</pre>
+                  <pre class="text-xs m-0 p-2 rounded-lg max-w-xs overflow-auto whitespace-pre-wrap" [style.background]="'var(--color-card)'" [style.color]="'var(--color-muted)'" [style.border]="'1px solid var(--color-card-border)'">{{ l.details | json }}</pre>
                 </td>
                 <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ l.created_at | date:'medium' }}</td>
               </tr>
