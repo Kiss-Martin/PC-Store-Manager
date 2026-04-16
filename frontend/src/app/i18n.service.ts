@@ -191,6 +191,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'register.error.selectRole': 'Please select a role',
     'register.error.usernameLength': 'Username must be at least 3 characters',
     'register.error.usernameChars': 'Username can only contain letters, numbers, underscores, dots, and hyphens',
+    'register.error.usernameNoZalgo': 'Username contains invalid characters',
     'register.error.passwordLength': 'Password must be at least 8 characters',
     'register.error.passwordUppercase': 'Password must contain at least one uppercase letter',
     'register.error.passwordLowercase': 'Password must contain at least one lowercase letter',
@@ -300,6 +301,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'profile.uploadAvatar': 'Upload avatar',
     'profile.success.avatarUploaded': 'Avatar uploaded',
     'profile.error.avatarUpload': 'Failed to upload avatar',
+    'profile.error.invalidImageType': 'Only JPEG, PNG, WebP, and GIF images allowed',
+    'profile.error.imageTooLarge': 'Image must be smaller than 2MB',
 
     // Admin sessions
     'admin.sessionsTitle': 'Active Sessions (Admin)',
@@ -499,6 +502,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     // Activity translations
     'activity.generic': 'Activity',
     'activity.stock.added': 'Added: {product}',
+    'activity.stock.removed': 'Stock removed: {product}',
     'activity.order.placed': 'Order: {product}',
     'activity.user.approved': 'Approved admin',
     'activity.user.rejected': 'Rejected admin',
@@ -701,6 +705,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'register.error.selectRole': 'Válassz szerepkört',
     'register.error.usernameLength': 'A felhasználónév legalább 3 karakter legyen',
     'register.error.usernameChars': 'A felhasználónév csak betűket, számokat, aláhúzást, pontot és kötőjelet tartalmazhat',
+    'register.error.usernameNoZalgo': 'A felhasználónév érvénytelen karaktereket tartalmaz',
     'register.error.passwordLength': 'A jelszó legalább 8 karakter legyen',
     'register.error.passwordUppercase': 'A jelszónak tartalmaznia kell legalább egy nagybetűt',
     'register.error.passwordLowercase': 'A jelszónak tartalmaznia kell legalább egy kisbetűt',
@@ -800,6 +805,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'profile.uploadAvatar': 'Profilkép feltöltése',
     'profile.success.avatarUploaded': 'Profilkép feltöltve',
     'profile.error.avatarUpload': 'A profilkép feltöltése sikertelen',
+    'profile.error.invalidImageType': 'Csak JPEG, PNG, WebP és GIF képek engedélyezve',
+    'profile.error.imageTooLarge': 'A kép kisebb kell, hogy legyen 2MB-nál',
     'profile.sessions': 'Aktív munkamenetek',
     'profile.revoke': 'Visszavonás',
     'profile.issued': 'Kiállítva',
@@ -1009,6 +1016,7 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     // Activity translations (Hungarian)
     'activity.generic': 'Tevékenység',
     'activity.stock.added': 'Hozzáadva: {product}',
+    'activity.stock.removed': 'Készlet csökkentve: {product}',
     'activity.order.placed': 'Megrendelés: {product}',
     'activity.user.approved': 'Admin jóváhagyva',
     'activity.user.rejected': 'Admin visszautasítva',

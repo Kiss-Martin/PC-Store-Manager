@@ -194,11 +194,11 @@ const AnalyticsService = {
           description = `Added: ${log.items?.name || 'Unknown'} — ${log.details || 'New stock'}`;
           activityKey = 'activity.stock.added';
         } else if (log.action === 'stock_out') {
-          type = 'order';
+          type = 'inventory';
           const quantityMatch = log.details?.match(/Sold (\d+) unit/);
           const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
-          description = `Order: ${log.items?.name || 'Unknown'} (${quantity}x) — ${log.customers?.name || 'Guest'}`;
-          activityKey = 'activity.order.placed';
+          description = `Stock removed: ${log.items?.name || 'Unknown'} (${quantity}x) — ${log.customers?.name || 'Guest'}`;
+          activityKey = 'activity.stock.removed';
         }
         
         return {
