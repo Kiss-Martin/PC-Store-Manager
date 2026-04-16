@@ -111,21 +111,45 @@ export class ProfileComponent implements OnInit, OnDestroy {
   onAvatarSelected(ev: any): void {
     const f: File = ev?.target?.files?.[0];
     if (!f) return;
-    // preview
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(f.type)) {
+      this.toast.show(this.i18n.t('profile.error.invalidImageType'), { type: 'error' });
+      return;
+    }
+
+    // Validate file size (2MB max)
+    const maxSize = 2 * 1024 * 1024;
+    if (f.size > maxSize) {
+      this.toast.show(this.i18n.t('profile.error.imageTooLarge'), { type: 'error' });
+      return;
+    }
+
+    // Preview
     if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) URL.revokeObjectURL(this.avatarUrl);
     this.avatarUrl = URL.createObjectURL(f);
-    // upload
+
+    // Upload
     this.isSaving = true;
     this.userService.uploadAvatar(f).subscribe({
       next: () => {
         this.isSaving = false;
-        this.showSuccess(this.i18n.t('profile.success.avatarUploaded'));
+        this.toast.show(this.i18n.t('profile.success.avatarUploaded'), { type: 'success' });
         this.loadAvatar();
       },
       error: (err: any) => {
         this.isSaving = false;
         console.error('Failed to upload avatar:', err);
-        this.showError(err?.error?.error || this.i18n.t('profile.error.avatarUpload'));
+        // Revert preview on error
+        if (this.avatarUrl && this.avatarUrl.startsWith('blob:')) URL.revokeObjectURL(this.avatarUrl);
+        this.avatarUrl = null;
+        this.loadAvatar();
+
+        let errorMsg = this.i18n.t('profile.error.avatarUpload');
+        if (err?.error?.error) errorMsg = err.error.error;
+        else if (err?.error?.message) errorMsg = err.error.message;
+        this.toast.show(errorMsg, { type: 'error' });
       }
     });
   }

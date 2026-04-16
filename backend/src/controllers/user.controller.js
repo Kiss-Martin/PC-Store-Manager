@@ -1,5 +1,6 @@
 // Users controller: handles user-related endpoints (workers, profile)
 import UserService from '../services/user.service.js';
+import { updateProfileSchema } from '../validators.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -14,7 +15,8 @@ export const getProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const user = await UserService.updateProfile(req.user.id, req.body, req.lang);
+  const validated = await updateProfileSchema.parseAsync(req.body);
+  const user = await UserService.updateProfile(req.user.id, validated, req.lang);
   res.json({ user });
 };
 
