@@ -217,7 +217,7 @@
                     <div class="text-xs" [style.color]="'var(--color-muted)'">{{ 'admin.unknownUser' | t }}</div>
                   }
                 </td>
-              <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono bg-gray-100" [style.color]="'var(--color-muted)'">{{ s.ip || ('profile.unknown' | t) }}</span></td>
+              <td class="py-4 px-5"><span class="inline-flex px-3 py-1 rounded-full text-xs font-mono" [style.color]="'var(--color-muted)'">{{ s.ip || ('profile.unknown' | t) }}</span></td>
               <td class="py-4 px-5 text-xs max-w-48 truncate" [style.color]="'var(--color-muted)'">{{ s.user_agent || ('profile.unknown' | t) }}</td>
               <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ s.created_at | date:'medium' }}</td>
               <td class="py-4 px-5 text-sm" [style.color]="'var(--color-muted)'">{{ s.expires_at | date:'medium' }}</td>
