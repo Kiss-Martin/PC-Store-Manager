@@ -1,4 +1,7 @@
 @echo off
+REM Kill all existing node processes to free up ports
+taskkill /F /IM node.exe /T 2>nul
+
 REM Start backend and frontend in separate cmd windows and open the frontend in the default browser
 cd /d %~dp0
 
