@@ -63,6 +63,15 @@ const emailStrings = {
       newStatus: 'New Status',
       footer: 'This notification was sent automatically by the PC Store Manager application.',
     },
+    stockUpdate: {
+      heading: '&#128315; Stock Updated',
+      body: 'Product stock has been updated in the system.',
+      product: 'Product',
+      oldQuantity: 'Previous Quantity',
+      newQuantity: 'New Quantity',
+      change: 'Change',
+      footer: 'This notification was sent automatically by the PC Store Manager application.',
+    },
   },
   hu: {
     adminNotify: {
@@ -126,6 +135,15 @@ const emailStrings = {
       orderNumber: 'Rendelés száma',
       product: 'Termék',
       newStatus: 'Új státusz',
+      footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
+    },
+    stockUpdate: {
+      heading: '&#128315; Készlet frissítve',
+      body: 'A termék készlete frissítésre került a rendszerben.',
+      product: 'Termék',
+      oldQuantity: 'Előző mennyiség',
+      newQuantity: 'Új mennyiség',
+      change: 'Változás',
       footer: 'Ezt az értesítést automatikusan küldte a PC Store Manager alkalmazás.',
     },
   },
@@ -291,4 +309,27 @@ export function renderBuyerOrderConfirmation({ lang = 'en', orderNumber, product
   return { subject, text: plain, html };
 }
 
-export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification, renderOrderStatusChangeNotification, renderBuyerOrderConfirmation };
+export function renderStockUpdateNotification({ lang = 'en', productName, oldQuantity, newQuantity }) {
+  const s = getEmailStrings(lang);
+  const st = s.stockUpdate;
+  const quantityChange = newQuantity - oldQuantity;
+  const changeStr = quantityChange > 0 ? `+${quantityChange}` : `${quantityChange}`;
+  const subject = `${st.heading} — ${productName}`;
+  const plain = `${st.body}\n\n${st.product}: ${productName}\n${st.oldQuantity}: ${oldQuantity}\n${st.newQuantity}: ${newQuantity}\n${st.change}: ${changeStr}\n\n${st.footer}`;
+  const html = `
+  <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
+    <h2 style="color:#111827">${st.heading}</h2>
+    <p>${st.body}</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;background:#f9fafb;border-radius:8px">
+      <tr><td style="padding:10px 14px;font-weight:600;width:140px">${st.product}</td><td style="padding:10px 14px">${safe(productName)}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${st.oldQuantity}</td><td style="padding:10px 14px">${oldQuantity}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:600">${st.newQuantity}</td><td style="padding:10px 14px">${newQuantity}</td></tr>
+      <tr style="background:#fff"><td style="padding:10px 14px;font-weight:600">${st.change}</td><td style="padding:10px 14px;color:${quantityChange > 0 ? '#10b981' : '#ef4444'}">${changeStr}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#6b7280;margin-top:18px">${st.footer}</p>
+  </div>
+  `;
+  return { subject, text: plain, html };
+}
+
+export default { renderAdminNotification, renderPasswordReset, renderSupportContact, renderApprovalNotification, renderNewOrderNotification, renderOrderStatusChangeNotification, renderBuyerOrderConfirmation, renderStockUpdateNotification };

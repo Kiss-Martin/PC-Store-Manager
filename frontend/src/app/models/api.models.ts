@@ -119,6 +119,8 @@ export interface DashboardActivity {
   i18nKey?: string;
   actor?: string;
   target?: string;
+  product?: string;
+  quantity?: number;
 }
 
 export interface AuditLog {
@@ -133,6 +135,13 @@ export interface AuditLog {
 }
 
 export interface PendingAdmin {
+  id: string;
+  email: string;
+  username: string;
+  fullname?: string;
+}
+
+export interface PendingWorker {
   id: string;
   email: string;
   username: string;

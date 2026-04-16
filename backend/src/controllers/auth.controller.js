@@ -146,7 +146,15 @@ export const listAllSessions = async (req, res) => {
 // Admin: list pending admin approvals
 export const listPendingAdmins = async (req, res) => {
   try {
-    const resp = await run(supabase.from('users').select('id,email,username,fullname').eq('role', 'admin').or('admin_approved.eq.false,admin_approved.is.null'));
+    console.log('listPendingAdmins: Fetching admins with admin_approved != true');
+    const resp = await run(
+      supabase
+        .from('users')
+        .select('id,email,username,fullname,created_at')
+        .eq('role', 'admin')
+        .neq('admin_approved', true)
+    );
+    console.log('listPendingAdmins: Query result:', resp ? `${resp.length} admins` : 'null');
     const filtered = (resp || []).filter(u => u.id !== req.user.id);
     res.json({ users: filtered });
   } catch (e) {
@@ -235,6 +243,133 @@ export const rejectAdminOneClick = async (req, res) => {
     await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
     await run(supabase.from('users').delete().eq('id', req.params.id).eq('role', 'admin').or('admin_approved.eq.false,admin_approved.is.null'));
     await writeAuditLog('reject_admin_oneclick', approverId, req.params.id, { via: 'email' });
+
+    const redirectTo = FRONTEND_URL + '/admin/action-result?result=rejected';
+    return res.redirect(302, redirectTo);
+  } catch (e) {
+    return res.status(400).send('Invalid or expired token');
+  }
+};
+
+// Admin: list pending worker approvals
+export const listPendingWorkers = async (req, res) => {
+  try {
+    console.log('listPendingWorkers: Fetching workers with admin_approved != true');
+    const resp = await run(
+      supabase
+        .from('users')
+        .select('id,email,username,fullname,created_at')
+        .eq('role', 'worker')
+        .neq('admin_approved', true)
+    );
+    console.log('listPendingWorkers: Query result:', resp ? `${resp.length} workers` : 'null');
+    const filtered = (resp || []).filter(u => u.id !== req.user.id);
+    console.log('listPendingWorkers: Filtered result:', filtered.length, 'workers');
+    res.json({ users: filtered });
+  } catch (e) {
+    console.error('listPendingWorkers: ERROR -', e && e.message ? e.message : e);
+    res.status(500).json({ error: 'Failed to list pending workers' });
+  }
+};
+
+// Admin: approve a pending worker
+export const approveWorker = async (req, res) => {
+  const id = req.params.id;
+  try {
+    await run(supabase.from('users').update({ admin_approved: true, worker_approved_by: req.user.id, worker_approved_at: new Date().toISOString() }).eq('id', id));
+    await writeAuditLog('approve_worker', req.user?.id || null, id, null);
+    AuthService.sendApprovalEmail(id, req.lang).catch(() => {});
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to approve worker' });
+  }
+};
+
+// export const approveAdmin = async (req, res) => {
+//   const id = req.params.id;
+//   try {
+//     await run(
+//       supabase
+//         .from("users")
+//         .update({
+//           admin_approved: true,
+//           admin_approved_by: req.user.id,
+//           admin_approved_at: new Date().toISOString(),
+//         })
+//         .eq("id", id),
+//     );
+//     await writeAuditLog("approve_admin", req.user?.id || null, id, null);
+//     AuthService.sendApprovalEmail(id, req.lang).catch(() => {});
+//     res.json({ success: true });
+//   } catch (e) {
+//     res.status(500).json({ error: "Failed to approve admin" });
+//   }
+// };
+
+// Admin: reject (delete) a pending worker
+export const rejectWorker = async (req, res) => {
+  const id = req.params.id;
+  try {
+    await run(supabase.from('users').delete().eq('id', id).eq('role', 'worker').or('admin_approved.eq.false,admin_approved.is.null'));
+    await writeAuditLog('reject_worker', req.user?.id || null, id, null);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to reject worker' });
+  }
+};
+
+// One-click approve worker via signed token (no auth required)
+export const approveWorkerOneClick = async (req, res) => {
+  const token = req.query?.token || req.body?.token;
+  if (!token) return res.status(400).send('Missing token');
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (!payload || payload.type !== 'admin_action' || payload.action !== 'approve_worker' || String(payload.target_id) !== String(req.params.id)) {
+      return res.status(400).send('Invalid token');
+    }
+    const approverId = payload.approver_id;
+    const approver = await run(supabase.from('users').select('id,role,admin_approved').eq('id', approverId).single()).catch(() => null);
+    if (!approver || approver.role !== 'admin' || !approver.admin_approved) return res.status(403).send('Approver not authorized');
+    const tokenJti = payload.jti;
+    if (!tokenJti) return res.status(400).send('Invalid token');
+    const existing = await run(supabase.from('revoked_tokens').select('id,expires_at').eq('jti', tokenJti).limit(1).single()).catch(() => null);
+    if (existing) return res.status(400).send('Token already used or invalid');
+
+    const expiresAt = payload.exp ? new Date(payload.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
+
+    const nowIso = new Date().toISOString();
+    await run(supabase.from('users').update({ admin_approved: true, worker_approved_by: approverId, worker_approved_at: nowIso }).eq('id', req.params.id));
+    await writeAuditLog('approve_worker_oneclick', approverId, req.params.id, { via: 'email' });
+    AuthService.sendApprovalEmail(req.params.id).catch(() => {});
+
+    const redirectTo = FRONTEND_URL + '/admin/action-result?result=approved';
+    return res.redirect(302, redirectTo);
+  } catch (e) {
+    return res.status(400).send('Invalid or expired token');
+  }
+};
+
+// One-click reject worker via signed token (no auth required)
+export const rejectWorkerOneClick = async (req, res) => {
+  const token = req.query?.token || req.body?.token;
+  if (!token) return res.status(400).send('Missing token');
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (!payload || payload.type !== 'admin_action' || payload.action !== 'reject_worker' || String(payload.target_id) !== String(req.params.id)) {
+      return res.status(400).send('Invalid token');
+    }
+    const approverId = payload.approver_id;
+    const approver = await run(supabase.from('users').select('id,role,admin_approved').eq('id', approverId).single()).catch(() => null);
+    if (!approver || approver.role !== 'admin' || !approver.admin_approved) return res.status(403).send('Approver not authorized');
+    const tokenJti = payload.jti;
+    if (!tokenJti) return res.status(400).send('Invalid token');
+    const existing = await run(supabase.from('revoked_tokens').select('id,expires_at').eq('jti', tokenJti).limit(1).single()).catch(() => null);
+    if (existing) return res.status(400).send('Token already used or invalid');
+    const expiresAt = payload.exp ? new Date(payload.exp * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    await run(supabase.from('revoked_tokens').insert({ jti: tokenJti, reason: 'admin_action_consumed', expires_at: expiresAt }).select().single()).catch(() => null);
+    await run(supabase.from('users').delete().eq('id', req.params.id).eq('role', 'worker').or('admin_approved.eq.false,admin_approved.is.null'));
+    await writeAuditLog('reject_worker_oneclick', approverId, req.params.id, { via: 'email' });
 
     const redirectTo = FRONTEND_URL + '/admin/action-result?result=rejected';
     return res.redirect(302, redirectTo);

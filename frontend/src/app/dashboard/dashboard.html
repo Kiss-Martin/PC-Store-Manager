@@ -97,7 +97,20 @@
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium m-0" [style.color]="'var(--color-text)'">
                 @if (activity.i18nKey) {
-                  {{ activity.i18nKey | t }} — <span [style.color]="'var(--color-muted)'">{{ activity.actor || activity.target }}</span>
+                  @switch(activity.i18nKey) {
+                    @case ('activity.stock.added') {
+                      {{ activity.i18nKey | t: { product: activity.product } }}
+                    }
+                    @case ('activity.stock.addedWithQuantity') {
+                      {{ activity.i18nKey | t: { quantity: activity.quantity, product: activity.product } }}
+                    }
+                    @case ('activity.stock.removed') {
+                      {{ activity.i18nKey | t: { product: activity.product } }}
+                    }
+                    @default {
+                      {{ activity.i18nKey | t }} — <span [style.color]="'var(--color-muted)'">{{ activity.actor || activity.target }}</span>
+                    }
+                  }
                 } @else {
                   {{ activity.description }}
                 }

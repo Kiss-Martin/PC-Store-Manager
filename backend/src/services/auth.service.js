@@ -68,10 +68,14 @@ const AuthService = {
           fullname: fullname || null,
           password_hash: hashed,
           role: role || 'worker',
-          // if creating an admin, require approval by another admin
+          // Admins require approval by another admin
           admin_approved: role === 'admin' ? false : true,
+          // Workers require approval
+          // eslint-disable-next-line no-dupe-keys
+          admin_approved: role === 'worker' ? false : true,
         }).select('id,email,username,fullname,role,admin_approved').single()
       );
+      console.log('REGISTER: Created user -', { id: data.id, email: data.email, role: data.role, admin_approved: data.admin_approved });
     } catch (e) {
       // Detect unique constraint violations and return field-level errors
       if (e.code === '23505') {
@@ -101,13 +105,21 @@ const AuthService = {
       if (!existingAdmins || existingAdmins.length === 0) {
         await run(supabase.from('users').update({ admin_approved: true, admin_approved_at: new Date().toISOString() }).eq('id', data.id));
         data.admin_approved = true;
+        console.log('REGISTER: Auto-approved first admin -', data.id);
       }
     }
-    // send registration confirmation to the new user (inform about awaiting approval if admin)
+
+    // Workers always require approval - do NOT auto-approve
+    if (data.role === 'worker') {
+      console.log('REGISTER: Worker awaiting approval -', data.id);
+    }
+
+    // send registration confirmation to the new user (inform about awaiting approval if admin/worker)
     try {
-      const regSubject = data.role === 'admin' && !data.admin_approved ? t(lang, 'auth.registrationAwaitingSubject') : t(lang, 'auth.registrationSubject');
+      const needsApproval = (data.role === 'admin' && !data.admin_approved) || (data.role === 'worker' && !data.admin_approved);
+      const regSubject = needsApproval ? t(lang, 'auth.registrationAwaitingSubject') : t(lang, 'auth.registrationSubject');
       const regLink = `${FRONTEND_URL}/`; 
-      const regTpl = renderRegistrationConfirmation({ lang, subject: regSubject, username: data.username, fullname: data.fullname || '', link: regLink, awaitingApproval: data.role === 'admin' && !data.admin_approved });
+      const regTpl = renderRegistrationConfirmation({ lang, subject: regSubject, username: data.username, fullname: data.fullname || '', link: regLink, awaitingApproval: needsApproval });
       if (mailTransporter) {
         await mailTransporter.sendMail({ to: data.email, from: smtpConfig.from, subject: regTpl.subject, text: regTpl.text, html: regTpl.html }).catch((e) => { throw e; });
       } else {
@@ -117,24 +129,26 @@ const AuthService = {
       console.warn('Failed to send registration confirmation to', data.email, e && (e.message || e));
     }
 
-    // New admins must be approved before receiving tokens
-    if (data.role === 'admin' && !data.admin_approved) {
-        // Notify existing approved admins by email that a new admin awaits approval
+    // New admins and workers must be approved before receiving tokens
+    if ((data.role === 'admin' && !data.admin_approved) || (data.role === 'worker' && !data.admin_approved)) {
+        // Notify existing approved admins by email that a new admin/worker awaits approval
         (async () => {
           try {
             const admins = await run(supabase.from('users').select('id,email').eq('role', 'admin').eq('admin_approved', true));
             if (admins && admins.length) {
               const subject = t(lang, 'auth.notifyAdminsSubject');
-              const link = `${FRONTEND_URL}/admin/pending-admins`;
+              const link = `${FRONTEND_URL}/admin/pending-${data.role === 'admin' ? 'admins' : 'workers'}`;
               for (const a of admins) {
                 try {
                   // generate one-click approve/reject tokens for this approver
                   const approveJti = crypto.randomBytes(16).toString('hex');
                   const rejectJti = crypto.randomBytes(16).toString('hex');
-                  const approveToken = jwt.sign({ type: 'admin_action', action: 'approve', approver_id: a.id, approver_email: a.email, target_id: data.id, jti: approveJti }, JWT_SECRET, { expiresIn: '7d' });
-                  const rejectToken = jwt.sign({ type: 'admin_action', action: 'reject', approver_id: a.id, approver_email: a.email, target_id: data.id, jti: rejectJti }, JWT_SECRET, { expiresIn: '7d' });
-                  const approveUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-admins/${data.id}/approve/oneclick?token=${encodeURIComponent(approveToken)}`;
-                  const rejectUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-admins/${data.id}/reject/oneclick?token=${encodeURIComponent(rejectToken)}`;
+                  const approveAction = data.role === 'admin' ? 'approve' : 'approve_worker';
+                  const rejectAction = data.role === 'admin' ? 'reject' : 'reject_worker';
+                  const approveToken = jwt.sign({ type: 'admin_action', action: approveAction, approver_id: a.id, approver_email: a.email, target_id: data.id, jti: approveJti }, JWT_SECRET, { expiresIn: '7d' });
+                  const rejectToken = jwt.sign({ type: 'admin_action', action: rejectAction, approver_id: a.id, approver_email: a.email, target_id: data.id, jti: rejectJti }, JWT_SECRET, { expiresIn: '7d' });
+                  const approveUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-${data.role === 'admin' ? 'admins' : 'workers'}/${data.id}/approve/oneclick?token=${encodeURIComponent(approveToken)}`;
+                  const rejectUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-${data.role === 'admin' ? 'admins' : 'workers'}/${data.id}/reject/oneclick?token=${encodeURIComponent(rejectToken)}`;
 
                   const tpl = renderAdminNotification({ lang, subject, email: data.email, username: data.username, fullname: data.fullname || '', approveUrl, rejectUrl, reviewLink: link });
                   // send email immediately (no extra tables required). If SMTP missing, fallback to logging.
@@ -142,10 +156,10 @@ const AuthService = {
                     if (mailTransporter) {
                       await mailTransporter.sendMail({ to: a.email, from: smtpConfig.from, subject: tpl.subject, text: tpl.text, html: tpl.html });
                     } else {
-                      console.log('Admin notification (no SMTP) ->', a.email, tpl.text, 'approve:', approveUrl, 'reject:', rejectUrl);
+                      console.log(`${data.role} notification (no SMTP) ->`, a.email, tpl.text, 'approve:', approveUrl, 'reject:', rejectUrl);
                     }
                   } catch (e) {
-                    console.warn('Failed to send admin notification to', a.email, e && e.message ? e.message : e);
+                    console.warn(`Failed to send ${data.role} notification to`, a.email, e && e.message ? e.message : e);
                   }
                 } catch (e) {
                   console.warn('Failed to notify admin', a && a.email ? a.email : a, e && e.message ? e.message : e);
@@ -162,7 +176,7 @@ const AuthService = {
         refreshToken: null,
         refreshExpires: null,
         requiresApproval: true,
-        message: t(lang, 'auth.registeredAwaitingApproval'),
+        message: data.role === 'admin' ? t(lang, 'auth.registeredAwaitingApproval') : t(lang, 'auth.registeredAwaitingApprovalWorker'),
       };
     }
 
@@ -278,12 +292,23 @@ const AuthService = {
       err.statusCode = 401;
       throw err;
     }
+    console.log('LOGIN: Password verified for user -', { id: data.id, email: data.email, role: data.role, admin_approved: data.admin_approved });
+    
     // Block unapproved admin accounts from logging in
     if (data.role === 'admin' && !data.admin_approved) {
-      const err = new Error(t(lang, 'auth.awaitingApproval'));
+      console.warn('LOGIN: Admin not approved, blocking -', data.id);
+      const err = new Error(t(lang, 'auth.awaitingApprovalAdmin'));
       err.statusCode = 403;
       throw err;
     }
+    // Block unapproved worker accounts from logging in
+    if (data.role === 'worker' && !data.admin_approved) {
+      console.warn('LOGIN: Worker not approved, blocking -', data.id);
+      const err = new Error(t(lang, 'auth.awaitingApprovalWorker'));
+      err.statusCode = 403;
+      throw err;
+    }
+    console.log('LOGIN: User approved, issuing tokens -', data.id);
     // Issue short-lived access token and a refresh token (persisted)
     const { token: accessToken, jti: accessJti } = generateAccessToken({ id: data.id, role: data.role, email: data.email, username: data.username, fullname: data.fullname }, '1h');
     const refreshToken = generateRefreshTokenStr();

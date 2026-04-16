@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap, shareReplay, finalize } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
-import { User, AuthResponse, Session, PendingAdmin } from '../models/api.models';
+import { User, AuthResponse, Session, PendingAdmin, PendingWorker } from '../models/api.models';
 import { I18nService } from '../i18n.service';
 import { Toast } from '../shared/toast.service';
 import {
@@ -182,12 +182,24 @@ export class AuthService {
     return this.api.getWithCredentials<{ users: PendingAdmin[] }>('/auth/admin/pending-admins');
   }
 
+  listPendingWorkers(): Observable<{ users: PendingWorker[] }> {
+    return this.api.getWithCredentials<{ users: PendingWorker[] }>('/auth/admin/pending-workers');
+  }
+
   approveAdmin(id: string) {
     return this.api.postWithCredentials(`/auth/admin/pending-admins/${id}/approve`, {});
   }
 
+  approveWorker(id: string) {
+    return this.api.postWithCredentials(`/auth/admin/pending-workers/${id}/approve`, {});
+  }
+
   rejectAdmin(id: string) {
     return this.api.postWithCredentials(`/auth/admin/pending-admins/${id}/reject`, {});
+  }
+
+  rejectWorker(id: string) {
+    return this.api.postWithCredentials(`/auth/admin/pending-workers/${id}/reject`, {});
   }
 
   revokeSession(id: string) {

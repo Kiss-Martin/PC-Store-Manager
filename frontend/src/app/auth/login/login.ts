@@ -54,7 +54,12 @@ export class LoginComponent {
       },
       error: (err: any) => {
         this.isLoading = false;
-        this.toast.show(err.error?.error || this.i18n.t('login.error.failed'), { type: 'error', timeout: 3500 });
+        // Handle approval-related errors (403)
+        if (err.status === 403) {
+          this.toast.show(err.error?.error || this.i18n.t('auth.awaitingApprovalWorker'), { type: 'warning', timeout: 4000 });
+        } else {
+          this.toast.show(err.error?.error || this.i18n.t('login.error.failed'), { type: 'error', timeout: 3500 });
+        }
       }
     });
   }

@@ -6,7 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { I18nService } from '../i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
-import { Session, PendingAdmin } from '../models/api.models';
+import { Session, PendingAdmin, PendingWorker } from '../models/api.models';
 
 @Component({
   selector: 'app-admin-sessions',
@@ -28,10 +28,11 @@ export class AdminSessionsComponent implements OnInit {
   start = '';
   end = '';
   pendingAdmins: PendingAdmin[] = [];
+  pendingWorkers: PendingAdmin[] = [];
 
   // Confirmation modal state
   showConfirmModal = false;
-  confirmAction: 'approve' | 'reject' | 'revoke' = 'approve';
+  confirmAction: 'approve' | 'reject' | 'revoke' | 'approveWorker' | 'rejectWorker' = 'approve';
   confirmTargetId: string | null = null;
   confirmTitle = '';
   confirmMessage = '';
@@ -48,6 +49,7 @@ export class AdminSessionsComponent implements OnInit {
     }
     this.loadSessions();
     this.loadPendingAdmins();
+    this.loadPendingWorkers();
   }
 
   loadSessions(): void {
@@ -72,11 +74,23 @@ export class AdminSessionsComponent implements OnInit {
   loadPendingAdmins(): void {
     this.auth.listPendingAdmins().subscribe({
       next: (res) => {
-        this.pendingAdmins = res.users || [];
+        this.pendingAdmins = Array.isArray(res.users) ? res.users : [];
       },
       error: (err: any) => {
         console.error('Failed to load pending admins', err);
         this.pendingAdmins = [];
+      }
+    });
+  }
+
+  loadPendingWorkers(): void {
+    this.auth.listPendingWorkers().subscribe({
+      next: (res) => {
+        this.pendingWorkers = Array.isArray(res.users) ? res.users : [];
+      },
+      error: (err: any) => {
+        console.error('Failed to load pending workers', err);
+        this.pendingWorkers = [];
       }
     });
   }
@@ -97,6 +111,28 @@ export class AdminSessionsComponent implements OnInit {
     this.confirmTargetId = id;
     this.confirmTitle = this.i18n.t('admin.rejectTitle');
     this.confirmMessage = this.i18n.t('admin.confirmReject');
+    this.confirmButtonText = this.i18n.t('admin.reject');
+    this.confirmColor = 'danger';
+    this.confirmIcon = 'user-x';
+    this.showConfirmModal = true;
+  }
+
+  requestApproveWorker(id: string): void {
+    this.confirmAction = 'approveWorker';
+    this.confirmTargetId = id;
+    this.confirmTitle = this.i18n.t('admin.approveWorkerTitle');
+    this.confirmMessage = this.i18n.t('admin.confirmApproveWorker');
+    this.confirmButtonText = this.i18n.t('admin.approve');
+    this.confirmColor = 'primary';
+    this.confirmIcon = 'user-check';
+    this.showConfirmModal = true;
+  }
+
+  requestRejectWorker(id: string): void {
+    this.confirmAction = 'rejectWorker';
+    this.confirmTargetId = id;
+    this.confirmTitle = this.i18n.t('admin.rejectWorkerTitle');
+    this.confirmMessage = this.i18n.t('admin.confirmRejectWorker');
     this.confirmButtonText = this.i18n.t('admin.reject');
     this.confirmColor = 'danger';
     this.confirmIcon = 'user-x';
@@ -132,6 +168,12 @@ export class AdminSessionsComponent implements OnInit {
       case 'reject':
         this.doRejectAdmin(id);
         break;
+      case 'approveWorker':
+        this.doApproveWorker(id);
+        break;
+      case 'rejectWorker':
+        this.doRejectWorker(id);
+        break;
       case 'revoke':
         this.doRevoke(id);
         break;
@@ -160,6 +202,32 @@ export class AdminSessionsComponent implements OnInit {
       error: (err: any) => {
         console.error('Reject admin failed', err);
         this.error = err.error?.error || this.i18n.t('admin.error.reject');
+      }
+    });
+  }
+
+  private doApproveWorker(id: string): void {
+    this.auth.approveWorker(id).subscribe({
+      next: () => {
+        this.pendingWorkers = this.pendingWorkers.filter((u) => u.id !== id);
+        this.success = this.i18n.t('admin.success.approvedWorker');
+      },
+      error: (err: any) => {
+        console.error('Approve worker failed', err);
+        this.error = err.error?.error || this.i18n.t('admin.error.approveWorker');
+      }
+    });
+  }
+
+  private doRejectWorker(id: string): void {
+    this.auth.rejectWorker(id).subscribe({
+      next: () => {
+        this.pendingWorkers = this.pendingWorkers.filter((u) => u.id !== id);
+        this.success = this.i18n.t('admin.success.rejectedWorker');
+      },
+      error: (err: any) => {
+        console.error('Reject worker failed', err);
+        this.error = err.error?.error || this.i18n.t('admin.error.rejectWorker');
       }
     });
   }

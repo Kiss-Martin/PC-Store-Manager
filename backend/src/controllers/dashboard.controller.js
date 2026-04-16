@@ -52,6 +52,11 @@ export const getDashboard = async (req, res) => {
     description: t.description || `${t.product} — ${t.customer}`,
     timestamp: t.timestamp || t.date || '',
     type: t.type || t.action || 'activity',
+    i18nKey: t.i18nKey,
+    product: t.product,
+    quantity: t.quantity,
+    actor: t.actor,
+    target: t.target,
   }));
 
   res.json({ stats, activities });

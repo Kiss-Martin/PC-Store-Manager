@@ -26,14 +26,13 @@ router.post('/register', authLimiter, asyncWrap(AuthController.register));
 router.post('/login', authLimiter, asyncWrap(AuthController.login));
 router.post('/forgot-password', authLimiter, asyncWrap(AuthController.forgotPassword));
 router.post('/reset-password', asyncWrap(AuthController.resetPassword));
-// One-click approve/reject links (token-based)
-router.get('/admin/pending-admins/:id/approve/oneclick', asyncWrap(AuthController.approveAdminOneClick));
-router.get('/admin/pending-admins/:id/reject/oneclick', asyncWrap(AuthController.rejectAdminOneClick));
 router.post('/refresh', refreshLimiter, asyncWrap(AuthController.refresh));
 router.post('/logout', asyncWrap(AuthController.logout));
+
 // Sessions: list and revoke
 router.get('/tokens', authMiddleware, asyncWrap(AuthController.listTokens));
 router.delete('/tokens/:id', authMiddleware, asyncWrap(AuthController.revokeToken));
+
 // Admin-only: list all sessions
 router.get('/admin/sessions', authMiddleware, requireRole('admin'), asyncWrap(AuthController.listAllSessions));
 router.get('/admin/audit', authMiddleware, requireRole('admin'), asyncWrap(AuthController.listAuditLogs));
@@ -43,5 +42,14 @@ router.delete('/admin/revoked/cleanup', authMiddleware, requireRole('admin'), as
 router.get('/admin/pending-admins', authMiddleware, requireRole('admin'), asyncWrap(AuthController.listPendingAdmins));
 router.post('/admin/pending-admins/:id/approve', authMiddleware, requireRole('admin'), asyncWrap(AuthController.approveAdmin));
 router.post('/admin/pending-admins/:id/reject', authMiddleware, requireRole('admin'), asyncWrap(AuthController.rejectAdmin));
+router.get('/admin/pending-admins/:id/approve/oneclick', asyncWrap(AuthController.approveAdminOneClick));
+router.get('/admin/pending-admins/:id/reject/oneclick', asyncWrap(AuthController.rejectAdminOneClick));
+
+// Worker approvals
+router.get('/admin/pending-workers', authMiddleware, requireRole('admin'), asyncWrap(AuthController.listPendingWorkers));
+router.post('/admin/pending-workers/:id/approve', authMiddleware, requireRole('admin'), asyncWrap(AuthController.approveWorker));
+router.post('/admin/pending-workers/:id/reject', authMiddleware, requireRole('admin'), asyncWrap(AuthController.rejectWorker));
+router.get('/admin/pending-workers/:id/approve/oneclick', asyncWrap(AuthController.approveWorkerOneClick));
+router.get('/admin/pending-workers/:id/reject/oneclick', asyncWrap(AuthController.rejectWorkerOneClick));
 
 export default router;

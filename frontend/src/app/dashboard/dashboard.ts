@@ -180,6 +180,8 @@ export class DashboardComponent implements OnInit {
           i18nKey: a.i18nKey,
           actor: a.actor,
           target: a.target,
+          product: a.product,
+          quantity: a.quantity,
         }));
 
         this.isLoading = false;
