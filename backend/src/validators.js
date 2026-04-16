@@ -12,7 +12,8 @@ export const registerSchema = z.object({
   email: z.string().email(),
   username: z.string()
     .min(3).max(32)
-    .regex(/^[a-zA-Z0-9_.-]+$/, 'usernameChars'),
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'usernameChars')
+    .refine((val) => !/[\u0300-\u036f\u0483-\u0489\u064b-\u0652]/.test(val), 'usernameNoZalgo'),
   password: strongPassword,
   fullname: z.string().max(128).optional(),
   role: z.enum(['admin', 'worker', 'buyer']).optional(),
@@ -30,6 +31,16 @@ export const loginSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: strongPassword,
+});
+
+export const updateProfileSchema = z.object({
+  email: z.string().email().optional(),
+  username: z.string()
+    .min(3).max(32)
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'usernameChars')
+    .refine((val) => !/[\u0300-\u036f\u0483-\u0489\u064b-\u0652]/.test(val), 'usernameNoZalgo')
+    .optional(),
+  fullname: z.string().max(128).optional(),
 });
 
 export const createItemSchema = z.object({
