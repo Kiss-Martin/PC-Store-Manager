@@ -2,16 +2,25 @@ const emailStrings = {
   en: {
     adminNotify: {
       body: 'A new administrator account was created and is awaiting approval.',
+      bodyWorker: 'A new worker account was created and is awaiting approval.',
       email: 'Email',
       username: 'Username',
       fullname: 'Full name',
+      role: 'Role',
       approve: 'Approve',
       reject: 'Reject',
       review: 'You can also review pending admins at',
+      reviewWorker: 'You can also review pending workers at',
     },
     registration: {
       awaitingBody: 'Your admin account has been created and is awaiting approval by another administrator. You will receive an update once it is approved.',
       welcomeBody: 'Welcome! Your account has been created successfully.',
+      goToDashboard: 'Go to Dashboard',
+      disclaimer: 'If you did not perform this action, please contact support.',
+    },
+    workerRegistration: {
+      awaitingBody: 'Your worker account has been created and is awaiting approval by an administrator. You will receive an update once it is approved.',
+      welcomeBody: 'Welcome! Your worker account has been created successfully.',
       goToDashboard: 'Go to Dashboard',
       disclaimer: 'If you did not perform this action, please contact support.',
     },
@@ -76,16 +85,25 @@ const emailStrings = {
   hu: {
     adminNotify: {
       body: 'Egy új adminisztrátori fiók jött létre, és jóváhagyásra vár.',
+      bodyWorker: 'Egy új dolgozói fiók jött létre, és jóváhagyásra vár.',
       email: 'E-mail',
       username: 'Felhasználónév',
       fullname: 'Teljes név',
+      role: 'Szerep',
       approve: 'Jóváhagyás',
       reject: 'Elutasítás',
       review: 'A függőben lévő adminokat itt is ellenőrizheted',
+      reviewWorker: 'A függőben lévő dolgozókat itt is ellenőrizheted',
     },
     registration: {
       awaitingBody: 'Az admin fiókodat létrehoztuk, és egy másik adminisztrátor jóváhagyására vár. Értesítünk, amint jóváhagyásra kerül.',
       welcomeBody: 'Üdvözlünk! A fiókod sikeresen létrejött.',
+      goToDashboard: 'Ugrás a vezérlőpultra',
+      disclaimer: 'Ha nem te végezted ezt a műveletet, kérjük, lépj kapcsolatba a támogatással.',
+    },
+    workerRegistration: {
+      awaitingBody: 'A dolgozói fiókodat létrehoztuk, és egy adminisztrátor jóváhagyására vár. Értesítünk, amint jóváhagyásra kerül.',
+      welcomeBody: 'Üdvözlünk! A dolgozói fiókodat sikeresen létrejött.',
       goToDashboard: 'Ugrás a vezérlőpultra',
       disclaimer: 'Ha nem te végezted ezt a műveletet, kérjük, lépj kapcsolatba a támogatással.',
     },
@@ -158,39 +176,47 @@ function safe(str = '') {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-export function renderAdminNotification({ lang = 'en', subject, email, username, fullname, approveUrl, rejectUrl, reviewLink }) {
+export function renderAdminNotification({ lang = 'en', subject, email, username, fullname, approveUrl, rejectUrl, reviewLink, role = 'admin' }) {
   const s = getEmailStrings(lang);
-  const plain = `${s.adminNotify.body}\n${s.adminNotify.email}: ${email}\n${s.adminNotify.username}: ${username}\n${s.adminNotify.fullname}: ${fullname}\n\n${s.adminNotify.review}: ${reviewLink}\n${s.adminNotify.approve}: ${approveUrl}\n${s.adminNotify.reject}: ${rejectUrl}`;
+  const isWorker = role === 'worker';
+  const body = isWorker ? s.adminNotify.bodyWorker : s.adminNotify.body;
+  const review = isWorker ? s.adminNotify.reviewWorker : s.adminNotify.review;
+  const roleDisplay = isWorker ? 'Worker' : 'Administrator';
+  const roleDisplayLang = isWorker ? (lang === 'hu' ? 'Dolgozó' : 'Worker') : (lang === 'hu' ? 'Adminisztrátor' : 'Administrator');
+  const plain = `${body}\n${s.adminNotify.email}: ${email}\n${s.adminNotify.username}: ${username}\n${s.adminNotify.fullname}: ${fullname}\n${s.adminNotify.role}: ${roleDisplayLang}\n\n${review}: ${reviewLink}\n${s.adminNotify.approve}: ${approveUrl}\n${s.adminNotify.reject}: ${rejectUrl}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
     <h2 style="color:#111827">${safe(subject)}</h2>
-    <p>${s.adminNotify.body}</p>
+    <p>${body}</p>
     <table style="width:100%;border-collapse:collapse;margin-top:8px">
       <tr><td style="padding:6px;font-weight:600">${s.adminNotify.email}</td><td style="padding:6px">${safe(email)}</td></tr>
       <tr><td style="padding:6px;font-weight:600">${s.adminNotify.username}</td><td style="padding:6px">${safe(username)}</td></tr>
       <tr><td style="padding:6px;font-weight:600">${s.adminNotify.fullname}</td><td style="padding:6px">${safe(fullname)}</td></tr>
+      <tr><td style="padding:6px;font-weight:600">${s.adminNotify.role}</td><td style="padding:6px">${safe(roleDisplayLang)}</td></tr>
     </table>
     <p style="margin-top:18px">
       <a href="${safe(approveUrl)}" style="display:inline-block;padding:10px 16px;background:#10b981;color:#fff;border-radius:6px;text-decoration:none;margin-right:8px">${s.adminNotify.approve}</a>
       <a href="${safe(rejectUrl)}" style="display:inline-block;padding:10px 16px;background:#ef4444;color:#fff;border-radius:6px;text-decoration:none">${s.adminNotify.reject}</a>
     </p>
-    <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.adminNotify.review} <a href="${safe(reviewLink)}">${safe(reviewLink)}</a></p>
+    <p style="font-size:12px;color:#6b7280;margin-top:14px">${review} <a href="${safe(reviewLink)}">${safe(reviewLink)}</a></p>
   </div>
   `;
   return { subject, text: plain, html };
 }
 
-export function renderRegistrationConfirmation({ lang = 'en', subject, username, fullname, link, awaitingApproval = false }) {
+export function renderRegistrationConfirmation({ lang = 'en', subject, username, fullname, link, awaitingApproval = false, role = 'admin' }) {
   const s = getEmailStrings(lang);
+  // Use workerRegistration strings if role is 'worker', otherwise use registration strings (for admin)
+  const strings = role === 'worker' ? s.workerRegistration : s.registration;
   const plain = awaitingApproval
-    ? `${s.registration.awaitingBody} (${username})`
-    : `${s.registration.welcomeBody} (${username}) — ${link}`;
+    ? `${strings.awaitingBody} (${username} - ${fullname})`
+    : `${strings.welcomeBody} (${username} - ${fullname}) — ${link}`;
   const html = `
   <div style="font-family: Arial, Helvetica, sans-serif; color:#111;">
     <h2 style="color:#111827">${safe(subject)}</h2>
-    <p>${awaitingApproval ? s.registration.awaitingBody : s.registration.welcomeBody}</p>
-    ${awaitingApproval ? '' : `<p style="margin-top:18px"><a href="${safe(link)}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${s.registration.goToDashboard}</a></p>`}
-    <p style="font-size:12px;color:#6b7280;margin-top:14px">${s.registration.disclaimer}</p>
+    <p>${awaitingApproval ? strings.awaitingBody : strings.welcomeBody}</p>
+    ${awaitingApproval ? '' : `<p style="margin-top:18px"><a href="${safe(link)}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${strings.goToDashboard}</a></p>`}
+    <p style="font-size:12px;color:#6b7280;margin-top:14px">${strings.disclaimer}</p>
   </div>
   `;
   return { subject, text: plain, html };

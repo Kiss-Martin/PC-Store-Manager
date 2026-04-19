@@ -68,11 +68,8 @@ const AuthService = {
           fullname: fullname || null,
           password_hash: hashed,
           role: role || 'worker',
-          // Admins require approval by another admin
-          admin_approved: role === 'admin' ? false : true,
-          // Workers require approval
-          // eslint-disable-next-line no-dupe-keys
-          admin_approved: role === 'worker' ? false : true,
+          // Both admins and workers require approval
+          admin_approved: (role === 'admin' || role === 'worker') ? false : true,
         }).select('id,email,username,fullname,role,admin_approved').single()
       );
       console.log('REGISTER: Created user -', { id: data.id, email: data.email, role: data.role, admin_approved: data.admin_approved });
@@ -99,17 +96,10 @@ const AuthService = {
       }
       throw e;
     }
-    // Auto-approve the first admin if no other approved admins exist
-    if (data.role === 'admin' && !data.admin_approved) {
-      const existingAdmins = await run(supabase.from('users').select('id').eq('role', 'admin').eq('admin_approved', true));
-      if (!existingAdmins || existingAdmins.length === 0) {
-        await run(supabase.from('users').update({ admin_approved: true, admin_approved_at: new Date().toISOString() }).eq('id', data.id));
-        data.admin_approved = true;
-        console.log('REGISTER: Auto-approved first admin -', data.id);
-      }
+    // Both admins and workers require approval - no auto-approval
+    if (data.role === 'admin') {
+      console.log('REGISTER: Admin awaiting approval -', data.id);
     }
-
-    // Workers always require approval - do NOT auto-approve
     if (data.role === 'worker') {
       console.log('REGISTER: Worker awaiting approval -', data.id);
     }
@@ -119,7 +109,7 @@ const AuthService = {
       const needsApproval = (data.role === 'admin' && !data.admin_approved) || (data.role === 'worker' && !data.admin_approved);
       const regSubject = needsApproval ? t(lang, 'auth.registrationAwaitingSubject') : t(lang, 'auth.registrationSubject');
       const regLink = `${FRONTEND_URL}/`; 
-      const regTpl = renderRegistrationConfirmation({ lang, subject: regSubject, username: data.username, fullname: data.fullname || '', link: regLink, awaitingApproval: needsApproval });
+      const regTpl = renderRegistrationConfirmation({ lang, subject: regSubject, username: data.username, fullname: data.fullname || '', link: regLink, awaitingApproval: needsApproval, role: data.role });
       if (mailTransporter) {
         await mailTransporter.sendMail({ to: data.email, from: smtpConfig.from, subject: regTpl.subject, text: regTpl.text, html: regTpl.html }).catch((e) => { throw e; });
       } else {
@@ -150,7 +140,7 @@ const AuthService = {
                   const approveUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-${data.role === 'admin' ? 'admins' : 'workers'}/${data.id}/approve/oneclick?token=${encodeURIComponent(approveToken)}`;
                   const rejectUrl = `${BACKEND_URL.replace(/\/$/, '')}/auth/admin/pending-${data.role === 'admin' ? 'admins' : 'workers'}/${data.id}/reject/oneclick?token=${encodeURIComponent(rejectToken)}`;
 
-                  const tpl = renderAdminNotification({ lang, subject, email: data.email, username: data.username, fullname: data.fullname || '', approveUrl, rejectUrl, reviewLink: link });
+                  const tpl = renderAdminNotification({ lang, subject, email: data.email, username: data.username, fullname: data.fullname || '', approveUrl, rejectUrl, reviewLink: link, role: data.role });
                   // send email immediately (no extra tables required). If SMTP missing, fallback to logging.
                   try {
                     if (mailTransporter) {
