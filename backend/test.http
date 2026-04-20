@@ -246,7 +246,7 @@ Content-Type: application/json
   "brand_id": "{{BRAND_ID}}",
   "model": "GL-2026",
   "specs": "32GB RAM, 1TB NVMe SSD, RTX 4080",
-  "warranty": "3 years"
+  "warranty": "3 months"
 }
 
 ### Update item (admin) — set ITEM_ID first
