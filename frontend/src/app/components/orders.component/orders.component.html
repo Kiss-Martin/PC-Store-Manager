@@ -477,12 +477,11 @@
         @if (auth.isBuyer()) {
           <!-- Buyer Info - Auto-filled from profile -->
           <div class="flex flex-col gap-2 p-4 rounded-lg border" [style.background]="'var(--color-bg)'" [style.border-color]="'var(--color-card-border)'">
-            <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.customer' | t }} {{ 'common.info' | t }}</label>
+            <label class="text-sm font-medium" [style.color]="'var(--color-text)'">{{ 'orders.customer' | t }}</label>
             <p class="text-sm m-0" [style.color]="'var(--color-text)'">
               <span class="font-medium">{{ auth.user()?.fullname || auth.user()?.username }}</span>
             </p>
             <p class="text-xs m-0" [style.color]="'var(--color-muted)'">{{ auth.user()?.email }}</p>
-            <p class="text-xs mt-1 px-2 py-1 rounded bg-violet-600/10 text-violet-600 w-fit">{{ 'orders.autoBuyerCustomer' | t }}</p>
           </div>
         } @else {
           <!-- Customer Selection for Staff -->
